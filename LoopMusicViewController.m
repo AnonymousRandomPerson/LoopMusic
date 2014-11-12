@@ -55,14 +55,6 @@ bool stateChange=false;*/
     NSFileManager *filemgr = [NSFileManager defaultManager];
     dbPath2 = [databasePath UTF8String];
     sqlite3_open(dbPath2, &trackData);
-    NSString *querySQL = [NSString stringWithFormat:@"SELECT max(id) FROM Tracks"];
-    const char *query_stmt = [querySQL UTF8String];
-    sqlite3_prepare_v2(trackData, query_stmt, -1, &statement, NULL);
-    sqlite3_step(statement);
-    totalSongs = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)] integerValue];
-    NSLog(@"%li", (long)totalSongs);
-    sqlite3_finalize(statement);
-    sqlite3_close(trackData);
     // Create database if not existant
     if ([filemgr fileExistsAtPath: databasePath ] == NO)
     {
@@ -74,7 +66,7 @@ bool stateChange=false;*/
             {
                 NSLog(@"Failed to create table");
             }
-            querySQL = [NSString stringWithFormat:@"ATTACH '%s' AS Tracks", dbPath];
+            NSString *querySQL = [NSString stringWithFormat:@"ATTACH '%s' AS Tracks", dbPath];
             sql_stmt = [querySQL UTF8String];
             sqlite3_exec(database, sql_stmt, NULL, NULL, &errMsg);
             querySQL = [NSString stringWithFormat:@"INSERT INTO Tracks SELECT * FROM Tracks.Tracks"];
@@ -87,6 +79,14 @@ bool stateChange=false;*/
             NSLog(@"Failed to open/create database");
         }
     }
+    // Initialize # of songs
+    NSString *querySQL = [NSString stringWithFormat:@"SELECT max(id) FROM Tracks"];
+    const char *query_stmt = [querySQL UTF8String];
+    sqlite3_prepare_v2(trackData, query_stmt, -1, &statement, NULL);
+    sqlite3_step(statement);
+    totalSongs = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)] integerValue];
+    NSLog(@"%li", (long)totalSongs);
+    sqlite3_finalize(statement);
     // Set up audio player
     playing=true;
     audioSession = [AVAudioSession sharedInstance];
@@ -290,8 +290,6 @@ bool stateChange=false;*/
     dbPath2 = [databasePath UTF8String];
     sqlite3_open(dbPath2, &trackData);
     NSError *error;
-    // Random song if not chosen
-    // If chosen song text is a string
     if (chooseSongString)
     {
         chooseSongString = false;
@@ -303,11 +301,53 @@ bool stateChange=false;*/
         {
             idField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
             nameField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 1)];
+            if (sqlite3_column_text(statement, 2) == nil)
+            {
+                loopTime = 0;
+                loopEnd = 0;
+                extension = @".m4a";
+                volumeSet = 0.3;
+                enabled = 1;
+                NSString *querySQL;
+                if (sqlite3_column_text(statement, 4) == nil)
+                {
+                    querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET extension = .m4a WHERE name = \"%@\"", nameField];
+                    NSLog(@"%@", querySQL);
+                    const char *query_stmt = [querySQL UTF8String];
+                    sqlite3_prepare_v2(trackData, query_stmt, -1, &statement, NULL);
+                    sqlite3_finalize(statement);
+                } else {
+                    extension = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)];
+                }
+                querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET loopstart = %f WHERE name = \"%@\"", loopTime, songName.text];
+                NSLog(@"%@", querySQL);
+                const char *query_stmt2 = [querySQL UTF8String];
+                sqlite3_prepare_v2(trackData, query_stmt2, -1, &statement, NULL);
+                sqlite3_finalize(statement);
+                querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET loopEnd WHERE name = \"%@\"", nameField];
+                NSLog(@"%@", querySQL);
+                const char *query_stmt3 = [querySQL UTF8String];
+                sqlite3_prepare_v2(trackData, query_stmt3, -1, &statement, NULL);
+                sqlite3_finalize(statement);
+                querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET volumeSet = 0.3 WHERE name = \"%@\"", nameField];
+                NSLog(@"%@", querySQL);
+                const char *query_stmt4 = [querySQL UTF8String];
+                sqlite3_prepare_v2(trackData, query_stmt4, -1, &statement, NULL);
+                sqlite3_finalize(statement);
+                querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET enabled = 1 WHERE name = \"%@\"", nameField];
+                NSLog(@"%@", querySQL);
+                const char *query_stmt5 = [querySQL UTF8String];
+                sqlite3_prepare_v2(trackData, query_stmt5, -1, &statement, NULL);
+                sqlite3_finalize(statement);
+            }
+            else
+            {
             loopTime = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] doubleValue];
             loopEnd = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 3)] doubleValue];
             extension = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)];
             volumeSet = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 5)] doubleValue];
             enabled = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)] intValue];
+            }
             valid = true;
         }
         sqlite3_finalize(statement);
@@ -644,7 +684,6 @@ bool stateChange=false;*/
     NSLog(@"%@", querySQL);
     const char *query_stmt = [querySQL UTF8String];
     sqlite3_prepare_v2(trackData, query_stmt, -1, &statement, NULL);
-    NSLog(@"%i", sqlite3_step(statement));
     sqlite3_finalize(statement);
     sqlite3_close(trackData);
 }
