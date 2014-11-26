@@ -131,22 +131,34 @@
 
 -(int)sqliteUpdate:(NSString*)field1 newTime:(double)newTime
 {
+    int result = 0;
     if ([field1 isEqual: @"loopstart"])
     {
-        int result = [(LoopMusicViewController*)(self.presentingViewController).presentingViewController setLoopTime:newTime];
-        NSLog(@"%i", result);
-        return result;
+        result = [(LoopMusicViewController*)(self.presentingViewController).presentingViewController setLoopTime:newTime];
     }
+    else
+    {
     dbPath2 = [databasePath UTF8String];
     sqlite3_open(dbPath2, &trackData);
     NSString *querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, settingsSongString];
-    NSLog(@"%@", querySQL);
     const char *query_stmt = [querySQL UTF8String];
     sqlite3_prepare_v2(trackData, query_stmt, -1, &statement, NULL);
-    int result = sqlite3_step(statement);
+    result = sqlite3_step(statement);
     sqlite3_finalize(statement);
     sqlite3_close(trackData);
-    NSLog(@"%i", result);
+    NSLog(@"%@, (%i)", querySQL, result);
+    }
+    if (result != 101)
+    {
+        UIAlertController *error = [UIAlertController alertControllerWithTitle:@"Error"
+                                                    message:[NSString stringWithFormat:@"Failed to update database (%i)", result]
+                                             preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Damn", @"OK action")
+                                                      style:UIAlertActionStyleDefault
+                                                    handler:nil];
+        [error addAction:defaultAction];
+        [self presentViewController:error animated:YES completion:nil];
+    }
     return result;
 }
 
