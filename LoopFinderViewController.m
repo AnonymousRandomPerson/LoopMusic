@@ -151,7 +151,7 @@
     if (result != 101)
     {
         UIAlertController *error = [UIAlertController alertControllerWithTitle:@"Error"
-                                                    message:[NSString stringWithFormat:@"Failed to update database (%i)", result]
+                                                    message:[NSString stringWithFormat:@"Failed to update database (%i). Restart the app.", result]
                                              preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Damn", @"OK action")
                                                       style:UIAlertActionStyleDefault

@@ -309,7 +309,6 @@ bool stateChange=false;*/
                 extension = @".m4a";
                 volumeSet = 0.3;
                 enabled = 1;
-                sqlite3_stmt *statement2;
                 NSString *querySQL;
                 if (sqlite3_column_text(statement, 4) == nil)
                 {

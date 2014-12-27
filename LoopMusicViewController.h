@@ -67,6 +67,7 @@ extern bool stateChange;*/
     const char *dbPath;
     const char *dbPath2;
     sqlite3_stmt *statement;
+    sqlite3_stmt *statement2;
     sqlite3 *database;
     NSString *docsDir;
     NSArray *dirPaths;
