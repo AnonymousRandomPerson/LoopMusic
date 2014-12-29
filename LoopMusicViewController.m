@@ -302,7 +302,8 @@ bool stateChange=false;*/
         {
             idField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
             nameField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 1)];
-            if (sqlite3_column_text(statement, 2) == nil)
+            NSLog(@"%@", [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)]);
+            if ([[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] isEqualToString:(@"")])
             {
                 loopTime = 0;
                 loopEnd = 0;
@@ -310,9 +311,9 @@ bool stateChange=false;*/
                 volumeSet = 0.3;
                 enabled = 1;
                 NSString *querySQL;
-                if (sqlite3_column_text(statement, 4) == nil)
+                if ([[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)] isEqualToString:(@"")])
                 {
-                    querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET extension = .m4a WHERE name = \"%@\"", nameField];
+                    querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET extension = \".m4a\" WHERE name = \"%@\"", nameField];
                     NSLog(@"%@", querySQL);
                     const char *query_stmt = [querySQL UTF8String];
                     sqlite3_prepare_v2(trackData, query_stmt, -1, &statement2, NULL);
@@ -327,13 +328,13 @@ bool stateChange=false;*/
                 sqlite3_prepare_v2(trackData, query_stmt2, -1, &statement2, NULL);
                 sqlite3_step(statement2);
                 sqlite3_finalize(statement2);
-                querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET loopEnd WHERE name = \"%@\"", nameField];
+                querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET loopend WHERE name = \"%@\"", nameField];
                 NSLog(@"%@", querySQL);
                 const char *query_stmt3 = [querySQL UTF8String];
                 sqlite3_prepare_v2(trackData, query_stmt3, -1, &statement2, NULL);
                 sqlite3_step(statement2);
                 sqlite3_finalize(statement2);
-                querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET volumeSet = 0.3 WHERE name = \"%@\"", nameField];
+                querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET volume = 0.3 WHERE name = \"%@\"", nameField];
                 NSLog(@"%@", querySQL);
                 const char *query_stmt4 = [querySQL UTF8String];
                 sqlite3_prepare_v2(trackData, query_stmt4, -1, &statement2, NULL);
@@ -783,7 +784,7 @@ bool stateChange=false;*/
     if (dim.on)
     {
         initBright = [UIScreen mainScreen].brightness;
-        [UIScreen mainScreen].brightness = .01;
+        [UIScreen mainScreen].brightness = 0;
     }
     else
     {
