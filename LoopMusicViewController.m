@@ -285,6 +285,7 @@ bool stateChange=false;*/
 // Change song
 -(void)playMusic
 {
+    [UIApplication sharedApplication].idleTimerDisabled = NO;
     [UIApplication sharedApplication].idleTimerDisabled = YES;
     playing=false;
     valid=false;
@@ -302,8 +303,7 @@ bool stateChange=false;*/
         {
             idField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
             nameField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 1)];
-            NSLog(@"%@", [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)]);
-            if ([[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] isEqualToString:(@"")])
+            if (sqlite3_column_text(statement, 2) == nil || [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] isEqualToString:(@"")])
             {
                 loopTime = 0;
                 loopEnd = 0;
@@ -311,7 +311,7 @@ bool stateChange=false;*/
                 volumeSet = 0.3;
                 enabled = 1;
                 NSString *querySQL;
-                if ([[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)] isEqualToString:(@"")])
+                if (sqlite3_column_text(statement, 4) == nil || [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)] isEqualToString:(@"")])
                 {
                     querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET extension = \".m4a\" WHERE name = \"%@\"", nameField];
                     NSLog(@"%@", querySQL);
@@ -328,7 +328,7 @@ bool stateChange=false;*/
                 sqlite3_prepare_v2(trackData, query_stmt2, -1, &statement2, NULL);
                 sqlite3_step(statement2);
                 sqlite3_finalize(statement2);
-                querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET loopend WHERE name = \"%@\"", nameField];
+                querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET loopend = 0 WHERE name = \"%@\"", nameField];
                 NSLog(@"%@", querySQL);
                 const char *query_stmt3 = [querySQL UTF8String];
                 sqlite3_prepare_v2(trackData, query_stmt3, -1, &statement2, NULL);
@@ -363,6 +363,7 @@ bool stateChange=false;*/
         if (valid)
         {
             url = [NSURL fileURLWithPath:[NSString stringWithFormat:nameField, [[NSBundle mainBundle] resourcePath]]];
+            sqlite3_close(trackData);
         }
         else
         {
@@ -399,8 +400,8 @@ bool stateChange=false;*/
                 sqlite3_close(trackData);
                 return;
             }
+            sqlite3_finalize(statement);
         } while (!enabled);
-        sqlite3_finalize(statement);
         nameField = [nameField stringByAppendingString:extension];
         nameField = [@"%@/" stringByAppendingString:nameField];
         url = [NSURL fileURLWithPath:[NSString stringWithFormat:nameField, [[NSBundle mainBundle] resourcePath]]];
