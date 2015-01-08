@@ -205,12 +205,14 @@
                                                                   handler:nil];
             [error addAction:defaultAction];
             [self presentViewController:error animated:YES completion:nil];
-        } else {
+        }
+        else
+        {
             UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Error"
-                                                             message:[NSString stringWithFormat:@"Failed to update database (%i). Restart the app.", result]
-                                                            delegate:self
-                                                   cancelButtonTitle:@"Damn"
-                                                   otherButtonTitles: nil];
+                                                            message:[NSString stringWithFormat:@"Failed to update database (%i). Restart the app.", result]
+                                                           delegate:self
+                                                  cancelButtonTitle:@"Damn"
+                                                  otherButtonTitles: nil];
             [alert show];
         }
     }

@@ -285,7 +285,6 @@ bool stateChange=false;*/
 // Change song
 -(void)playMusic
 {
-    [UIApplication sharedApplication].idleTimerDisabled = NO;
     [UIApplication sharedApplication].idleTimerDisabled = YES;
     playing=false;
     valid=false;
@@ -772,11 +771,15 @@ bool stateChange=false;*/
 {
     if (audioPlayer.playing)
     {
+        [audioPlayer stop];
         audioPlayer.currentTime = newCurrentTime;
+        [audioPlayer play];
     }
     else if (audioPlayer2.playing)
     {
+        [audioPlayer2 stop];
         audioPlayer2.currentTime = newCurrentTime;
+        [audioPlayer2 play];
     }
 }
 
