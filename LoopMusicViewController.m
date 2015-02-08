@@ -110,7 +110,7 @@ bool stateChange=false;*/
     //[queue addOperation:player];
     //[queue addOperation:looper];
     delay = 0;
-    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:.0001
+    timer = [NSTimer scheduledTimerWithTimeInterval:.0001
                                              target:self
                                            selector:@selector(timeDec:)
                                            userInfo:nil
@@ -423,6 +423,13 @@ bool stateChange=false;*/
     audioPlayer2.currentTime=loopTime-delay;
     audioPlayer.volume = volumeSet;
     audioPlayer2.volume = volumeSet;
+    if (!timer) {
+        timer = [NSTimer scheduledTimerWithTimeInterval:.0001
+                                                 target:self
+                                               selector:@selector(timeDec:)
+                                               userInfo:nil
+                                                repeats:YES];
+         }
 	if (audioPlayer == nil)
 		NSLog(@"%@", [error description]);
     playing=true;
@@ -530,6 +537,13 @@ bool stateChange=false;*/
         [audioPlayer play];
         [audioPlayer2 prepareToPlay];
         playing=true;
+        if (!timer) {
+            timer = [NSTimer scheduledTimerWithTimeInterval:.0001
+                                                     target:self
+                                                   selector:@selector(timeDec:)
+                                                   userInfo:nil
+                                                    repeats:YES];
+        }
         /*looper = [[NSInvocationOperation alloc] initWithTarget:self
                                                       selector:@selector(loop)
                                                         object:nil];
@@ -545,6 +559,10 @@ bool stateChange=false;*/
         [audioPlayer stop];
     if (audioPlayer2.playing)
         [audioPlayer2 stop];
+    if (timer) {
+        [timer invalidate];
+        timer = nil;
+    }
 }
 
 -(void)chooseSong:(NSString*)newSong

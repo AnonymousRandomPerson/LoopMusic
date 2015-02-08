@@ -82,6 +82,8 @@ extern bool stateChange;*/
     double duplicate;
     
     float initBright;
+    
+    NSTimer *timer;
 }
 
 @property(nonatomic, retain) UIButton *randomSong;
