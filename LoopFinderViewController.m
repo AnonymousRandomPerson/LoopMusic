@@ -61,6 +61,11 @@
     [(LoopMusicViewController*)(self.presentingViewController).presentingViewController setCurrentTime:[setCurrentTime.text doubleValue]];
 }
 
+-(IBAction)testTime:(id)sender
+{
+    [(LoopMusicViewController*)(self.presentingViewController).presentingViewController testTime];
+}
+
 -(IBAction)finderSetTime:(id)sender
 {
     if ([finderSetTime.text doubleValue] >= loopEnd || [finderSetTime.text doubleValue] < 0 || [finderSetTime.text isEqual:@""])
@@ -197,11 +202,6 @@
 -(IBAction)findTime:(id)sender
 {
     findTimeText.text = [NSString stringWithFormat:@"%f", [(LoopMusicViewController*)(self.presentingViewController).presentingViewController findTime] + [(LoopMusicViewController*)(self.presentingViewController) getDelay]];
-}
-
--(IBAction)testTime:(id)sender
-{
-    [(LoopMusicViewController*)(self.presentingViewController).presentingViewController testTime];
 }
 
 -(IBAction)close:(id)sender

@@ -159,35 +159,6 @@ bool stateChange=false;*/
             audioPlayer2.currentTime=loopTime-delay;
             repeats++;
         }
-        /*if (stateChange)
-        {
-            if (onState==1)
-            {
-                NSLog(@"Off");
-                if (audioPlayer.playing)
-                {
-                    audioPlayer2.currentTime+=delay2;
-                }
-                else
-                {
-                    audioPlayer.currentTime+=delay2;
-                }
-            }
-            else
-            {
-                NSLog(@"On");
-                if (audioPlayer.playing)
-                {
-                    audioPlayer2.currentTime-=delay2;
-                }
-                else
-                {
-                    audioPlayer.currentTime-=delay2;
-                }
-                delay2=0;
-            }
-            stateChange=false;
-        }*/
         if (!occupied)
         {
             if (repeatsShuffle > 0 && shuffleSetting == 2)
@@ -206,10 +177,10 @@ bool stateChange=false;*/
             }
             if (buffer)
             {
-                buffer=false;
+                buffer = false;
                 time = [self getTime];
                 repeats = 0;
-                choose=false;
+                choose = false;
                 [self playMusic];
                 return;
             }
@@ -667,25 +638,38 @@ bool stateChange=false;*/
 
 -(void)testTime
 {
-    [self playSong:self];
+    double test = loopEnd-delay-5;
+    if (test < 0) {
+        test = 0;
+    }
+    [self setCurrentTime:test];
+    /*[self playSong:self];
     if (audioPlayer.playing)
     {
         [audioPlayer stop];
-        audioPlayer.currentTime=loopEnd-delay-5;
-        if (audioPlayer.currentTime<0)
-        {
-            audioPlayer.currentTime=0;
-        }
+        audioPlayer.currentTime=test;
         [audioPlayer play];
     }
     else if (audioPlayer2.playing)
     {
         [audioPlayer2 stop];
-        audioPlayer2.currentTime=loopEnd-delay-5;
-        if (audioPlayer2.currentTime<0)
-        {
-            audioPlayer2.currentTime=0;
-        }
+        audioPlayer2.currentTime=test;
+        [audioPlayer2 play];
+    }*/
+}
+
+-(void)setCurrentTime:(double)newCurrentTime
+{
+    if (audioPlayer.playing)
+    {
+        [audioPlayer stop];
+        audioPlayer.currentTime = newCurrentTime;
+        [audioPlayer play];
+    }
+    else if (audioPlayer2.playing)
+    {
+        [audioPlayer2 stop];
+        audioPlayer2.currentTime = newCurrentTime;
         [audioPlayer2 play];
     }
 }
@@ -783,22 +767,6 @@ bool stateChange=false;*/
             break;
         }
     }*/
-}
-
--(void)setCurrentTime:(double)newCurrentTime
-{
-    if (audioPlayer.playing)
-    {
-        [audioPlayer stop];
-        audioPlayer.currentTime = newCurrentTime;
-        [audioPlayer play];
-    }
-    else if (audioPlayer2.playing)
-    {
-        [audioPlayer2 stop];
-        audioPlayer2.currentTime = newCurrentTime;
-        [audioPlayer2 play];
-    }
 }
 
 -(IBAction)dim:(id)sender
