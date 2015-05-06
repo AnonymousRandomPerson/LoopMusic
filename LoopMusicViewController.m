@@ -273,7 +273,7 @@ bool stateChange=false;*/
         {
             idField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
             nameField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 1)];
-            if (sqlite3_column_text(statement, 2) == nil || [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] isEqualToString:(@"")])
+            if (sqlite3_column_text(statement, 5) == nil || [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] isEqualToString:(@"")])
             {
                 loopTime = 0;
                 loopEnd = 0;
