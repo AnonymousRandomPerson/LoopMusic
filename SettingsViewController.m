@@ -27,17 +27,7 @@
 
 - (void)viewDidLoad
 {
-    //open database
     self.shuffle.selectedSegmentIndex = shuffleSetting;
-    stringTemp = [[NSBundle mainBundle] pathForResource:@"Tracks" ofType:@"db"];
-    dbPath = [stringTemp UTF8String];
-    sqlite3_open(dbPath, &trackData);
-    database = nil;
-    dirPaths = NSSearchPathForDirectoriesInDomains
-    (NSDocumentDirectory, NSUserDomainMask, YES);
-    docsDir = dirPaths[0];
-    databasePath = [[NSString alloc] initWithString:[docsDir stringByAppendingPathComponent: @"Tracks.db"]];
-    dbPath2 = [databasePath UTF8String];
     
     setTime.text = [NSString stringWithFormat:@"%f", loopTime];
     setTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
@@ -49,33 +39,34 @@
                                                     selector:@selector(loadSettings:)
                                                     userInfo:nil
                                                      repeats:NO];
+    presenter = (LoopMusicViewController*)self.presentingViewController;
 }
 
 -(void)loadSettings:(NSTimer*)loadTimer
 {
-    enabledSwitch.on = [(LoopMusicViewController*)self.presentingViewController getEnabled];
-    volumeAdjust.text = [NSString stringWithFormat:@"%f", [(LoopMusicViewController*)self.presentingViewController getVolume]];
-    [(LoopMusicViewController*)self.presentingViewController setOccupied:true];
+    enabledSwitch.on = [presenter getEnabled];
+    volumeAdjust.text = [NSString stringWithFormat:@"%f", [presenter getVolume]];
+    [presenter setOccupied:true];
 }
 
 -(IBAction)back:(id)sender
 {
-    [(LoopMusicViewController*)self.presentingViewController setOccupied:false];
+    [presenter setOccupied:false];
     shuffleSetting = [shuffle selectedSegmentIndex];
     NSString *fileWriteString = [NSString stringWithFormat:@"%lu,%f,%li", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle];
     NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
     [fileWriteString writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
-    [self dismissViewControllerAnimated:true completion:nil];
+    [super back:sender];
 }
 
 -(IBAction)setVolume:(id)sender
 {
     if ([volumeAdjust.text doubleValue] < 0 || [volumeAdjust.text doubleValue] > 1)
     {
-        volumeAdjust.text = [NSString stringWithFormat:@"%f", [(LoopMusicViewController*)self.presentingViewController getVolume]];
+        volumeAdjust.text = [NSString stringWithFormat:@"%f", [presenter getVolume]];
         return;
     }
-    [(LoopMusicViewController*)self.presentingViewController setVolume:[volumeAdjust.text doubleValue]];
+    [presenter setVolume:[volumeAdjust.text doubleValue]];
 }
 
 -(IBAction)addVolume:(id)sender
@@ -105,7 +96,7 @@
         setTime.text = [NSString stringWithFormat:@"%f", loopTime];
         return;
     }
-    [(LoopMusicViewController*)self.presentingViewController setLoopTime:[setTime.text doubleValue]];
+    [presenter setLoopTime:[setTime.text doubleValue]];
     [self sqliteUpdate:@"loopstart" newTime:loopTime];
 }
 
@@ -116,9 +107,9 @@
         [self sqliteUpdate:@"loopend" newTime:loopEnd];;
         return;
     }
-    if ([setTimeEnd.text doubleValue] > [(LoopMusicViewController*)self.presentingViewController getAudioDuration])
+    if ([setTimeEnd.text doubleValue] > [presenter getAudioDuration])
     {
-        setTimeEnd.text = [NSString stringWithFormat:@"%f", [(LoopMusicViewController*)self.presentingViewController getAudioDuration]];
+        setTimeEnd.text = [NSString stringWithFormat:@"%f", [presenter getAudioDuration]];
     }
     loopEnd = [setTimeEnd.text doubleValue];
     [self sqliteUpdate:@"loopend" newTime:loopEnd];
@@ -136,7 +127,7 @@
 
 -(IBAction)addTimeEnd:(id)sender
 {
-    if (loopEnd >= [(LoopMusicViewController*)self.presentingViewController getAudioDuration])
+    if (loopEnd >= [presenter getAudioDuration])
     {
         return;
     }
@@ -166,17 +157,16 @@
     setTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
 }
 
--(int)sqliteUpdate:(NSString*)field1 newTime:(double)newTime
+-(NSInteger)sqliteUpdate:(NSString*)field1 newTime:(double)newTime
 {
-    int result = 0;
+    [self openDB];
+    NSInteger result = 0;
     if ([field1 isEqual: @"loopstart"])
     {
-        result = [(LoopMusicViewController*)self.presentingViewController setLoopTime:newTime];
+        result = [presenter setLoopTime:newTime];
     }
     else
     {
-        dbPath2 = [databasePath UTF8String];
-        sqlite3_open(dbPath2, &trackData);
         NSString *querySQL;
         if ([field1 isEqual: @"enabled"])
         {
@@ -186,19 +176,14 @@
         {
             querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, settingsSongString];
         }
-        const char *query_stmt = [querySQL UTF8String];
-        sqlite3_prepare_v2(trackData, query_stmt, -1, &statement, NULL);
-        result = sqlite3_step(statement);
-        sqlite3_finalize(statement);
-        sqlite3_close(trackData);
-        NSLog(@"%@, (%i)", querySQL, result);
+        result = [self updateDBResult:querySQL];
     }
     if (result != 101)
     {
         if (NSClassFromString(@"UIAlertController"))
         {
             UIAlertController *error = [UIAlertController alertControllerWithTitle:@"Error"
-                                                                           message:[NSString stringWithFormat:@"Failed to update database (%i). Restart the app.", result]
+                                                                           message:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]
                                                                     preferredStyle:UIAlertControllerStyleAlert];
             UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Damn", @"OK action")
                                                                     style:UIAlertActionStyleDefault
@@ -209,13 +194,14 @@
         else
         {
             UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Error"
-                                                            message:[NSString stringWithFormat:@"Failed to update database (%i). Restart the app.", result]
+                                                            message:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]
                                                            delegate:self
                                                   cancelButtonTitle:@"Damn"
                                                   otherButtonTitles: nil];
             [alert show];
         }
     }
+    sqlite3_close(trackData);
     return result;
 }
 
@@ -243,16 +229,6 @@
     }
 }
 
--(IBAction)loopFinder:(id)sender
-{
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main"
-                                                         bundle:nil];
-    UIViewController *loopFinderVC = [storyboard instantiateViewControllerWithIdentifier:@"loopFinder"];
-    [self presentViewController:loopFinderVC
-                       animated:true
-                     completion:nil];
-}
-
 -(IBAction)enabledSwitch:(id)sender
 {
     [self sqliteUpdate:@"enabled" newTime:enabledSwitch.on];
@@ -270,18 +246,6 @@
 -(IBAction)shuffleChange:(id)sender
 {
     shuffleSetting = [shuffle selectedSegmentIndex];
-    /*switch ([shuffle selectedSegmentIndex])
-    {
-        case 0: timeShuffle = -1;
-            repeatsShuffle = -1;
-            break;
-        case 1: repeatsShuffle = -1;
-            timeShuffle = [shuffleTime.text doubleValue];
-            break;
-        case 2: timeShuffle = -1;
-            repeatsShuffle = [shuffleRepeats.text intValue];
-            break;
-    }*/
 }
 
 -(void)returned
@@ -290,21 +254,63 @@
     setTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
 }
 
+-(IBAction)loopFinder:(id)sender
+{
+    [self changeScreen:@"loopFinder"];
+}
+
+-(IBAction)addSong:(id)sender
+{
+    MPMediaPickerController *picker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeAnyAudio];
+    
+    [picker setDelegate: self];
+    [picker setAllowsPickingMultipleItems: YES];
+    picker.prompt = @"Add songs";
+    
+    [self presentViewController:picker
+                       animated:true
+                     completion:nil];
+}
+
+- (void)mediaPicker:(MPMediaPickerController *) mediaPicker didPickMediaItems:(MPMediaItemCollection *)collection {
+    [self openDB];
+    for (MPMediaItem *item in collection.items)
+    {
+        NSString *itemName = [item valueForProperty:MPMediaItemPropertyTitle];
+        [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", itemName]];
+        if (sqlite3_step(statement) == SQLITE_ROW)
+        {
+            NSString *urlString = @"";
+            if (sqlite3_column_text(statement, 0) != nil) {
+                NSString *urlString = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
+            }
+            if ([urlString isEqualToString:@""])
+            {
+                NSURL *itemURL = [item valueForProperty:MPMediaItemPropertyAssetURL];
+                [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET url = \"%@\" WHERE name = \"%@\"", itemURL.absoluteString, itemName]];
+            }
+        }
+        sqlite3_finalize(statement);
+    }
+    sqlite3_close(trackData);
+    [self dismissViewControllerAnimated:true
+                             completion:nil];
+}
+
+- (void)mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker {
+    [self dismissViewControllerAnimated:true
+                             completion:nil];
+}
+
+-(IBAction)deleteSong:(id)sender
+{
+    [self changeScreen:@"delete"];
+}
+
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
 
 @end

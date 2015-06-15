@@ -1,29 +1,18 @@
 //
-//  SearchViewController.m
+//  DeleteViewController.m
 //  LoopMusic
 //
-//  Created by Cheng Hann Gan on 5/30/14.
-//  Copyright (c) 2014 Cheng Hann Gan. All rights reserved.
+//  Created by Cheng Hann Gan on 5/8/15.
+//  Copyright (c) 2015 Cheng Hann Gan. All rights reserved.
 //
 
-#import "SearchViewController.h"
+#import "DeleteViewController.h"
 
-@interface SearchViewController ()
+@interface DeleteViewController ()
 
 @end
 
-@implementation SearchViewController
-
-@synthesize back;
-
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        // Custom initialization
-    }
-    return self;
-}
+@implementation DeleteViewController
 
 - (void)viewDidLoad
 {
@@ -60,9 +49,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (self.searchDisplayController.active) {
-        [(LoopMusicViewController*)self.presentingViewController chooseSong:searchedSongs[indexPath.row]];
     } else {
-        [(LoopMusicViewController*)self.presentingViewController chooseSong:songs[indexPath.row]];
     }
     [self dismissViewControllerAnimated:true completion:nil];
 }
@@ -76,13 +63,13 @@
 -(BOOL)searchDisplayController:(UISearchDisplayController *)controller shouldReloadTableForSearchString:(NSString *)searchString
 {
     [self filterContentForSearchText:searchString
-                               scope:[[self.searchDisplayController.searchBar scopeButtonTitles] objectAtIndex:[self.searchDisplayController.searchBar selectedScopeButtonIndex]]];
+                               scope:[[self.searchDisplayController.searchBar scopeButtonTitles] objectAtIndex:[self.searchDisplayController.searchBar
+                                                                                                                selectedScopeButtonIndex]]];
     
     return YES;
 }
 
-- (void)didReceiveMemoryWarning
-{
+- (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }

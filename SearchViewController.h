@@ -7,6 +7,7 @@
 //
 
 #import "LoopMusicViewController.h"
+extern const char *dbPath;
 
 @interface SearchViewController : LoopMusicViewController <UITableViewDelegate, UITableViewDataSource>
 {
@@ -16,7 +17,5 @@
 }
 
 @property(nonatomic, retain) UIButton *back;
-
--(IBAction)back:(id)sender;
 
 @end

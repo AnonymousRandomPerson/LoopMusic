@@ -8,7 +8,7 @@
 
 #import "LoopMusicViewController.h"
 
-@interface SettingsViewController : LoopMusicViewController {
+@interface SettingsViewController : LoopMusicViewController <MPMediaPickerControllerDelegate> {
     IBOutlet UIButton *back;
     IBOutlet UITextField *volumeAdjust;
     IBOutlet UITextField *setTime;
@@ -17,6 +17,7 @@
     IBOutlet UITextField *shuffleRepeats;
     IBOutlet UISegmentedControl *shuffle;
     IBOutlet UISwitch *enabledSwitch;
+    LoopMusicViewController *presenter;
 }
 
 @property(nonatomic, retain) UIButton *back;
@@ -28,7 +29,6 @@
 @property(nonatomic, retain) UISegmentedControl *shuffle;
 @property(nonatomic, retain) UISwitch *enabledSwitch;
 
--(IBAction)back:(id)sender;
 -(IBAction)setVolume:(id)sender;
 -(IBAction)setTime:(id)sender;
 -(IBAction)setTimeEnd:(id)sender;

@@ -11,8 +11,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <sys/time.h>
-//#import <MediaPlayer/MediaPlayer.h>
-//#import <CoreFoundation/CoreFoundation.h>
+#import <MediaPlayer/MediaPlayer.h>
 
 extern double loopTime;
 extern double loopEnd;
@@ -20,15 +19,11 @@ extern NSString *settingsSongString;
 extern double timeShuffle;
 extern NSInteger repeatsShuffle;
 extern NSUInteger shuffleSetting;
-/*extern NSInteger onState;
-extern float delay2;
-extern bool stateChange;*/
 
 @interface LoopMusicViewController : UIViewController {
     AVAudioPlayer *audioPlayer;
     AVAudioPlayer *audioPlayer2;
     AVAudioSession *audioSession;
-    //MPNowPlayingInfoCenter *nowPlayingInfo;
     
     NSInteger musicNumber;
     NSURL *url;
@@ -38,14 +33,9 @@ extern bool stateChange;*/
     bool playing;
     float delay;
     
-    /*NSOperationQueue *queue;
-    NSInvocationOperation *player;
-    NSInvocationOperation *looper;*/
-    
     IBOutlet UIButton *randomSong;
     IBOutlet UIButton *playSong;
     IBOutlet UIButton *stopSong;
-    //IBOutlet UITextField *chooseSong;
     IBOutlet UIButton *searchSong;
     IBOutlet UILabel *songName;
     IBOutlet UIButton *settings;
@@ -57,20 +47,13 @@ extern bool stateChange;*/
     float volumeSet;
     bool enabled;
     double loopField;
-    NSInteger totalSongs;
     bool valid;
     NSString *chooseSongText;
+    NSInteger totalSongs;
     
-    NSString *stringTemp;
-    sqlite3 *trackData;
-    NSString *databasePath;
     const char *dbPath;
-    const char *dbPath2;
+    sqlite3 *trackData;
     sqlite3_stmt *statement;
-    sqlite3_stmt *statement2;
-    sqlite3 *database;
-    NSString *docsDir;
-    NSArray *dirPaths;
     
     struct timeval t;
     long long time;
@@ -89,7 +72,6 @@ extern bool stateChange;*/
 @property(nonatomic, retain) UIButton *randomSong;
 @property(nonatomic, retain) UIButton *playSong;
 @property(nonatomic, retain) UIButton *stopSong;
-//@property(nonatomic, retain) UITextField *chooseSong;
 @property(nonatomic, retain) UIButton *searchSong;
 @property(nonatomic, retain) UILabel *songName;
 @property(nonatomic, retain) UIButton *settings;
@@ -98,14 +80,22 @@ extern bool stateChange;*/
 -(IBAction)randomSong:(id)sender;
 -(IBAction)playSong:(id)sender;
 -(IBAction)stopSong:(id)sender;
-//-(IBAction)chooseSong:(id)sender;
 -(IBAction)searchSong:(id)sender;
 -(IBAction)settings:(id)sender;
 -(IBAction)close:(id)sender;
 -(IBAction)dim:(id)sender;
 
+-(IBAction)changeScreen:(NSString*)screen;
+-(IBAction)back:(id)sender;
+-(void)openDB;
+-(void)prepareQuery:(NSString*)query;
+-(void)updateDB:(NSString*)query;
+-(void)openUpdateDB:(NSString*)query;
+-(NSInteger)updateDBResult:(NSString*)query;
+-(NSInteger)initializeTotalSongs;
+-(NSMutableArray*)getSongList;
 
-//-(void)loop;
+-(void)playMusic;
 -(void)chooseSong:(NSString*)newSong;
 -(void)setDelay:(float)newDelay;
 -(void)setOccupied:(bool)newOccupied;
@@ -115,7 +105,7 @@ extern bool stateChange;*/
 -(float)getVolume;
 -(void)setVolume:(double)newVolume;
 -(float)findTime;
--(int)setLoopTime:(double)newLoopTime;
+-(NSInteger)setLoopTime:(double)newLoopTime;
 -(void)setCurrentTime:(double)newCurrentTime;
 -(double)getDelay;
 -(bool)getEnabled;

@@ -27,15 +27,8 @@
 
 - (void)viewDidLoad
 {
-    stringTemp = [[NSBundle mainBundle] pathForResource:@"Tracks" ofType:@"db"];
-    dbPath = [stringTemp UTF8String];
+    [self openDB];
     sqlite3_open(dbPath, &trackData);
-    database = nil;
-    dirPaths = NSSearchPathForDirectoriesInDomains
-    (NSDocumentDirectory, NSUserDomainMask, YES);
-    docsDir = dirPaths[0];
-    databasePath = [[NSString alloc] initWithString:[docsDir stringByAppendingPathComponent: @"Tracks.db"]];
-    dbPath2 = [databasePath UTF8String];
     
     finderSetTime.text = [NSString stringWithFormat:@"%f", loopTime];
     finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
@@ -134,31 +127,23 @@
     finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
 }
 
--(int)sqliteUpdate:(NSString*)field1 newTime:(double)newTime
+-(NSInteger)sqliteUpdate:(NSString*)field1 newTime:(double)newTime
 {
-    int result = 0;
+    NSInteger result = 0;
     if ([field1 isEqual: @"loopstart"])
     {
         result = [(LoopMusicViewController*)(self.presentingViewController).presentingViewController setLoopTime:newTime];
     }
     else
     {
-        dbPath2 = [databasePath UTF8String];
-        sqlite3_open(dbPath2, &trackData);
-        NSString *querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, settingsSongString];
-        const char *query_stmt = [querySQL UTF8String];
-        sqlite3_prepare_v2(trackData, query_stmt, -1, &statement, NULL);
-        result = sqlite3_step(statement);
-        sqlite3_finalize(statement);
-        sqlite3_close(trackData);
-        NSLog(@"%@, (%i)", querySQL, result);
+        result = [self updateDBResult:[NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, settingsSongString]];
     }
     if (result != 101)
     {
         if (NSClassFromString(@"UIAlertController"))
         {
             UIAlertController *error = [UIAlertController alertControllerWithTitle:@"Error"
-                                                                           message:[NSString stringWithFormat:@"Failed to update database (%i). Restart the app.", result]
+                                                                           message:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]
                                                                     preferredStyle:UIAlertControllerStyleAlert];
             UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Damn", @"OK action")
                                                                     style:UIAlertActionStyleDefault
@@ -169,7 +154,7 @@
         else
         {
             UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Error"
-                                                            message:[NSString stringWithFormat:@"Failed to update database (%i). Restart the app.", result]
+                                                            message:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]
                                                            delegate:self
                                                   cancelButtonTitle:@"Damn"
                                                   otherButtonTitles: nil];
@@ -214,7 +199,7 @@
 -(IBAction)back:(id)sender
 {
     [(SettingsViewController*)self.presentingViewController returned];
-    [self dismissViewControllerAnimated:true completion:nil];
+    [super back:sender];
 }
 
 - (void)didReceiveMemoryWarning
@@ -222,16 +207,5 @@
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
 
 @end
