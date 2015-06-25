@@ -17,13 +17,17 @@
 - (void)viewDidLoad
 {
     songs = [self getSongList];
+    presenter = (LoopMusicViewController*)self.presentingViewController;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (tableView == self.searchDisplayController.searchResultsTableView) {
+    if (tableView == self.searchDisplayController.searchResultsTableView)
+    {
         return [searchedSongs count];
-    } else {
+    }
+    else
+    {
         return [songs count];
     }
 }
@@ -34,13 +38,17 @@
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:simpleTableIdentifier];
     
-    if (cell == nil) {
+    if (cell == nil)
+    {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:simpleTableIdentifier];
     }
     
-    if (tableView == self.searchDisplayController.searchResultsTableView) {
+    if (tableView == self.searchDisplayController.searchResultsTableView)
+    {
         cell.textLabel.text = [searchedSongs objectAtIndex:indexPath.row];
-    } else {
+    }
+    else
+    {
         cell.textLabel.text = [songs objectAtIndex:indexPath.row];
     }
     return cell;
@@ -48,9 +56,17 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (self.searchDisplayController.active) {
-    } else {
+    [self openDB];
+    if (self.searchDisplayController.active)
+    {
+        [self updateDB:[NSString stringWithFormat:@"DELETE FROM Tracks WHERE name = \"%@\"", searchedSongs[indexPath.row]]];
     }
+    else
+    {
+        [self updateDB:[NSString stringWithFormat:@"DELETE FROM Tracks WHERE name = \"%@\"", songs[indexPath.row]]];
+    }
+    sqlite3_close(trackData);
+    [presenter decrementTotalSongs];
     [self dismissViewControllerAnimated:true completion:nil];
 }
 
@@ -69,9 +85,9 @@
     return YES;
 }
 
-- (void)didReceiveMemoryWarning {
+- (void)didReceiveMemoryWarning
+{
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 @end

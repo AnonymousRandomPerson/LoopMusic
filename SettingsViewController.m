@@ -272,23 +272,30 @@
                      completion:nil];
 }
 
-- (void)mediaPicker:(MPMediaPickerController *) mediaPicker didPickMediaItems:(MPMediaItemCollection *)collection {
+- (void)mediaPicker:(MPMediaPickerController *) mediaPicker didPickMediaItems:(MPMediaItemCollection *)collection
+{
     [self openDB];
     for (MPMediaItem *item in collection.items)
     {
         NSString *itemName = [item valueForProperty:MPMediaItemPropertyTitle];
+        NSURL *itemURL = [item valueForProperty:MPMediaItemPropertyAssetURL];
         [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", itemName]];
         if (sqlite3_step(statement) == SQLITE_ROW)
         {
             NSString *urlString = @"";
-            if (sqlite3_column_text(statement, 0) != nil) {
+            if (sqlite3_column_text(statement, 0) != nil)
+            {
                 NSString *urlString = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
             }
             if ([urlString isEqualToString:@""])
             {
-                NSURL *itemURL = [item valueForProperty:MPMediaItemPropertyAssetURL];
                 [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET url = \"%@\" WHERE name = \"%@\"", itemURL.absoluteString, itemName]];
             }
+        }
+        else
+        {
+            [self updateDB:[NSString stringWithFormat:@"INSERT INTO Tracks (name, loopstart, loopend, volume, enabled, url) VALUES (\"%@\", 0, 0, 0.3, 1, \"%@\")", itemName, itemURL.absoluteString]];
+            [presenter incrementTotalSongs];
         }
         sqlite3_finalize(statement);
     }
@@ -297,7 +304,8 @@
                              completion:nil];
 }
 
-- (void)mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker {
+- (void)mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker
+{
     [self dismissViewControllerAnimated:true
                              completion:nil];
 }
@@ -310,7 +318,6 @@
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 @end

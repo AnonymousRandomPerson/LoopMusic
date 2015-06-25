@@ -19,9 +19,6 @@
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        // Custom initialization
-    }
     return self;
 }
 
@@ -32,9 +29,12 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (tableView == self.searchDisplayController.searchResultsTableView) {
+    if (tableView == self.searchDisplayController.searchResultsTableView)
+    {
         return [searchedSongs count];
-    } else {
+    }
+    else
+    {
         return [songs count];
     }
 }
@@ -45,13 +45,17 @@
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:simpleTableIdentifier];
     
-    if (cell == nil) {
+    if (cell == nil)
+    {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:simpleTableIdentifier];
     }
     
-    if (tableView == self.searchDisplayController.searchResultsTableView) {
+    if (tableView == self.searchDisplayController.searchResultsTableView)
+    {
         cell.textLabel.text = [searchedSongs objectAtIndex:indexPath.row];
-    } else {
+    }
+    else
+    {
         cell.textLabel.text = [songs objectAtIndex:indexPath.row];
     }
     return cell;
@@ -59,9 +63,12 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (self.searchDisplayController.active) {
+    if (self.searchDisplayController.active)
+    {
         [(LoopMusicViewController*)self.presentingViewController chooseSong:searchedSongs[indexPath.row]];
-    } else {
+    }
+    else
+    {
         [(LoopMusicViewController*)self.presentingViewController chooseSong:songs[indexPath.row]];
     }
     [self dismissViewControllerAnimated:true completion:nil];
@@ -84,7 +91,6 @@
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 @end

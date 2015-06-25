@@ -12,6 +12,7 @@
 {
     NSMutableArray *songs;
     NSMutableArray *searchedSongs;
+    LoopMusicViewController *presenter;
 }
 
 @end

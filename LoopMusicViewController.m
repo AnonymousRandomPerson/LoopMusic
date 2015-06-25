@@ -25,13 +25,15 @@ NSUInteger shuffleSetting = 0;
 
 @synthesize searchSong, playSong, randomSong, stopSong, songName, settings, dim;
 
-- (void)viewDidAppear:(BOOL)animated {
+- (void)viewDidAppear:(BOOL)animated
+{
     [super viewDidAppear:animated];
     [[UIApplication sharedApplication] beginReceivingRemoteControlEvents];
     [self becomeFirstResponder];
 }
 
-- (void)viewWillDisappear:(BOOL)animated {
+- (void)viewWillDisappear:(BOOL)animated
+{
     [super viewWillDisappear:animated];
     [[UIApplication sharedApplication] endReceivingRemoteControlEvents];
     [self resignFirstResponder];
@@ -177,26 +179,17 @@ NSUInteger shuffleSetting = 0;
     {
         chooseSongString = false;
         musicNumber = -1;
-        [self prepareQuery:[NSString stringWithFormat:@"SELECT id, name, loopstart, loopend, extension, volume, enabled, url FROM Tracks WHERE name=\"%@\"", chooseSongText]];
+        [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks WHERE name=\"%@\"", chooseSongText]];
         if (sqlite3_step(statement) == SQLITE_ROW)
         {
             idField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
             nameField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 1)];
-            if (sqlite3_column_text(statement, 5) == nil || [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] isEqualToString:(@"")])
+            if (sqlite3_column_text(statement, 4) == nil || [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] isEqualToString:(@"")])
             {
                 loopTime = 0;
                 loopEnd = 0;
-                extension = @".m4a";
                 volumeSet = 0.3;
                 enabled = 1;
-                if (sqlite3_column_text(statement, 4) == nil || [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)] isEqualToString:(@"")])
-                {
-                    [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET extension = \".m4a\" WHERE name = \"%@\"", nameField]];
-                }
-                else
-                {
-                    extension = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)];
-                }
                 [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET loopstart = %f WHERE name = \"%@\"", loopTime, nameField]];
                 [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET loopend = 0 WHERE name = \"%@\"", nameField]];
                 [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET volume = 0.3 WHERE name = \"%@\"", nameField]];
@@ -206,11 +199,10 @@ NSUInteger shuffleSetting = 0;
             {
                 loopTime = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] doubleValue];
                 loopEnd = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 3)] doubleValue];
-                extension = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)];
-                volumeSet = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 5)] doubleValue];
-                enabled = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)] intValue];
-                if (sqlite3_column_text(statement, 7) != nil) {
-                    url = [NSURL URLWithString:[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 7)]];
+                volumeSet = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)] doubleValue];
+                enabled = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 5)] intValue];
+                if (sqlite3_column_text(statement, 6) != nil) {
+                    url = [NSURL URLWithString:[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)]];
                 }
                 else
                 {
@@ -221,18 +213,9 @@ NSUInteger shuffleSetting = 0;
         }
         sqlite3_finalize(statement);
         songName.text = nameField;
-        nameField = [nameField stringByAppendingString:extension];
-        nameField = [@"%@/" stringByAppendingString:nameField];
-        if (valid)
+        sqlite3_close(trackData);
+        if (!valid || url == nil)
         {
-            if (url == nil) {
-                url = [NSURL fileURLWithPath:[NSString stringWithFormat:nameField, [[NSBundle mainBundle] resourcePath]]];
-            }
-            sqlite3_close(trackData);
-        }
-        else
-        {
-            sqlite3_close(trackData);
             return;
         }
         musicNumber = [idField intValue];
@@ -240,25 +223,28 @@ NSUInteger shuffleSetting = 0;
     //If chosen song text is a number
     else
     {
-        do {
+        do
+        {
             NSInteger random = -1;
-            do {
-                random = arc4random() % totalSongs + 1;
+            do
+            {
+                random = arc4random() % totalSongs;
             } while (musicNumber == random);
             timeShuffle2 = [self timeVariance];
             musicNumber = random;
-            [self prepareQuery:[NSString stringWithFormat:@"SELECT id, name, loopstart, loopend, extension, volume, enabled, url FROM Tracks WHERE id=\"%li\"", (long)musicNumber]];
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks ORDER BY id LIMIT 1 OFFSET \"%li\"", (long)musicNumber]];
+            /*[self prepareQuery:[NSString stringWithFormat:@"SELECT id, name, loopstart, loopend, volume, enabled, url FROM Tracks WHERE id=\"%li\"", (long)musicNumber]];*/
             if (sqlite3_step(statement) == SQLITE_ROW)
             {
                 idField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
                 nameField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 1)];
                 loopTime = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] doubleValue];
                 loopEnd = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 3)] doubleValue];
-                extension = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)];
-                volumeSet = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 5)] doubleValue];
-                enabled = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)] intValue];
-                if (sqlite3_column_text(statement, 7) != nil) {
-                    url = [NSURL URLWithString:[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 7)]];
+                volumeSet = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)] doubleValue];
+                enabled = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 5)] intValue];
+                if (sqlite3_column_text(statement, 6) != nil)
+                {
+                    url = [NSURL URLWithString:[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)]];
                 }
                 else
                 {
@@ -267,17 +253,11 @@ NSUInteger shuffleSetting = 0;
             }
             else
             {
-                sqlite3_close(trackData);
-                return;
+                enabled = false;
             }
             sqlite3_finalize(statement);
         } while (!enabled);
         songName.text = nameField;
-        if (url == nil) {
-            nameField = [nameField stringByAppendingString:extension];
-            nameField = [@"%@/" stringByAppendingString:nameField];
-            url = [NSURL fileURLWithPath:[NSString stringWithFormat:nameField, [[NSBundle mainBundle] resourcePath]]];
-        }
     }
     sqlite3_close(trackData);
     NSError *error;
@@ -295,7 +275,8 @@ NSUInteger shuffleSetting = 0;
     audioPlayer2.currentTime=loopTime-delay;
     audioPlayer.volume = volumeSet;
     audioPlayer2.volume = volumeSet;
-    if (!timer) {
+    if (!timer)
+    {
         timer = [NSTimer scheduledTimerWithTimeInterval:.0001
                                                  target:self
                                                selector:@selector(timeDec:)
@@ -303,7 +284,9 @@ NSUInteger shuffleSetting = 0;
                                                 repeats:YES];
     }
     if (audioPlayer == nil)
+    {
         NSLog(@"%@", [error description]);
+    }
     playing=true;
     [audioPlayer play];
     [audioPlayer2 prepareToPlay];
@@ -326,9 +309,13 @@ NSUInteger shuffleSetting = 0;
     audioPlayer.currentTime=0;
     audioPlayer2.currentTime=0;
     if (audioPlayer.playing)
+    {
         [audioPlayer stop];
+    }
     if (audioPlayer2.playing)
+    {
         [audioPlayer2 stop];
+    }
     [self playMusic];
 }
 
@@ -343,7 +330,8 @@ NSUInteger shuffleSetting = 0;
         [audioPlayer play];
         [audioPlayer2 prepareToPlay];
         playing=true;
-        if (!timer) {
+        if (!timer)
+        {
             timer = [NSTimer scheduledTimerWithTimeInterval:.0001
                                                      target:self
                                                    selector:@selector(timeDec:)
@@ -358,13 +346,13 @@ NSUInteger shuffleSetting = 0;
     [UIApplication sharedApplication].idleTimerDisabled = NO;
     playing=false;
     if (audioPlayer.playing)
+    {
         [audioPlayer stop];
+    }
     if (audioPlayer2.playing)
+    {
         [audioPlayer2 stop];
-    /*if (timer) {
-        [timer invalidate];
-        timer = nil;
-    }*/
+    }
 }
 
 -(void)chooseSong:(NSString*)newSong
@@ -418,7 +406,6 @@ NSUInteger shuffleSetting = 0;
 
 -(IBAction)close:(id)sender
 {
-    //[chooseSong resignFirstResponder];
 }
 
 -(void)setOccupied:(bool)newOccupied
@@ -439,7 +426,8 @@ NSUInteger shuffleSetting = 0;
 -(void)testTime
 {
     double test = loopEnd-delay-5;
-    if (test < 0) {
+    if (test < 0)
+    {
         test = 0;
     }
     [self setCurrentTime:test];
@@ -510,11 +498,13 @@ NSUInteger shuffleSetting = 0;
     }
 }
 
-- (BOOL)canBecomeFirstResponder {
+- (BOOL)canBecomeFirstResponder
+{
     return YES;
 }
 
-- (void)remoteControlReceivedWithEvent:(UIEvent *)event {
+- (void)remoteControlReceivedWithEvent:(UIEvent *)event
+{
     //if it is a remote control event handle it correctly
     if (event.type == UIEventTypeRemoteControl)
     {
@@ -624,11 +614,22 @@ NSUInteger shuffleSetting = 0;
 
 -(NSInteger)initializeTotalSongs
 {
-    [self prepareQuery:[NSString stringWithFormat:@"SELECT max(id) FROM Tracks"]];
+    [self prepareQuery:[NSString stringWithFormat:@"SELECT COUNT(*) FROM Tracks"]];
     sqlite3_step(statement);
     totalSongs = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)] integerValue];
     sqlite3_finalize(statement);
+    NSLog(@"%ld", (long)totalSongs);
     return totalSongs;
+}
+
+-(void)incrementTotalSongs
+{
+    totalSongs++;
+}
+
+-(void)decrementTotalSongs
+{
+    totalSongs--;
 }
 
 -(NSMutableArray*)getSongList
@@ -662,7 +663,6 @@ NSUInteger shuffleSetting = 0;
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 @end

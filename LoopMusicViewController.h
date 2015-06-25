@@ -20,7 +20,8 @@ extern double timeShuffle;
 extern NSInteger repeatsShuffle;
 extern NSUInteger shuffleSetting;
 
-@interface LoopMusicViewController : UIViewController {
+@interface LoopMusicViewController : UIViewController
+{
     AVAudioPlayer *audioPlayer;
     AVAudioPlayer *audioPlayer2;
     AVAudioSession *audioSession;
@@ -43,7 +44,6 @@ extern NSUInteger shuffleSetting;
     
     NSString *idField;
     NSString *nameField;
-    NSString *extension;
     float volumeSet;
     bool enabled;
     double loopField;
@@ -93,6 +93,8 @@ extern NSUInteger shuffleSetting;
 -(void)openUpdateDB:(NSString*)query;
 -(NSInteger)updateDBResult:(NSString*)query;
 -(NSInteger)initializeTotalSongs;
+-(void)incrementTotalSongs;
+-(void)decrementTotalSongs;
 -(NSMutableArray*)getSongList;
 
 -(void)playMusic;
