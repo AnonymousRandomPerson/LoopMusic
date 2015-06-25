@@ -38,22 +38,23 @@
 
 -(void)loadSettings:(NSTimer*)loadTimer
 {
-    finderSongName.text = [(LoopMusicViewController*)(self.presentingViewController).presentingViewController getSongName];
+    presenter = (LoopMusicViewController*)(self.presentingViewController).presentingViewController;
+    finderSongName.text = [presenter getSongName];
 }
 
 -(IBAction)setCurrentTime:(id)sender
 {
-    if ([setCurrentTime.text isEqual:@""]  || [setCurrentTime.text doubleValue] > [(LoopMusicViewController*)(self.presentingViewController).presentingViewController getAudioDuration])
+    if ([setCurrentTime.text isEqual:@""]  || [setCurrentTime.text doubleValue] > [presenter getAudioDuration])
     {
         setCurrentTime.text = @"";
         return;
     }
-    [(LoopMusicViewController*)(self.presentingViewController).presentingViewController setCurrentTime:[setCurrentTime.text doubleValue]];
+    [presenter setCurrentTime:[setCurrentTime.text doubleValue]];
 }
 
 -(IBAction)testTime:(id)sender
 {
-    [(LoopMusicViewController*)(self.presentingViewController).presentingViewController testTime];
+    [presenter testTime];
 }
 
 -(IBAction)finderSetTime:(id)sender
@@ -63,7 +64,7 @@
         finderSetTime.text = [NSString stringWithFormat:@"%f", loopTime];
         return;
     }
-    [(LoopMusicViewController*)(self.presentingViewController).presentingViewController setLoopTime:[finderSetTime.text doubleValue]];
+    [presenter setLoopTime:[finderSetTime.text doubleValue]];
     [self sqliteUpdate:@"loopstart" newTime:loopTime];
 }
 
@@ -74,9 +75,9 @@
         finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
         return;
     }
-    if ([finderSetTimeEnd.text doubleValue] > [(LoopMusicViewController*)(self.presentingViewController).presentingViewController getAudioDuration])
+    if ([finderSetTimeEnd.text doubleValue] > [presenter getAudioDuration])
     {
-        finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", [(LoopMusicViewController*)(self.presentingViewController).presentingViewController getAudioDuration]];
+        finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", [presenter getAudioDuration]];
     }
     loopEnd = [finderSetTimeEnd.text doubleValue];
     [self sqliteUpdate:@"loopend" newTime:loopEnd];
@@ -94,7 +95,7 @@
 
 -(IBAction)finderAddTimeEnd:(id)sender
 {
-    if (loopEnd >= [(LoopMusicViewController*)(self.presentingViewController).presentingViewController getAudioDuration])
+    if (loopEnd >= [presenter getAudioDuration])
     {
         return;
     }
@@ -129,7 +130,7 @@
     NSInteger result = 0;
     if ([field1 isEqual: @"loopstart"])
     {
-        result = [(LoopMusicViewController*)(self.presentingViewController).presentingViewController setLoopTime:newTime];
+        result = [presenter setLoopTime:newTime];
     }
     else
     {
@@ -183,7 +184,7 @@
 
 -(IBAction)findTime:(id)sender
 {
-    findTimeText.text = [NSString stringWithFormat:@"%f", [(LoopMusicViewController*)(self.presentingViewController).presentingViewController findTime] + [(LoopMusicViewController*)(self.presentingViewController) getDelay]];
+    findTimeText.text = [NSString stringWithFormat:@"%f", [presenter findTime] + [presenter getDelay]];
 }
 
 -(IBAction)close:(id)sender

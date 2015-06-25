@@ -198,10 +198,10 @@ NSUInteger shuffleSetting = 0;
             }
             else
             {
-                loopTime = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] doubleValue];
-                loopEnd = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 3)] doubleValue];
-                volumeSet = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)] doubleValue];
-                enabled = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 5)] intValue];
+                loopTime = sqlite3_column_double(statement, 2);
+                loopEnd = sqlite3_column_double(statement, 3);
+                volumeSet = sqlite3_column_double(statement, 4);
+                enabled = sqlite3_column_int(statement, 5);
                 if (sqlite3_column_text(statement, 6) != nil) {
                     url = [NSURL URLWithString:[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)]];
                 }
@@ -211,6 +211,7 @@ NSUInteger shuffleSetting = 0;
                 }
             }
             valid = true;
+            musicNumber = [idField intValue];
         }
         sqlite3_finalize(statement);
         songName.text = nameField;
@@ -219,7 +220,6 @@ NSUInteger shuffleSetting = 0;
         {
             return;
         }
-        musicNumber = [idField intValue];
     }
     //If chosen song text is a number
     else
@@ -234,15 +234,14 @@ NSUInteger shuffleSetting = 0;
             timeShuffle2 = [self timeVariance];
             musicNumber = random;
             [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks ORDER BY id LIMIT 1 OFFSET \"%li\"", (long)musicNumber]];
-            /*[self prepareQuery:[NSString stringWithFormat:@"SELECT id, name, loopstart, loopend, volume, enabled, url FROM Tracks WHERE id=\"%li\"", (long)musicNumber]];*/
             if (sqlite3_step(statement) == SQLITE_ROW)
             {
                 idField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
                 nameField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 1)];
-                loopTime = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 2)] doubleValue];
-                loopEnd = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 3)] doubleValue];
-                volumeSet = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 4)] doubleValue];
-                enabled = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 5)] intValue];
+                loopTime = sqlite3_column_double(statement, 2);
+                loopEnd = sqlite3_column_double(statement, 3);
+                volumeSet = sqlite3_column_double(statement, 4);
+                enabled = sqlite3_column_int(statement, 5);
                 if (sqlite3_column_text(statement, 6) != nil)
                 {
                     url = [NSURL URLWithString:[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)]];
@@ -251,6 +250,7 @@ NSUInteger shuffleSetting = 0;
                 {
                     url = nil;
                 }
+                musicNumber = [idField intValue];
             }
             else
             {
@@ -592,7 +592,11 @@ NSUInteger shuffleSetting = 0;
 {
     sqlite3_stmt *tempStatement;
     sqlite3_prepare_v2(trackData, [query UTF8String], -1, &tempStatement, NULL);
-    sqlite3_step(tempStatement);
+    NSInteger result = sqlite3_step(tempStatement);
+    if (result != 101)
+    {
+        NSLog(@"Database query %@ errored (%ld).", query, (long)result);
+    }
     sqlite3_finalize(tempStatement);
 }
 
@@ -641,7 +645,7 @@ NSUInteger shuffleSetting = 0;
     totalSongs = [self initializeTotalSongs];
     for (NSInteger i = 1; i<=totalSongs; i++)
     {
-        [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM Tracks WHERE id=\"%li\"", (long)i]];
+        [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM Tracks ORDER BY id LIMIT 1 OFFSET \"%li\"", (long)i]];
         if (sqlite3_step(statement) == SQLITE_ROW)
         {
             songListName = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
