@@ -42,6 +42,7 @@ NSUInteger shuffleSetting = 0;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    [self setOccupied:false];
     [self openDB];
     // Initialize # of songs
     [self initializeTotalSongs];

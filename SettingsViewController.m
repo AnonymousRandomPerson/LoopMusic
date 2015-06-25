@@ -31,8 +31,6 @@
     shuffleTime.text = [NSString stringWithFormat:@"%f", timeShuffle];
     shuffleRepeats.text = [NSString stringWithFormat:@"%li", (long)repeatsShuffle];
     shuffle.selectedSegmentIndex = shuffleSetting;
-    presenter = (LoopMusicViewController*)self.presentingViewController;
-    [presenter setOccupied:true];
     NSTimer *loadTimer = [NSTimer scheduledTimerWithTimeInterval:.1
                                                       target:self
                                                     selector:@selector(loadSettings:)
@@ -42,8 +40,10 @@
 
 -(void)loadSettings:(NSTimer*)loadTimer
 {
+    presenter = (LoopMusicViewController*)self.presentingViewController;
     enabledSwitch.on = [presenter getEnabled];
     volumeAdjust.text = [NSString stringWithFormat:@"%f", [presenter getVolume]];
+    [presenter setOccupied:true];
 }
 
 -(IBAction)back:(id)sender

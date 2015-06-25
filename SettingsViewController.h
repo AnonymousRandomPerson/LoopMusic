@@ -29,6 +29,7 @@
 @property(nonatomic, retain) UISegmentedControl *shuffle;
 @property(nonatomic, retain) UISwitch *enabledSwitch;
 
+-(IBAction)back:(id)sender;
 -(IBAction)setVolume:(id)sender;
 -(IBAction)setTime:(id)sender;
 -(IBAction)setTimeEnd:(id)sender;
