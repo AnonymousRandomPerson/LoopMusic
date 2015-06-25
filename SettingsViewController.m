@@ -19,9 +19,6 @@
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        // Custom initialization
-    }
     return self;
 }
 
@@ -34,19 +31,19 @@
     shuffleTime.text = [NSString stringWithFormat:@"%f", timeShuffle];
     shuffleRepeats.text = [NSString stringWithFormat:@"%li", (long)repeatsShuffle];
     shuffle.selectedSegmentIndex = shuffleSetting;
+    presenter = (LoopMusicViewController*)self.presentingViewController;
+    [presenter setOccupied:true];
     NSTimer *loadTimer = [NSTimer scheduledTimerWithTimeInterval:.1
                                                       target:self
                                                     selector:@selector(loadSettings:)
                                                     userInfo:nil
                                                      repeats:NO];
-    presenter = (LoopMusicViewController*)self.presentingViewController;
 }
 
 -(void)loadSettings:(NSTimer*)loadTimer
 {
     enabledSwitch.on = [presenter getEnabled];
     volumeAdjust.text = [NSString stringWithFormat:@"%f", [presenter getVolume]];
-    [presenter setOccupied:true];
 }
 
 -(IBAction)back:(id)sender
