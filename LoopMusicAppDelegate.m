@@ -14,6 +14,7 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
+    NSLog(@"%f %f", self.window.bounds.size.height, self.window.bounds.size.width);
     return YES;
 }
 							

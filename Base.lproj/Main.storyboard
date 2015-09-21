@@ -10,8 +10,8 @@
             <objects>
                 <viewController storyboardIdentifier="delete" title="Delete" id="4qS-sj-fkN" customClass="DeleteViewController" sceneMemberID="viewController">
                     <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="NSz-CP-1UH"/>
-                        <viewControllerLayoutGuide type="bottom" id="hEI-fa-dy9"/>
+                        <viewControllerLayoutGuide type="top" id="n4i-TL-nrM"/>
+                        <viewControllerLayoutGuide type="bottom" id="lIh-hG-Ega"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="7Rh-x6-vLO">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
@@ -66,8 +66,8 @@
             <objects>
                 <viewController storyboardIdentifier="main" id="vXZ-lx-hvc" customClass="LoopMusicViewController" sceneMemberID="viewController">
                     <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="zhk-CV-9Ud"/>
-                        <viewControllerLayoutGuide type="bottom" id="IDb-Pc-LQ1"/>
+                        <viewControllerLayoutGuide type="top" id="uIr-Ix-2ZE"/>
+                        <viewControllerLayoutGuide type="bottom" id="mQu-h2-UKm"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="kh9-bI-dsS">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
@@ -157,8 +157,8 @@
             <objects>
                 <viewController storyboardIdentifier="settings" title="Settings" id="VcT-fG-Tz1" customClass="SettingsViewController" sceneMemberID="viewController">
                     <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="7P6-iT-oLB"/>
-                        <viewControllerLayoutGuide type="bottom" id="hIb-o9-PWR"/>
+                        <viewControllerLayoutGuide type="top" id="kZb-Hy-3CF"/>
+                        <viewControllerLayoutGuide type="bottom" id="gUx-Wo-7B6"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="bEc-r8-v5b">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
@@ -393,8 +393,8 @@
             <objects>
                 <viewController storyboardIdentifier="search" id="1aa-bQ-UDF" customClass="SearchViewController" sceneMemberID="viewController">
                     <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="boB-y9-alL"/>
-                        <viewControllerLayoutGuide type="bottom" id="wg2-tO-h7g"/>
+                        <viewControllerLayoutGuide type="top" id="hy0-it-jdi"/>
+                        <viewControllerLayoutGuide type="bottom" id="Ovs-Uu-uAb"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="E7Z-mI-0Ea">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
@@ -450,8 +450,8 @@
             <objects>
                 <viewController storyboardIdentifier="loopFinder" id="6GA-Ov-HC3" customClass="LoopFinderViewController" sceneMemberID="viewController">
                     <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="GOk-xo-CHQ"/>
-                        <viewControllerLayoutGuide type="bottom" id="mKD-HP-rwa"/>
+                        <viewControllerLayoutGuide type="top" id="Oqj-0m-U4g"/>
+                        <viewControllerLayoutGuide type="bottom" id="sFl-yX-kE4"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="fnM-X0-lKM">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
