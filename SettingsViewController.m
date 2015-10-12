@@ -279,15 +279,7 @@
         [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", itemName]];
         if (sqlite3_step(statement) == SQLITE_ROW)
         {
-            NSString *urlString = @"";
-            if (sqlite3_column_text(statement, 0) != nil)
-            {
-                urlString = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
-            }
-            if ([urlString isEqualToString:@""])
-            {
-                [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET url = \"%@\" WHERE name = \"%@\"", itemURL.absoluteString, itemName]];
-            }
+            [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET url = \"%@\" WHERE name = \"%@\"", itemURL.absoluteString, itemName]];
         }
         else
         {
