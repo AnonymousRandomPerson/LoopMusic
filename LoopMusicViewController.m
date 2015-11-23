@@ -86,14 +86,16 @@ NSUInteger shuffleSetting = 0;
 {
     if (playing)
     {
-        if (audioPlayer.currentTime>=loopEnd-delay) {
+        if (audioPlayer.currentTime>=loopEnd-delay)
+        {
             [audioPlayer2 play];
             [audioPlayer stop];
             [audioPlayer prepareToPlay];
             audioPlayer.currentTime=loopTime-delay;
             repeats++;
         }
-        if (audioPlayer2.currentTime>=loopEnd-delay) {
+        if (audioPlayer2.currentTime>=loopEnd-delay)
+        {
             [audioPlayer play];
             [audioPlayer2 stop];
             [audioPlayer2 prepareToPlay];
