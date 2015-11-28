@@ -128,7 +128,9 @@ double fadeSetting = 0;
                     choose = false;
                     [self playMusic];
                     return;
-                } else {
+                }
+                else if (audioPlayer.volume > 0)
+                {
                     audioPlayer.volume -= volumeDec;
                     audioPlayer2.volume -= volumeDec;
                 }
@@ -283,7 +285,6 @@ double fadeSetting = 0;
     audioPlayer.volume = volumeSet;
     audioPlayer2.volume = volumeSet;
     [self updateVolumeDec];
-    volumeDec = volumeSet / (fadeSetting * 10000);
     if (!timer)
     {
         timer = [NSTimer scheduledTimerWithTimeInterval:.0001
@@ -313,7 +314,7 @@ double fadeSetting = 0;
 
 -(void)updateVolumeDec
 {
-    volumeDec = fadeSetting > 0 ? volumeSet / (fadeSetting * 10000) : 0;
+    volumeDec = fadeSetting > 0 ? volumeSet / (fadeSetting * 5000) : 0;
 }
 
 -(IBAction)randomSong:(id)sender
@@ -467,7 +468,7 @@ double fadeSetting = 0;
 
 -(float)getVolume
 {
-    return audioPlayer.volume;
+    return volumeSet;
 }
 
 -(void)setVolume:(double)newVolume
