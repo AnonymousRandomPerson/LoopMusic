@@ -19,6 +19,7 @@ extern NSString *settingsSongString;
 extern double timeShuffle;
 extern NSInteger repeatsShuffle;
 extern NSUInteger shuffleSetting;
+extern double fadeSetting;
 
 @interface LoopMusicViewController : UIViewController
 {
@@ -33,6 +34,8 @@ extern NSUInteger shuffleSetting;
     bool chooseSongString;
     bool playing;
     float delay;
+    double fadeTime;
+    double volumeDec;
     
     IBOutlet UIButton *randomSong;
     IBOutlet UIButton *playSong;
@@ -98,6 +101,7 @@ extern NSUInteger shuffleSetting;
 -(NSMutableArray*)getSongList;
 
 -(void)playMusic;
+-(void)updateVolumeDec;
 -(void)chooseSong:(NSString*)newSong;
 -(void)setDelay:(float)newDelay;
 -(void)setOccupied:(bool)newOccupied;

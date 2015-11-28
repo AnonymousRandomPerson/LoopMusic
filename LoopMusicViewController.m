@@ -15,7 +15,7 @@ double timeShuffle = -1;
 double timeShuffle2 = -1;
 NSInteger repeatsShuffle = -1;
 NSUInteger shuffleSetting = 0;
-
+double fadeSetting = 0;
 
 @interface LoopMusicViewController ()
 
@@ -77,6 +77,7 @@ NSUInteger shuffleSetting = 0;
         timeShuffle = [splitSettings[1] doubleValue];
         timeShuffle2 = [self timeVariance];
         repeatsShuffle = [splitSettings[2] integerValue];
+        fadeSetting = splitSettings.count > 3 ? [splitSettings[3] doubleValue] : 0;
     }
     initBright = [UIScreen mainScreen].brightness;
     dim.on = false;
@@ -120,26 +121,29 @@ NSUInteger shuffleSetting = 0;
             }
             if (buffer)
             {
-                buffer = false;
-                time = [self getTime];
-                repeats = 0;
-                choose = false;
-                [self playMusic];
-                return;
+                if (++fadeTime > fadeSetting * 5000)
+                {
+                    buffer = false;
+                    time = [self getTime];
+                    choose = false;
+                    [self playMusic];
+                    return;
+                } else {
+                    audioPlayer.volume -= volumeDec;
+                    audioPlayer2.volume -= volumeDec;
+                }
             }
         }
         if (!audioPlayer2.playing && !audioPlayer.playing && time > 10000)
         {
             if (audioPlayer.currentTime == 0)
             {
-                //audioPlayer2.currentTime = loopTime-delay;
                 [audioPlayer2 play];
                 audioPlayer.currentTime = loopTime-delay;
                 [audioPlayer prepareToPlay];
             }
             else
             {
-                //audioPlayer.currentTime = loopTime-delay;
                 [audioPlayer play];
                 audioPlayer2.currentTime = loopTime-delay;
                 [audioPlayer2 prepareToPlay];
@@ -278,6 +282,8 @@ NSUInteger shuffleSetting = 0;
     audioPlayer2.currentTime=loopTime-delay;
     audioPlayer.volume = volumeSet;
     audioPlayer2.volume = volumeSet;
+    [self updateVolumeDec];
+    volumeDec = volumeSet / (fadeSetting * 10000);
     if (!timer)
     {
         timer = [NSTimer scheduledTimerWithTimeInterval:.0001
@@ -294,6 +300,8 @@ NSUInteger shuffleSetting = 0;
     [audioPlayer play];
     [audioPlayer2 prepareToPlay];
     repeats = 0;
+    fadeTime = 0;
+    buffer = false;
     time = [self getTime];
     if (loopEnd == 0.0)
     {
@@ -301,6 +309,11 @@ NSUInteger shuffleSetting = 0;
         [self openDB];
         [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET loopend = %f WHERE id=\"%li\"", loopEnd, (long)musicNumber]];
     }
+}
+
+-(void)updateVolumeDec
+{
+    volumeDec = fadeSetting > 0 ? volumeSet / (fadeSetting * 10000) : 0;
 }
 
 -(IBAction)randomSong:(id)sender
@@ -465,6 +478,7 @@ NSUInteger shuffleSetting = 0;
     }
     audioPlayer.volume=newVolume;
     audioPlayer2.volume=newVolume;
+    [self updateVolumeDec];
     [self openUpdateDB:[NSString stringWithFormat:@"UPDATE Tracks SET volume = %f WHERE name = \"%@\"", newVolume, songName.text]];
 }
 
@@ -625,7 +639,6 @@ NSUInteger shuffleSetting = 0;
     sqlite3_step(statement);
     totalSongs = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)] integerValue];
     sqlite3_finalize(statement);
-    NSLog(@"%ld", (long)totalSongs);
     return totalSongs;
 }
 

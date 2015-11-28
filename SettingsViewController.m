@@ -14,7 +14,7 @@
 
 @implementation SettingsViewController
 
-@synthesize back, volumeAdjust, setTime, setTimeEnd, shuffle, shuffleRepeats, shuffleTime, enabledSwitch;
+@synthesize back, volumeAdjust, setTime, setTimeEnd, shuffle, shuffleRepeats, shuffleTime, enabledSwitch, fadeText;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -31,6 +31,7 @@
     shuffleTime.text = [NSString stringWithFormat:@"%f", timeShuffle];
     shuffleRepeats.text = [NSString stringWithFormat:@"%li", (long)repeatsShuffle];
     shuffle.selectedSegmentIndex = shuffleSetting;
+    fadeText.text = [NSString stringWithFormat:@"%f", fadeSetting];
     NSTimer *loadTimer = [NSTimer scheduledTimerWithTimeInterval:.1
                                                       target:self
                                                     selector:@selector(loadSettings:)
@@ -50,7 +51,7 @@
 {
     [presenter setOccupied:false];
     shuffleSetting = [shuffle selectedSegmentIndex];
-    NSString *fileWriteString = [NSString stringWithFormat:@"%lu,%f,%li", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle];
+    NSString *fileWriteString = [NSString stringWithFormat:@"%lu,%f,%li,%f", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting];
     NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
     [fileWriteString writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
     [super back:sender];
@@ -226,6 +227,20 @@
     }
 }
 
+
+-(IBAction)setFade:(id)sender
+{
+    if ([fadeText.text doubleValue] >= 0)
+    {
+        fadeSetting = [fadeText.text doubleValue];
+        [presenter updateVolumeDec];
+    }
+    else
+    {
+        fadeText.text = @"Invalid";
+    }
+}
+
 -(IBAction)enabledSwitch:(id)sender
 {
     [self sqliteUpdate:@"enabled" newTime:enabledSwitch.on];
@@ -238,6 +253,7 @@
     [setTime resignFirstResponder];
     [setTimeEnd resignFirstResponder];
     [volumeAdjust resignFirstResponder];
+    [fadeText resignFirstResponder];
 }
 
 -(IBAction)shuffleChange:(id)sender

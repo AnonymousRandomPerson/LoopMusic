@@ -15,6 +15,7 @@
     IBOutlet UITextField *setTimeEnd;
     IBOutlet UITextField *shuffleTime;
     IBOutlet UITextField *shuffleRepeats;
+    IBOutlet UITextField *fadeText;
     IBOutlet UISegmentedControl *shuffle;
     IBOutlet UISwitch *enabledSwitch;
     LoopMusicViewController *presenter;
@@ -26,6 +27,7 @@
 @property(nonatomic, retain) UITextField *setTimeEnd;
 @property(nonatomic, retain) UITextField *shuffleTime;
 @property(nonatomic, retain) UITextField *shuffleRepeats;
+@property(nonatomic, retain) UITextField *fadeText;
 @property(nonatomic, retain) UISegmentedControl *shuffle;
 @property(nonatomic, retain) UISwitch *enabledSwitch;
 
@@ -35,6 +37,7 @@
 -(IBAction)setTimeEnd:(id)sender;
 -(IBAction)shuffleTime:(id)sender;
 -(IBAction)shuffleRepeats:(id)sender;
+-(IBAction)setFade:(id)sender;
 -(IBAction)close:(id)sender;
 -(IBAction)shuffleChange:(id)sender;
 -(IBAction)loopFinder:(id)sender;
