@@ -477,8 +477,9 @@ double fadeSetting = 0;
     {
         return;
     }
-    audioPlayer.volume=newVolume;
-    audioPlayer2.volume=newVolume;
+    audioPlayer.volume = newVolume;
+    audioPlayer2.volume = newVolume;
+    volumeSet = newVolume;
     [self updateVolumeDec];
     [self openUpdateDB:[NSString stringWithFormat:@"UPDATE Tracks SET volume = %f WHERE name = \"%@\"", newVolume, songName.text]];
 }
