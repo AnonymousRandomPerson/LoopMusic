@@ -101,11 +101,13 @@ extern double fadeSetting;
 -(NSMutableArray*)getSongList;
 
 -(void)playMusic;
+-(void)setAudioPlayer:(NSURL*)newURL;
 -(void)updateVolumeDec;
 -(void)chooseSong:(NSString*)newSong;
 -(void)setDelay:(float)newDelay;
 -(void)setOccupied:(bool)newOccupied;
 -(NSString*)getSongName;
+-(void)setNewSongName:(NSString*)newName;
 -(double)getAudioDuration;
 -(void)testTime;
 -(float)getVolume;
@@ -118,5 +120,6 @@ extern double fadeSetting;
 -(void)setInitBright:(float)newBright;
 -(float)getInitBright;
 -(double)timeVariance;
+-(void)showErrorMessage:(NSString*)message;
 
 @end

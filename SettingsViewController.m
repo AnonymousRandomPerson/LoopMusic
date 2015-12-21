@@ -274,6 +274,7 @@
 
 -(IBAction)addSong:(id)sender
 {
+    addingSong = true;
     MPMediaPickerController *picker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeAnyAudio];
     
     [picker setDelegate: self];
@@ -285,28 +286,100 @@
                      completion:nil];
 }
 
-- (void)mediaPicker:(MPMediaPickerController *) mediaPicker didPickMediaItems:(MPMediaItemCollection *)collection
+-(IBAction)renameSong:(id)sender
 {
-    [self openDB];
-    for (MPMediaItem *item in collection.items)
+    UIAlertView * alert = [[UIAlertView alloc] initWithTitle:@"Rename" message:@"Enter a new song name." delegate:self cancelButtonTitle:@"Enter" otherButtonTitles:nil];
+    alert.alertViewStyle = UIAlertViewStylePlainTextInput;
+    [alert textFieldAtIndex:0].text = [presenter getSongName];
+    [alert show];
+}
+
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    NSString* newName = [[alertView textFieldAtIndex:0] text];
+    if (![newName isEqualToString:@""] && ![newName isEqualToString:[presenter getSongName]])
     {
-        NSString *itemName = [item valueForProperty:MPMediaItemPropertyTitle];
-        NSURL *itemURL = [item valueForProperty:MPMediaItemPropertyAssetURL];
-        [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", itemName]];
+        [self openDB];
+        [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM Tracks WHERE name=\"%@\"", [presenter getSongName]]];
         if (sqlite3_step(statement) == SQLITE_ROW)
         {
-            [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET url = \"%@\" WHERE name = \"%@\"", itemURL.absoluteString, itemName]];
-        }
-        else
-        {
-            [self updateDB:[NSString stringWithFormat:@"INSERT INTO Tracks (name, loopstart, loopend, volume, enabled, url) VALUES (\"%@\", 0, 0, 0.3, 1, \"%@\")", itemName, itemURL.absoluteString]];
-            [presenter incrementTotalSongs];
+            [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET name = \"%@\" WHERE name = \"%@\"", newName, [presenter getSongName]]];
+            [presenter setNewSongName:newName];
         }
         sqlite3_finalize(statement);
+        sqlite3_close(trackData);
     }
-    sqlite3_close(trackData);
+}
+
+-(IBAction)replaceSong:(id)sender
+{
+    addingSong = false;
+    MPMediaPickerController *picker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeAnyAudio];
+    
+    [picker setDelegate: self];
+    [picker setAllowsPickingMultipleItems: NO];
+    picker.prompt = @"Replace song";
+    
+    [self presentViewController:picker
+                       animated:true
+                     completion:nil];
+}
+
+- (void)mediaPicker:(MPMediaPickerController *) mediaPicker didPickMediaItems:(MPMediaItemCollection *)collection
+{
     [self dismissViewControllerAnimated:true
                              completion:nil];
+    [self openDB];
+    if (addingSong)
+    {
+        for (MPMediaItem *item in collection.items)
+        {
+            NSString *itemName = [item valueForProperty:MPMediaItemPropertyTitle];
+            NSURL *itemURL = [item valueForProperty:MPMediaItemPropertyAssetURL];
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", itemName]];
+            if (sqlite3_step(statement) == SQLITE_ROW)
+            {
+                [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET url = \"%@\" WHERE name = \"%@\"", itemURL.absoluteString, itemName]];
+            }
+            else
+            {
+                sqlite3_finalize(statement);
+                [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM Tracks WHERE url=\"%@\"", itemURL]];
+                if (sqlite3_step(statement) != SQLITE_ROW)
+                {
+                    [self updateDB:[NSString stringWithFormat:@"INSERT INTO Tracks (name, loopstart, loopend, volume, enabled, url) VALUES (\"%@\", 0, 0, 0.3, 1, \"%@\")", itemName, itemURL.absoluteString]];
+                    [presenter incrementTotalSongs];
+                }
+            }
+            sqlite3_finalize(statement);
+        }
+    }
+    else
+    {
+        for (MPMediaItem *item in collection.items)
+        {
+            NSString *itemName = [item valueForProperty:MPMediaItemPropertyTitle];
+            NSURL *itemURL = [item valueForProperty:MPMediaItemPropertyAssetURL];
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", itemName]];
+            if (sqlite3_step(statement) == SQLITE_ROW && ![itemName isEqualToString:[presenter getSongName]])
+            {
+                [self showErrorMessage:@"Name is already used."];
+            }
+            else
+            {
+                sqlite3_finalize(statement);
+                [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", [presenter getSongName]]];
+                if (sqlite3_step(statement) == SQLITE_ROW)
+                {
+                    [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET url = \"%@\", name = \"%@\" WHERE name = \"%@\"", itemURL.absoluteString, itemName, [presenter getSongName]]];
+                    [presenter setAudioPlayer:itemURL];
+                    [presenter setNewSongName:itemName];
+                }
+            }
+            sqlite3_finalize(statement);
+        }
+    }
+    sqlite3_close(trackData);
 }
 
 - (void)mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker

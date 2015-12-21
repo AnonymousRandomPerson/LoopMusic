@@ -19,6 +19,8 @@
     IBOutlet UISegmentedControl *shuffle;
     IBOutlet UISwitch *enabledSwitch;
     LoopMusicViewController *presenter;
+    
+    bool addingSong;
 }
 
 @property(nonatomic, retain) UIButton *back;

@@ -138,26 +138,7 @@
     }
     if (result != 101)
     {
-        if (NSClassFromString(@"UIAlertController"))
-        {
-            UIAlertController *error = [UIAlertController alertControllerWithTitle:@"Error"
-                                                                           message:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]
-                                                                    preferredStyle:UIAlertControllerStyleAlert];
-            UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Damn", @"OK action")
-                                                                    style:UIAlertActionStyleDefault
-                                                                  handler:nil];
-            [error addAction:defaultAction];
-            [self presentViewController:error animated:YES completion:nil];
-        }
-        else
-        {
-            UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Error"
-                                                            message:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]
-                                                           delegate:self
-                                                  cancelButtonTitle:@"Damn"
-                                                  otherButtonTitles: nil];
-            [alert show];
-        }
+        [self showErrorMessage:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]];
     }
     return result;
 }

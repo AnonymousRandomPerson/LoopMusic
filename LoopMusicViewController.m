@@ -66,6 +66,7 @@ double fadeSetting = 0;
                                             repeats:YES];
     time = [self getTime];
     repeats = 0;
+    musicNumber = -1;
     [self playMusic];
     
     NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
@@ -269,21 +270,8 @@ double fadeSetting = 0;
         songName.text = nameField;
     }
     sqlite3_close(trackData);
-    NSError *error;
-    // Change audio player settings
     NSLog(@"%@", songName.text);
-    audioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:url
-                                                         error:&error];
-    audioPlayer.numberOfLoops = 0;
-    audioPlayer2 = [[AVAudioPlayer alloc] initWithContentsOfURL:url
-                                                          error:&error];
-    audioPlayer2.numberOfLoops = 0;
-    [audioPlayer stop];
-    [audioPlayer2 stop];
-    audioPlayer.currentTime=0;
-    audioPlayer2.currentTime=loopTime-delay;
-    audioPlayer.volume = volumeSet;
-    audioPlayer2.volume = volumeSet;
+    [self setAudioPlayer:url];
     [self updateVolumeDec];
     if (!timer)
     {
@@ -292,10 +280,6 @@ double fadeSetting = 0;
                                                selector:@selector(timeDec:)
                                                userInfo:nil
                                                 repeats:YES];
-    }
-    if (audioPlayer == nil)
-    {
-        NSLog(@"%@", [error description]);
     }
     playing=true;
     [audioPlayer play];
@@ -310,6 +294,29 @@ double fadeSetting = 0;
         [self openDB];
         [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET loopend = %f WHERE id=\"%li\"", loopEnd, (long)musicNumber]];
     }
+}
+
+-(void)setAudioPlayer:(NSURL*)newURL
+{
+    // Change audio player settings
+    NSError *error;
+    audioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:newURL
+                                                         error:&error];
+    if (audioPlayer == nil)
+    {
+        NSLog(@"%@", [error description]);
+        return;
+    }
+    audioPlayer.numberOfLoops = 0;
+    audioPlayer2 = [[AVAudioPlayer alloc] initWithContentsOfURL:newURL
+                                                          error:&error];
+    audioPlayer2.numberOfLoops = 0;
+    [audioPlayer stop];
+    [audioPlayer2 stop];
+    audioPlayer.currentTime=0;
+    audioPlayer2.currentTime=loopTime-delay;
+    audioPlayer.volume = volumeSet;
+    audioPlayer2.volume = volumeSet;
 }
 
 -(void)updateVolumeDec
@@ -433,6 +440,11 @@ double fadeSetting = 0;
 -(NSString*)getSongName
 {
     return songName.text;
+}
+
+-(void)setNewSongName:(NSString*)newName
+{
+    songName.text = newName;
 }
 
 -(double)getAudioDuration
@@ -660,13 +672,13 @@ double fadeSetting = 0;
     NSString *songListName;
     [self openDB];
     totalSongs = [self initializeTotalSongs];
-    for (NSInteger i = 1; i<=totalSongs; i++)
+    for (NSInteger i = 0; i<totalSongs; i++)
     {
         [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM Tracks ORDER BY id LIMIT 1 OFFSET \"%li\"", (long)i]];
         if (sqlite3_step(statement) == SQLITE_ROW)
         {
             songListName = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
-            if (i==1)
+            if (i==0)
             {
                 songs = [NSMutableArray arrayWithObjects:songListName,nil];
             }
@@ -680,6 +692,30 @@ double fadeSetting = 0;
     sqlite3_close(trackData);
     [songs sortUsingSelector:@selector(compare:)];
     return songs;
+}
+
+-(void)showErrorMessage:(NSString*)message
+{
+    if (NSClassFromString(@"UIAlertController"))
+    {
+        UIAlertController *error = [UIAlertController alertControllerWithTitle:@"Error"
+                                                                       message:message
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Okay", @"OK action")
+                                                                style:UIAlertActionStyleDefault
+                                                              handler:nil];
+        [error addAction:defaultAction];
+        [self presentViewController:error animated:YES completion:nil];
+    }
+    else
+    {
+        UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Error"
+                                                        message:message
+                                                       delegate:self
+                                              cancelButtonTitle:@"Okay"
+                                              otherButtonTitles: nil];
+        [alert show];
+    }
 }
 
 - (void)didReceiveMemoryWarning
