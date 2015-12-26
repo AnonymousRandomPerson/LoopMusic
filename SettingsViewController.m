@@ -59,6 +59,11 @@
 
 -(IBAction)setVolume:(id)sender
 {
+    if ([presenter isSongListEmpty])
+    {
+        [self showNoSongMessage];
+        return;
+    }
     if ([volumeAdjust.text doubleValue] < 0 || [volumeAdjust.text doubleValue] > 1)
     {
         volumeAdjust.text = [NSString stringWithFormat:@"%f", [presenter getVolume]];
@@ -69,6 +74,11 @@
 
 -(IBAction)addVolume:(id)sender
 {
+    if ([presenter isSongListEmpty])
+    {
+        [self showNoSongMessage];
+        return;
+    }
     if ([volumeAdjust.text doubleValue] >= 1)
     {
         return;
@@ -79,6 +89,11 @@
 
 -(IBAction)subtractVolume:(id)sender
 {
+    if ([presenter isSongListEmpty])
+    {
+        [self showNoSongMessage];
+        return;
+    }
     if ([volumeAdjust.text doubleValue] <= 0)
     {
         return;
@@ -269,7 +284,14 @@
 
 -(IBAction)loopFinder:(id)sender
 {
-    [self changeScreen:@"loopFinder"];
+    if ([presenter isSongListEmpty])
+    {
+        [self showNoSongMessage];
+    }
+    else
+    {
+        [self changeScreen:@"loopFinder"];
+    }
 }
 
 -(IBAction)addSong:(id)sender
@@ -288,6 +310,11 @@
 
 -(IBAction)renameSong:(id)sender
 {
+    if ([presenter isSongListEmpty])
+    {
+        [self showNoSongMessage];
+        return;
+    }
     UIAlertView * alert = [[UIAlertView alloc] initWithTitle:@"Rename" message:@"Enter a new song name." delegate:self cancelButtonTitle:@"Enter" otherButtonTitles:nil];
     alert.alertViewStyle = UIAlertViewStylePlainTextInput;
     [alert textFieldAtIndex:0].text = [presenter getSongName];
@@ -313,6 +340,11 @@
 
 -(IBAction)replaceSong:(id)sender
 {
+    if ([presenter isSongListEmpty])
+    {
+        [self showNoSongMessage];
+        return;
+    }
     addingSong = false;
     MPMediaPickerController *picker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeAnyAudio];
     
@@ -390,7 +422,14 @@
 
 -(IBAction)deleteSong:(id)sender
 {
-    [self changeScreen:@"delete"];
+    if ([presenter isSongListEmpty])
+    {
+        [self showNoSongMessage];
+    }
+    else
+    {
+        [self changeScreen:@"delete"];
+    }
 }
 
 - (void)didReceiveMemoryWarning

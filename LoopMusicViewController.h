@@ -90,15 +90,18 @@ extern double fadeSetting;
 
 -(IBAction)changeScreen:(NSString*)screen;
 -(IBAction)back:(id)sender;
+
 -(void)openDB;
 -(void)prepareQuery:(NSString*)query;
 -(void)updateDB:(NSString*)query;
 -(void)openUpdateDB:(NSString*)query;
 -(NSInteger)updateDBResult:(NSString*)query;
+
 -(NSInteger)initializeTotalSongs;
 -(void)incrementTotalSongs;
 -(void)decrementTotalSongs;
 -(NSMutableArray*)getSongList;
+-(bool)isSongListEmpty;
 
 -(void)playMusic;
 -(void)setAudioPlayer:(NSURL*)newURL;
@@ -120,6 +123,8 @@ extern double fadeSetting;
 -(void)setInitBright:(float)newBright;
 -(float)getInitBright;
 -(double)timeVariance;
+
 -(void)showErrorMessage:(NSString*)message;
+-(void)showNoSongMessage;
 
 @end

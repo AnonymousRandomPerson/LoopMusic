@@ -70,15 +70,26 @@ double fadeSetting = 0;
     [self playMusic];
     
     NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
-    if (filePath)
+    NSString *contentOfFile = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
+    if (contentOfFile)
     {
-        NSString *contentOfFile = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
         NSArray *splitSettings = [contentOfFile componentsSeparatedByString:@","];
         shuffleSetting = [splitSettings[0] integerValue];
         timeShuffle = [splitSettings[1] doubleValue];
         timeShuffle2 = [self timeVariance];
         repeatsShuffle = [splitSettings[2] integerValue];
         fadeSetting = splitSettings.count > 3 ? [splitSettings[3] doubleValue] : 0;
+    }
+    else
+    {
+        // Default values.
+        shuffleSetting = 1;
+        timeShuffle = 3.5;
+        timeShuffle2 = [self timeVariance];
+        repeatsShuffle = 3;
+        fadeSetting = 2;
+        NSString *newSettings = [NSString stringWithFormat:@"%lu,%f,%ld,%f", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting];
+        [newSettings writeToFile:filePath atomically:true encoding:NSUTF8StringEncoding error:nil];
     }
     initBright = [UIScreen mainScreen].brightness;
     dim.on = false;
@@ -180,6 +191,10 @@ double fadeSetting = 0;
 // Change song
 -(void)playMusic
 {
+    if ([self isSongListEmpty])
+    {
+        return;
+    }
     [UIApplication sharedApplication].idleTimerDisabled = YES;
     playing=false;
     valid=false;
@@ -326,6 +341,11 @@ double fadeSetting = 0;
 
 -(IBAction)randomSong:(id)sender
 {
+    if ([self isSongListEmpty])
+    {
+        [self showNoSongMessage];
+        return;
+    }
     time = [self getTime];
     repeats = 0;
     choose = false;
@@ -345,6 +365,11 @@ double fadeSetting = 0;
 
 -(IBAction)playSong:(id)sender
 {
+    if ([self isSongListEmpty])
+    {
+        [self showNoSongMessage];
+        return;
+    }
     if (!audioPlayer.playing && !audioPlayer2.playing)
     {
         time = [self getTime];
@@ -367,6 +392,11 @@ double fadeSetting = 0;
 
 -(IBAction)stopSong:(id)sender
 {
+    if ([self isSongListEmpty])
+    {
+        [self showNoSongMessage];
+        return;
+    }
     [UIApplication sharedApplication].idleTimerDisabled = NO;
     playing=false;
     if (audioPlayer.playing)
@@ -390,6 +420,11 @@ double fadeSetting = 0;
 
 -(IBAction)searchSong:(id)sender
 {
+    if ([self isSongListEmpty])
+    {
+        [self showNoSongMessage];
+        return;
+    }
     [self changeScreen:@"search"];
 }
 
@@ -610,7 +645,7 @@ double fadeSetting = 0;
 
 -(void)openDB
 {
-    sqlite3_open([[[NSString alloc] initWithString:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0] stringByAppendingPathComponent: @"Tracks.db"]] UTF8String], &trackData);
+    NSInteger result = sqlite3_open([[[NSString alloc] initWithString:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0] stringByAppendingPathComponent: @"Tracks.db"]] UTF8String], &trackData);
 }
 
 -(void)prepareQuery:(NSString*)query
@@ -651,8 +686,19 @@ double fadeSetting = 0;
 {
     [self prepareQuery:[NSString stringWithFormat:@"SELECT COUNT(*) FROM Tracks"]];
     sqlite3_step(statement);
-    totalSongs = [[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)] integerValue];
-    sqlite3_finalize(statement);
+    const char* countText = (const char *) sqlite3_column_text(statement, 0);
+    if (countText)
+    {
+        totalSongs = [[[NSString alloc] initWithUTF8String:countText] integerValue];
+        sqlite3_finalize(statement);
+    }
+    else
+    {
+        sqlite3_finalize(statement);
+        // Table doesn't exist; create it.
+        [self updateDB:@"CREATE TABLE Tracks (id integer PRIMARY KEY, name text, loopstart numeric, loopend numeric, volume numeric, enabled integer, url text)"];
+        totalSongs = 0;
+    }
     return totalSongs;
 }
 
@@ -694,6 +740,11 @@ double fadeSetting = 0;
     return songs;
 }
 
+-(bool)isSongListEmpty
+{
+    return !totalSongs;
+}
+
 -(void)showErrorMessage:(NSString*)message
 {
     if (NSClassFromString(@"UIAlertController"))
@@ -716,6 +767,11 @@ double fadeSetting = 0;
                                               otherButtonTitles: nil];
         [alert show];
     }
+}
+
+-(void)showNoSongMessage
+{
+    [self showErrorMessage:@"You need to add a song first."];
 }
 
 - (void)didReceiveMemoryWarning
