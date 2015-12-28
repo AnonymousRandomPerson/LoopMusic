@@ -6,13 +6,13 @@
 //  Copyright (c) 2015 Cheng Hann Gan. All rights reserved.
 //
 
-#import "LoopMusicViewController.h"
+#import "MultipleSearchBase.h"
 
-@interface DeleteViewController : LoopMusicViewController
+@interface DeleteViewController : MultipleSearchBase
 {
-    NSMutableArray *songs;
-    NSMutableArray *searchedSongs;
-    LoopMusicViewController *presenter;
+    NSString *selectedItem;
 }
+
+-(IBAction)deleteButton:(id)sender;
 
 @end

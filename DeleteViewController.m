@@ -16,78 +16,60 @@
 
 - (void)viewDidLoad
 {
-    songs = [self getSongList];
-    presenter = (LoopMusicViewController*)self.presentingViewController;
+    items = [self getTotalSongList];
+    [super viewDidLoad];
 }
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    if (tableView == self.searchDisplayController.searchResultsTableView)
+    if (buttonIndex)
     {
-        return [searchedSongs count];
+        [self dismissViewControllerAnimated:true completion:nil];
+        [self openDB];
+        
+        for (NSString *item in selectedItems)
+        {
+            NSInteger deleteIndex = 0;
+            
+            if (playlistIndex)
+            {
+                deleteIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Tracks WHERE name = \"%@\"", item]];
+            }
+            [self updateDB:[NSString stringWithFormat:@"DELETE FROM Tracks WHERE name = \"%@\"", item]];
+            [presenter decrementTotalSongs];
+            if (playlistIndex)
+            {
+                NSArray *splitSongs = [self getSongIndices];
+                if (splitSongs)
+                {
+                    NSString *deleteIndexString = [NSString stringWithFormat:@"%ld", (long)deleteIndex];
+                    if ([splitSongs containsObject:deleteIndexString])
+                    {
+                        [presenter decrementPlaylistSongs];
+                    }
+                }
+            }
+        }
+        sqlite3_close(trackData);
+    }
+}
+
+-(IBAction)deleteButton:(id)sender
+{
+    NSString* deleteText;
+    if (selectedItems.count == 0)
+    {
+        [self showErrorMessage:@"No tracks selected."];
+    }
+    else if (selectedItems.count == 1)
+    {
+        deleteText = [selectedItems objectAtIndex:0];
     }
     else
     {
-        return [songs count];
+        deleteText = @"these tracks";
     }
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    static NSString *simpleTableIdentifier = @"SongList";
-    
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:simpleTableIdentifier];
-    
-    if (cell == nil)
-    {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:simpleTableIdentifier];
-    }
-    
-    if (tableView == self.searchDisplayController.searchResultsTableView)
-    {
-        cell.textLabel.text = [searchedSongs objectAtIndex:indexPath.row];
-    }
-    else
-    {
-        cell.textLabel.text = [songs objectAtIndex:indexPath.row];
-    }
-    return cell;
-}
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    [self openDB];
-    if (self.searchDisplayController.active)
-    {
-        [self updateDB:[NSString stringWithFormat:@"DELETE FROM Tracks WHERE name = \"%@\"", searchedSongs[indexPath.row]]];
-    }
-    else
-    {
-        [self updateDB:[NSString stringWithFormat:@"DELETE FROM Tracks WHERE name = \"%@\"", songs[indexPath.row]]];
-    }
-    sqlite3_close(trackData);
-    [presenter decrementTotalSongs];
-    [self dismissViewControllerAnimated:true completion:nil];
-}
-
-- (void)filterContentForSearchText:(NSString*)searchText scope:(NSString*)scope
-{
-    NSPredicate *resultPredicate = [NSPredicate predicateWithFormat:@"SELF contains[c] %@", searchText];
-    searchedSongs = [[NSMutableArray alloc] initWithArray:[songs filteredArrayUsingPredicate:resultPredicate]];
-}
-
--(BOOL)searchDisplayController:(UISearchDisplayController *)controller shouldReloadTableForSearchString:(NSString *)searchString
-{
-    [self filterContentForSearchText:searchString
-                               scope:[[self.searchDisplayController.searchBar scopeButtonTitles] objectAtIndex:[self.searchDisplayController.searchBar
-                                                                                                                selectedScopeButtonIndex]]];
-    
-    return YES;
-}
-
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
+    [self showTwoButtonMessage:@"Delete Playlist" :[NSString stringWithFormat:@"Delete %@?", deleteText] :@"Okay"];
 }
 
 @end

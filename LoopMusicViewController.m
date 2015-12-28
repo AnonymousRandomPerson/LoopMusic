@@ -16,6 +16,7 @@ double timeShuffle2 = -1;
 NSInteger repeatsShuffle = -1;
 NSUInteger shuffleSetting = 0;
 double fadeSetting = 0;
+NSInteger playlistIndex = 0;
 
 @interface LoopMusicViewController ()
 
@@ -46,6 +47,16 @@ double fadeSetting = 0;
     [self openDB];
     // Initialize # of songs
     [self initializeTotalSongs];
+    
+    // Check if the playlist table has been created.
+    [self updateDB:@"CREATE TABLE IF NOT EXISTS Playlists (id integer PRIMARY KEY, name text, tracks text)"];
+    [self prepareQuery:@"SELECT id from Playlists where name = \"All tracks\""];
+    if (sqlite3_step(statement) != SQLITE_ROW)
+    {
+        [self updateDB:@"INSERT INTO Playlists VALUES (0, \"All tracks\", \"\")"];
+    }
+    sqlite3_finalize(statement);
+    
     sqlite3_close(trackData);
     // Set up audio player
     playing=true;
@@ -67,7 +78,6 @@ double fadeSetting = 0;
     time = [self getTime];
     repeats = 0;
     musicNumber = -1;
-    [self playMusic];
     
     NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
     NSString *contentOfFile = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
@@ -79,6 +89,7 @@ double fadeSetting = 0;
         timeShuffle2 = [self timeVariance];
         repeatsShuffle = [splitSettings[2] integerValue];
         fadeSetting = splitSettings.count > 3 ? [splitSettings[3] doubleValue] : 0;
+        playlistIndex = splitSettings.count > 4 ? [splitSettings[4] integerValue] : 0;
     }
     else
     {
@@ -88,9 +99,16 @@ double fadeSetting = 0;
         timeShuffle2 = [self timeVariance];
         repeatsShuffle = 3;
         fadeSetting = 2;
-        NSString *newSettings = [NSString stringWithFormat:@"%lu,%f,%ld,%f", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting];
+        playlistIndex = 0;
+        NSString *newSettings = [NSString stringWithFormat:@"%lu,%f,%li,%f,%li", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting, (long)playlistIndex];
         [newSettings writeToFile:filePath atomically:true encoding:NSUTF8StringEncoding error:nil];
     }
+    if (playlistIndex)
+    {
+        [self updatePlaylistSongs];
+        [self updatePlaylistName];
+    }
+    [self playMusic];
     initBright = [UIScreen mainScreen].brightness;
     dim.on = false;
 }
@@ -99,20 +117,20 @@ double fadeSetting = 0;
 {
     if (playing)
     {
-        if (audioPlayer.currentTime>=loopEnd-delay)
+        if (audioPlayer.currentTime >= loopEnd - delay)
         {
             [audioPlayer2 play];
             [audioPlayer stop];
             [audioPlayer prepareToPlay];
-            audioPlayer.currentTime=loopTime-delay;
+            audioPlayer.currentTime=loopTime - delay;
             repeats++;
         }
-        if (audioPlayer2.currentTime>=loopEnd-delay)
+        if (audioPlayer2.currentTime >= loopEnd - delay)
         {
             [audioPlayer play];
             [audioPlayer2 stop];
             [audioPlayer2 prepareToPlay];
-            audioPlayer2.currentTime=loopTime-delay;
+            audioPlayer2.currentTime = loopTime - delay;
             repeats++;
         }
         if (!occupied)
@@ -153,13 +171,13 @@ double fadeSetting = 0;
             if (audioPlayer.currentTime == 0)
             {
                 [audioPlayer2 play];
-                audioPlayer.currentTime = loopTime-delay;
+                audioPlayer.currentTime = loopTime - delay;
                 [audioPlayer prepareToPlay];
             }
             else
             {
                 [audioPlayer play];
-                audioPlayer2.currentTime = loopTime-delay;
+                audioPlayer2.currentTime = loopTime - delay;
                 [audioPlayer2 prepareToPlay];
             }
             repeats++;
@@ -173,7 +191,7 @@ double fadeSetting = 0;
     {
         [audioPlayer2 play];
         [audioPlayer stop];
-        audioPlayer.currentTime=loopTime-delay;
+        audioPlayer.currentTime = loopTime - delay;
         [audioPlayer prepareToPlay];
         repeats++;
     }
@@ -181,7 +199,7 @@ double fadeSetting = 0;
     {
         [audioPlayer play];
         [audioPlayer2 stop];
-        audioPlayer2.currentTime=loopTime-delay;
+        audioPlayer2.currentTime = loopTime - delay;
         [audioPlayer2 prepareToPlay];
         repeats++;
     }
@@ -195,9 +213,13 @@ double fadeSetting = 0;
     {
         return;
     }
+    if (!playlistIndex || !totalPlaylistSongs)
+    {
+        totalPlaylistSongs = totalSongs;
+    }
     [UIApplication sharedApplication].idleTimerDisabled = YES;
-    playing=false;
-    valid=false;
+    playing = false;
+    valid = false;
     
     [self openDB];
     if (chooseSongString)
@@ -245,7 +267,7 @@ double fadeSetting = 0;
             return;
         }
     }
-    //If chosen song text is a number
+    // If chosen song text is a number
     else
     {
         do
@@ -253,11 +275,33 @@ double fadeSetting = 0;
             NSInteger random = -1;
             do
             {
-                random = arc4random() % totalSongs;
-            } while (musicNumber == random);
+                random = arc4random() % totalPlaylistSongs;
+            } while (musicNumber == random && totalPlaylistSongs != 1);
             timeShuffle2 = [self timeVariance];
-            musicNumber = random;
-            [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks ORDER BY id LIMIT 1 OFFSET \"%li\"", (long)musicNumber]];
+            if (playlistIndex)
+            {
+                NSArray *splitSongs = [self getSongIndices];
+                if (splitSongs && splitSongs.count > random)
+                {
+                    musicNumber = [[splitSongs objectAtIndex:random] integerValue];
+                }
+                else
+                {
+                    musicNumber = random;
+                }
+            }
+            else
+            {
+                musicNumber = random;
+            }
+            if (playlistIndex)
+            {
+                [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks WHERE id = %li", (long)musicNumber]];
+            }
+            else
+            {
+                [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks ORDER BY id LIMIT 1 OFFSET \"%li\"", (long)musicNumber]];
+            }
             if (sqlite3_step(statement) == SQLITE_ROW)
             {
                 idField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
@@ -296,7 +340,7 @@ double fadeSetting = 0;
                                                userInfo:nil
                                                 repeats:YES];
     }
-    playing=true;
+    playing = true;
     [audioPlayer play];
     [audioPlayer2 prepareToPlay];
     repeats = 0;
@@ -328,8 +372,8 @@ double fadeSetting = 0;
     audioPlayer2.numberOfLoops = 0;
     [audioPlayer stop];
     [audioPlayer2 stop];
-    audioPlayer.currentTime=0;
-    audioPlayer2.currentTime=loopTime-delay;
+    audioPlayer.currentTime = 0;
+    audioPlayer2.currentTime = loopTime - delay;
     audioPlayer.volume = volumeSet;
     audioPlayer2.volume = volumeSet;
 }
@@ -349,9 +393,9 @@ double fadeSetting = 0;
     time = [self getTime];
     repeats = 0;
     choose = false;
-    playing=false;
-    audioPlayer.currentTime=0;
-    audioPlayer2.currentTime=0;
+    playing = false;
+    audioPlayer.currentTime = 0;
+    audioPlayer2.currentTime = 0;
     if (audioPlayer.playing)
     {
         [audioPlayer stop];
@@ -374,11 +418,11 @@ double fadeSetting = 0;
     {
         time = [self getTime];
         repeats = 0;
-        audioPlayer.currentTime=0;
-        audioPlayer2.currentTime=loopTime-delay;
+        audioPlayer.currentTime = 0;
+        audioPlayer2.currentTime = loopTime - delay;
         [audioPlayer play];
         [audioPlayer2 prepareToPlay];
-        playing=true;
+        playing = true;
         if (!timer)
         {
             timer = [NSTimer scheduledTimerWithTimeInterval:.0001
@@ -489,7 +533,7 @@ double fadeSetting = 0;
 
 -(void)testTime
 {
-    double test = loopEnd-delay-5;
+    double test = loopEnd - delay - 5;
     if (test < 0)
     {
         test = 0;
@@ -616,7 +660,7 @@ double fadeSetting = 0;
 
 -(double)timeVariance
 {
-    return (((double)((int)(arc4random() % 60 - 30)))/60.0 + timeShuffle) * 60000000.0;
+    return (((double)((int)(arc4random() % 60 - 30))) / 60.0 + timeShuffle) * 60000000.0;
 }
 
 - (void)onKeyboardDidHide:(NSNotification *)notification
@@ -624,7 +668,7 @@ double fadeSetting = 0;
     [[UIApplication sharedApplication] setIdleTimerDisabled:YES];
 }
 
-//Screen changing helpers
+// Screen changing helpers
 
 -(IBAction)changeScreen:(NSString*)screen
 {
@@ -641,11 +685,11 @@ double fadeSetting = 0;
     [self dismissViewControllerAnimated:true completion:nil];
 }
 
-//Database helpers
+// Database helpers
 
 -(void)openDB
 {
-    NSInteger result = sqlite3_open([[[NSString alloc] initWithString:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0] stringByAppendingPathComponent: @"Tracks.db"]] UTF8String], &trackData);
+    sqlite3_open([[[NSString alloc] initWithString:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0] stringByAppendingPathComponent: @"Tracks.db"]] UTF8String], &trackData);
 }
 
 -(void)prepareQuery:(NSString*)query
@@ -663,6 +707,32 @@ double fadeSetting = 0;
         NSLog(@"Database query %@ errored (%ld).", query, (long)result);
     }
     sqlite3_finalize(tempStatement);
+}
+
+-(NSInteger)getIntegerDB:(NSString*)query
+{
+    sqlite3_stmt *tempStatement;
+    sqlite3_prepare_v2(trackData, [query UTF8String], -1, &tempStatement, NULL);
+    NSInteger returnValue = -1;
+    if (sqlite3_step(tempStatement) == SQLITE_ROW)
+    {
+        returnValue = sqlite3_column_int(tempStatement, 0);
+    }
+    sqlite3_finalize(tempStatement);
+    return returnValue;
+}
+
+-(NSString*)getStringDB:(NSString*)query
+{
+    sqlite3_stmt *tempStatement;
+    sqlite3_prepare_v2(trackData, [query UTF8String], -1, &tempStatement, NULL);
+    NSString *returnValue = @"";
+    if (sqlite3_step(tempStatement) == SQLITE_ROW)
+    {
+        returnValue = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(tempStatement, 0)];
+    }
+    sqlite3_finalize(tempStatement);
+    return returnValue;
 }
 
 -(void)openUpdateDB:(NSString*)query
@@ -699,50 +769,179 @@ double fadeSetting = 0;
         [self updateDB:@"CREATE TABLE Tracks (id integer PRIMARY KEY, name text, loopstart numeric, loopend numeric, volume numeric, enabled integer, url text)"];
         totalSongs = 0;
     }
+    totalPlaylistSongs = totalSongs;
     return totalSongs;
 }
 
 -(void)incrementTotalSongs
 {
     totalSongs++;
+    if (!playlistIndex)
+    {
+        totalPlaylistSongs = totalSongs;
+    }
 }
 
 -(void)decrementTotalSongs
 {
     totalSongs--;
+    if (!playlistIndex)
+    {
+        totalPlaylistSongs = totalSongs;
+    }
+}
+
+-(void)incrementPlaylistSongs
+{
+    totalPlaylistSongs++;
+}
+
+-(void)decrementPlaylistSongs
+{
+    totalPlaylistSongs--;
+}
+
+-(void)updatePlaylistSongs
+{
+    [self openDB];
+    NSArray *songList = [self getSongIndices];
+    totalPlaylistSongs = songList ? songList.count : 0;
+    sqlite3_close(trackData);
+}
+
+-(NSString*)getPlaylistName
+{
+    if ([playlistName.text isEqualToString:@"All tracks"])
+    {
+        return @"All tracks";
+    }
+    else
+    {
+        return playlistName.text;
+    }
+}
+
+-(void)updatePlaylistName
+{
+    if (playlistIndex)
+    {
+        [self openDB];
+        NSString* newName = [self getStringDB:[NSString stringWithFormat:@"SELECT name FROM Playlists where id = %ld", (long)playlistIndex]];
+        [self updatePlaylistName:newName];
+        sqlite3_close(trackData);
+        if ([newName isEqualToString:@""])
+        {
+            playlistIndex = 0;
+            [self updatePlaylistSongs];
+        }
+    }
+    else
+    {
+        [self updatePlaylistName:@""];
+    }
+}
+
+-(void)updatePlaylistName:(NSString*)name
+{
+    if (name && ![name isEqualToString:@"All tracks"])
+    {
+        playlistName.text = name;
+    }
+    else
+    {
+        playlistName.text = @"";
+    }
+}
+
+-(NSArray*)getSongIndices
+{
+    NSArray *splitSongs = nil;
+    [self prepareQuery:[NSString stringWithFormat:@"SELECT tracks FROM Playlists WHERE id = %ld", (long)playlistIndex]];
+    if (sqlite3_step(statement) == SQLITE_ROW)
+    {
+        NSString *trackString = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
+        splitSongs = [trackString componentsSeparatedByString:@","];
+    }
+    sqlite3_finalize(statement);
+    if (splitSongs.count == 1 && [[splitSongs objectAtIndex:0] isEqualToString:@""])
+    {
+        return nil;
+    }
+    return splitSongs;
 }
 
 -(NSMutableArray*)getSongList
 {
-    NSMutableArray *songs;
-    NSString *songListName;
-    [self openDB];
-    totalSongs = [self initializeTotalSongs];
-    for (NSInteger i = 0; i<totalSongs; i++)
+    if (!playlistIndex)
     {
-        [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM Tracks ORDER BY id LIMIT 1 OFFSET \"%li\"", (long)i]];
-        if (sqlite3_step(statement) == SQLITE_ROW)
-        {
-            songListName = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
-            if (i==0)
-            {
-                songs = [NSMutableArray arrayWithObjects:songListName,nil];
-            }
-            else
-            {
-                [songs addObject:songListName];
-            }
-        }
-        sqlite3_finalize(statement);
+        return [self getTotalSongList];
     }
+    else
+    {
+        NSMutableArray *songs;
+        NSString *songListName;
+        [self openDB];
+        NSArray* splitSongs = [self getSongIndices];
+        if (!splitSongs)
+        {
+            sqlite3_finalize(statement);
+            sqlite3_close(trackData);
+            playlistIndex = 0;
+            return [self getTotalSongList];
+        }
+        for (NSInteger i = 0; i < splitSongs.count; i++)
+        {
+            NSString *trackIndex = [splitSongs objectAtIndex:i];
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM Tracks WHERE id = \"%@\"", trackIndex]];
+            if (sqlite3_step(statement) == SQLITE_ROW)
+            {
+                songListName = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
+                if (!songs)
+                {
+                    songs = [NSMutableArray arrayWithObjects:songListName, nil];
+                }
+                else
+                {
+                    [songs addObject:songListName];
+                }
+            }
+            sqlite3_finalize(statement);
+        }
+        sqlite3_close(trackData);
+        [songs sortUsingSelector:@selector(compare:)];
+        return songs;
+    }
+}
+
+-(NSMutableArray*)getNameList:(NSString*)table
+{
+    NSMutableArray *items = [NSMutableArray arrayWithCapacity:8];
+    NSString *itemListName;
+    [self openDB];
+    [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM %@ ORDER BY name", table]];
+    while (sqlite3_step(statement) == SQLITE_ROW)
+    {
+        itemListName = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
+        [items addObject:itemListName];
+    }
+    sqlite3_finalize(statement);
     sqlite3_close(trackData);
-    [songs sortUsingSelector:@selector(compare:)];
-    return songs;
+    return items;
+}
+
+-(NSMutableArray*)getTotalSongList
+{
+    return [self getNameList:@"Tracks"];
 }
 
 -(bool)isSongListEmpty
 {
     return !totalSongs;
+}
+
+-(NSMutableArray*)getPlaylistList
+{
+    return [self getNameList:@"Playlists"];
 }
 
 -(void)showErrorMessage:(NSString*)message
@@ -772,6 +971,24 @@ double fadeSetting = 0;
 -(void)showNoSongMessage
 {
     [self showErrorMessage:@"You need to add a song first."];
+}
+
+-(void)showTwoButtonMessage:(NSString*)title :(NSString*)message :(NSString*)okay
+{
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:okay, nil];
+    alert.alertViewStyle = UIAlertViewStyleDefault;
+    [alert show];
+}
+
+-(void)showTwoButtonMessageInput:(NSString*)title :(NSString*)message :(NSString*)okay :(NSString*)initText
+{
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:okay, nil];
+    alert.alertViewStyle = UIAlertViewStylePlainTextInput;
+    if (initText)
+    {
+        [alert textFieldAtIndex:0].text = initText;
+    }
+    [alert show];
 }
 
 - (void)didReceiveMemoryWarning

@@ -20,6 +20,7 @@ extern double timeShuffle;
 extern NSInteger repeatsShuffle;
 extern NSUInteger shuffleSetting;
 extern double fadeSetting;
+extern NSInteger playlistIndex;
 
 @interface LoopMusicViewController : UIViewController
 {
@@ -44,6 +45,7 @@ extern double fadeSetting;
     IBOutlet UILabel *songName;
     IBOutlet UIButton *settings;
     IBOutlet UISwitch *dim;
+    IBOutlet UILabel *playlistName;
     
     NSString *idField;
     NSString *nameField;
@@ -53,6 +55,7 @@ extern double fadeSetting;
     bool valid;
     NSString *chooseSongText;
     NSInteger totalSongs;
+    NSInteger totalPlaylistSongs;
     
     const char *dbPath;
     sqlite3 *trackData;
@@ -94,14 +97,24 @@ extern double fadeSetting;
 -(void)openDB;
 -(void)prepareQuery:(NSString*)query;
 -(void)updateDB:(NSString*)query;
+-(NSInteger)getIntegerDB:(NSString*)query;
 -(void)openUpdateDB:(NSString*)query;
 -(NSInteger)updateDBResult:(NSString*)query;
 
 -(NSInteger)initializeTotalSongs;
 -(void)incrementTotalSongs;
 -(void)decrementTotalSongs;
+-(void)incrementPlaylistSongs;
+-(void)decrementPlaylistSongs;
+-(void)updatePlaylistSongs;
+-(NSArray*)getSongIndices;
 -(NSMutableArray*)getSongList;
+-(NSMutableArray*)getTotalSongList;
 -(bool)isSongListEmpty;
+-(NSMutableArray*)getPlaylistList;
+-(NSString*)getPlaylistName;
+-(void)updatePlaylistName;
+-(void)updatePlaylistName:(NSString*)name;
 
 -(void)playMusic;
 -(void)setAudioPlayer:(NSURL*)newURL;
@@ -126,5 +139,7 @@ extern double fadeSetting;
 
 -(void)showErrorMessage:(NSString*)message;
 -(void)showNoSongMessage;
+-(void)showTwoButtonMessage:(NSString*)title :(NSString*)message :(NSString*)okay;
+-(void)showTwoButtonMessageInput:(NSString*)title :(NSString*)message :(NSString*)okay :(NSString*)initText;
 
 @end

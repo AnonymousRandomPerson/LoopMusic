@@ -51,7 +51,7 @@
 {
     [presenter setOccupied:false];
     shuffleSetting = [shuffle selectedSegmentIndex];
-    NSString *fileWriteString = [NSString stringWithFormat:@"%lu,%f,%li,%f", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting];
+    NSString *fileWriteString = [NSString stringWithFormat:@"%lu,%f,%li,%f,%li", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting, (long)playlistIndex];
     NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
     [fileWriteString writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
     [super back:sender];
@@ -130,11 +130,11 @@
 
 -(IBAction)addTime:(id)sender
 {
-    if (loopTime >= loopEnd-.001)
+    if (loopTime >= loopEnd - .001)
     {
         return;
     }
-    [self sqliteUpdate:@"loopstart" newTime:loopTime+.001];
+    [self sqliteUpdate:@"loopstart" newTime:loopTime + .001];
     setTime.text = [NSString stringWithFormat:@"%f", loopTime];
 }
 
@@ -193,26 +193,7 @@
     }
     if (result != 101)
     {
-        if (NSClassFromString(@"UIAlertController"))
-        {
-            UIAlertController *error = [UIAlertController alertControllerWithTitle:@"Error"
-                                                                           message:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]
-                                                                    preferredStyle:UIAlertControllerStyleAlert];
-            UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Damn", @"OK action")
-                                                                    style:UIAlertActionStyleDefault
-                                                                  handler:nil];
-            [error addAction:defaultAction];
-            [self presentViewController:error animated:YES completion:nil];
-        }
-        else
-        {
-            UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Error"
-                                                            message:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]
-                                                           delegate:self
-                                                  cancelButtonTitle:@"Damn"
-                                                  otherButtonTitles: nil];
-            [alert show];
-        }
+        [self showErrorMessage:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]];
     }
     sqlite3_close(trackData);
     return result;
@@ -315,26 +296,81 @@
         [self showNoSongMessage];
         return;
     }
-    UIAlertView * alert = [[UIAlertView alloc] initWithTitle:@"Rename" message:@"Enter a new song name." delegate:self cancelButtonTitle:@"Enter" otherButtonTitles:nil];
-    alert.alertViewStyle = UIAlertViewStylePlainTextInput;
-    [alert textFieldAtIndex:0].text = [presenter getSongName];
-    [alert show];
+    alertIndex = 0;
+    [self showTwoButtonMessageInput:@"Rename Track" :@"Enter a new name for the track." :@"Rename" :[presenter getSongName]];
 }
 
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    NSString* newName = [[alertView textFieldAtIndex:0] text];
-    if (![newName isEqualToString:@""] && ![newName isEqualToString:[presenter getSongName]])
+    if (buttonIndex == 0)
     {
+        return;
+    }
+    NSString* newName = [[alertView textFieldAtIndex:0] text];
+    if ([newName isEqualToString:@""])
+    {
+        [self showErrorMessage:@"The playlist name cannot be blank."];
+        return;
+    }
+    if (alertIndex == 0)
+    {
+        if (![newName isEqualToString:[presenter getSongName]])
+        {
+            [self openDB];
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM Tracks WHERE name=\"%@\"", [presenter getSongName]]];
+            if (sqlite3_step(statement) == SQLITE_ROW)
+            {
+                [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET name = \"%@\" WHERE name = \"%@\"", newName, [presenter getSongName]]];
+                [presenter setNewSongName:newName];
+            }
+            sqlite3_finalize(statement);
+            sqlite3_close(trackData);
+        }
+    }
+    else if (alertIndex == 1)
+    {
+        // Rename playlist.
+        if (playlistIndex && ![newName isEqualToString:[presenter getPlaylistName]])
+        {
+            [self openDB];
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM Playlists WHERE name=\"%@\"", newName]];
+            if (sqlite3_step(statement) == SQLITE_ROW && sqlite3_column_int(statement, 0) != playlistIndex)
+            {
+                [self showErrorMessage:@"Name is already used."];
+            }
+            else
+            {
+                [self updateDB:[NSString stringWithFormat:@"UPDATE Playlists SET name = \"%@\" WHERE id = \"%ld\"", newName, (long)playlistIndex]];
+            }
+            sqlite3_finalize(statement);
+            sqlite3_close(trackData);
+            [presenter updatePlaylistName:newName];
+        }
+    }
+    else if (alertIndex == 2)
+    {
+        // Add playlist.
         [self openDB];
-        [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM Tracks WHERE name=\"%@\"", [presenter getSongName]]];
+        [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM Playlists WHERE name=\"%@\"", newName]];
         if (sqlite3_step(statement) == SQLITE_ROW)
         {
-            [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET name = \"%@\" WHERE name = \"%@\"", newName, [presenter getSongName]]];
-            [presenter setNewSongName:newName];
+            NSLog(@"%d", sqlite3_column_int(statement, 0));
+            [self showErrorMessage:@"Name is already used."];
+        }
+        else
+        {
+            [self updateDB:[NSString stringWithFormat:@"INSERT INTO Playlists (name, tracks) values (\"%@\", \"\")", newName]];
+            sqlite3_finalize(statement);
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM Playlists WHERE name=\"%@\"", newName]];
+            if (sqlite3_step(statement) == SQLITE_ROW)
+            {
+                playlistIndex = sqlite3_column_int(statement, 0);
+            }
         }
         sqlite3_finalize(statement);
         sqlite3_close(trackData);
+        [presenter updatePlaylistSongs];
+        [presenter updatePlaylistName];
     }
 }
 
@@ -430,6 +466,52 @@
     {
         [self changeScreen:@"delete"];
     }
+}
+
+
+-(IBAction)choosePlaylist:(id)sender
+{
+    [self changeScreen:@"choosePlaylist"];
+}
+
+-(IBAction)modifyPlaylist:(id)sender
+{
+    if (!playlistIndex)
+    {
+        [self showErrorMessage:@"The \"All tracks\" playlist can't be modified."];
+    }
+    else if ([presenter isSongListEmpty])
+    {
+        [self showNoSongMessage];
+    }
+    else
+    {
+        [self changeScreen:@"modifyPlaylist"];
+    }
+}
+
+-(IBAction)newPlaylist:(id)sender
+{
+    alertIndex = 2;
+    [self showTwoButtonMessageInput:@"New Playlist" :@"Enter the name of the playlist." :@"Add" :nil];
+}
+
+-(IBAction)renamePlaylist:(id)sender
+{
+    if (playlistIndex)
+    {
+        alertIndex = 1;
+        [self showTwoButtonMessageInput:@"Rename Playlist" :@"Enter a new name for the playlist." :@"Rename" :[presenter getPlaylistName]];
+    }
+    else
+    {
+        [self showErrorMessage:@"The \"All tracks\" playlist can't be modified."];
+    }
+}
+
+-(IBAction)deletePlaylist:(id)sender
+{
+    [self changeScreen:@"deletePlaylist"];
 }
 
 - (void)didReceiveMemoryWarning

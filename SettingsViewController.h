@@ -21,6 +21,7 @@
     LoopMusicViewController *presenter;
     
     bool addingSong;
+    NSInteger alertIndex;
 }
 
 @property(nonatomic, retain) UIButton *back;
@@ -44,6 +45,11 @@
 -(IBAction)shuffleChange:(id)sender;
 -(IBAction)loopFinder:(id)sender;
 -(IBAction)enabledSwitch:(id)sender;
+-(IBAction)choosePlaylist:(id)sender;
+-(IBAction)modifyPlaylist:(id)sender;
+-(IBAction)newPlaylist:(id)sender;
+-(IBAction)renamePlaylist:(id)sender;
+-(IBAction)deletePlaylist:(id)sender;
 -(void)returned;
 
 @end
