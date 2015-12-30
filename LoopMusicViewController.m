@@ -276,24 +276,17 @@ NSInteger playlistIndex = 0;
             do
             {
                 random = arc4random() % totalPlaylistSongs;
+                if (playlistIndex)
+                {
+                    NSArray *splitSongs = [self getSongIndices];
+                    if (splitSongs && splitSongs.count > random)
+                    {
+                        random = [[splitSongs objectAtIndex:random] integerValue];
+                    }
+                }
             } while (musicNumber == random && totalPlaylistSongs != 1);
+            musicNumber = random;
             timeShuffle2 = [self timeVariance];
-            if (playlistIndex)
-            {
-                NSArray *splitSongs = [self getSongIndices];
-                if (splitSongs && splitSongs.count > random)
-                {
-                    musicNumber = [[splitSongs objectAtIndex:random] integerValue];
-                }
-                else
-                {
-                    musicNumber = random;
-                }
-            }
-            else
-            {
-                musicNumber = random;
-            }
             if (playlistIndex)
             {
                 [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks WHERE id = %li", (long)musicNumber]];
@@ -884,10 +877,8 @@ NSInteger playlistIndex = 0;
         NSArray* splitSongs = [self getSongIndices];
         if (!splitSongs)
         {
-            sqlite3_finalize(statement);
             sqlite3_close(trackData);
-            playlistIndex = 0;
-            return [self getTotalSongList];
+            return [NSMutableArray arrayWithCapacity:0];
         }
         for (NSInteger i = 0; i < splitSongs.count; i++)
         {

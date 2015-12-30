@@ -17,7 +17,7 @@
 - (void)viewDidLoad
 {
     items = [self getTotalSongList];
-    selectedItems = [presenter getSongList];
+    selectedItems = [self getSongList];
     [super viewDidLoad];
 }
 
@@ -41,6 +41,7 @@
     }
     [self updateDB:[NSString stringWithFormat:@"UPDATE Playlists SET tracks = \"%@\" WHERE id = %ld", trackString, (long)playlistIndex]];
     sqlite3_close(trackData);
+    [presenter updatePlaylistSongs];
 }
 
 @end

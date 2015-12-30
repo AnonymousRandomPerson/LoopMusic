@@ -50,7 +50,7 @@
         [cell setSelected:true];
         [tableView selectRowAtIndexPath:indexPath
                                animated:false
-                         scrollPosition:UITableViewScrollPositionTop];
+                         scrollPosition:UITableViewScrollPositionNone];
     }
 }
 
