@@ -34,9 +34,6 @@
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
-    /*UIWindow *window = [UIApplication sharedApplication].keyWindow;
-    LoopMusicViewController *rootViewController = window.rootViewController;
-    [rootViewController setInitBright:([UIScreen mainScreen].brightness)];*/
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
 }
 
@@ -47,11 +44,6 @@
 
 - (void)applicationWillTerminate:(UIApplication *)application
 {
-    
-    
-    /*UIWindow *window = [UIApplication sharedApplication].keyWindow;
-    LoopMusicViewController *rootViewController = window.rootViewController;
-    [UIScreen mainScreen].brightness = [rootViewController getInitBright];*/
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
 
