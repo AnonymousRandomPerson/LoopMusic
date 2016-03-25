@@ -14,7 +14,7 @@
 
 @implementation DeletePlaylistViewController
 
--(void)viewDidLoad
+- (void)viewDidLoad
 {
     items = [self getPlaylistList];
     [super viewDidLoad];
@@ -23,7 +23,14 @@
     [items removeObject:@"All tracks"];
 }
 
--(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+/*!
+ * Sent to the delegate when the user clicks a button on an alert view.
+ * @discussion The receiver is automatically dismissed after this method is invoked.
+ * @param alertView The alert view containing the button.
+ * @param buttonIndex The index of the button that was clicked. The button indices start at 0.
+ * @return
+ */
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     if (buttonIndex)
     {
@@ -31,6 +38,7 @@
         [self openDB];
         for (NSString *item in selectedItems)
         {
+            /// The ID of the playlist to be deleted.
             NSInteger deleteIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Playlists WHERE name = \"%@\"", item]];
             if (playlistIndex == deleteIndex)
             {
@@ -43,8 +51,9 @@
     }
 }
 
--(IBAction)deleteButton:(id)sender
+- (IBAction)deleteButton:(id)sender
 {
+    /// The name of the playlist to be deleted.
     NSString* deleteText;
     if (selectedItems.count == 0)
     {

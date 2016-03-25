@@ -32,14 +32,20 @@
     shuffleRepeats.text = [NSString stringWithFormat:@"%li", (long)repeatsShuffle];
     shuffle.selectedSegmentIndex = shuffleSetting;
     fadeText.text = [NSString stringWithFormat:@"%f", fadeSetting];
+    /// Timer to load settings for the app.
     NSTimer *loadTimer = [NSTimer scheduledTimerWithTimeInterval:.1
-                                                      target:self
-                                                    selector:@selector(loadSettings:)
-                                                    userInfo:nil
-                                                     repeats:NO];
+                                                          target:self
+                                                        selector:@selector(loadSettings:)
+                                                        userInfo:nil
+                                                         repeats:NO];
 }
 
--(void)loadSettings:(NSTimer*)loadTimer
+/*!
+ * Loads the main screen and settings for the app.
+ * @param The timer that called this function.
+ * @return
+ */
+- (void)loadSettings:(NSTimer*)loadTimer
 {
     presenter = (LoopMusicViewController*)self.presentingViewController;
     enabledSwitch.on = [presenter getEnabled];
@@ -47,17 +53,19 @@
     [presenter setOccupied:true];
 }
 
--(IBAction)back:(id)sender
+- (IBAction)back:(id)sender
 {
     [presenter setOccupied:false];
     shuffleSetting = [shuffle selectedSegmentIndex];
+    /// The string to write to the settings file.
     NSString *fileWriteString = [NSString stringWithFormat:@"%lu,%f,%li,%f,%li", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting, (long)playlistIndex];
+    /// The file path of the settings file.
     NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
     [fileWriteString writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
     [super back:sender];
 }
 
--(IBAction)setVolume:(id)sender
+- (IBAction)setVolume:(id)sender
 {
     if ([presenter isSongListEmpty])
     {
@@ -72,7 +80,12 @@
     [presenter setVolume:[volumeAdjust.text doubleValue]];
 }
 
--(IBAction)addVolume:(id)sender
+/*!
+ * Increases the relative volume of the current track by 0.1 if possible.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)addVolume:(id)sender
 {
     if ([presenter isSongListEmpty])
     {
@@ -83,11 +96,16 @@
     {
         return;
     }
-    volumeAdjust.text = [NSString stringWithFormat:@"%f", [volumeAdjust.text doubleValue] + .1];
+    volumeAdjust.text = [NSString stringWithFormat:@"%f", [volumeAdjust.text doubleValue] + 0.1];
     [self setVolume:self];
 }
 
--(IBAction)subtractVolume:(id)sender
+/*!
+ * Decreases the relative volume of the current track by 0.1 if possible.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)subtractVolume:(id)sender
 {
     if ([presenter isSongListEmpty])
     {
@@ -98,11 +116,11 @@
     {
         return;
     }
-    volumeAdjust.text = [NSString stringWithFormat:@"%f", [volumeAdjust.text doubleValue] - .1];
+    volumeAdjust.text = [NSString stringWithFormat:@"%f", [volumeAdjust.text doubleValue] - 0.1];
     [self setVolume:self];
 }
 
--(IBAction)setTime:(id)sender
+- (IBAction)setTime:(id)sender
 {
     if ([setTime.text doubleValue] >= loopEnd || [setTime.text doubleValue] < 0 || [setTime.text isEqual:@""])
     {
@@ -113,7 +131,7 @@
     [self sqliteUpdate:@"loopstart" newTime:loopTime];
 }
 
--(IBAction)setTimeEnd:(id)sender
+- (IBAction)setTimeEnd:(id)sender
 {
     if ([setTimeEnd.text doubleValue] <= loopTime || [setTimeEnd.text isEqual:@""])
     {
@@ -128,51 +146,74 @@
     [self sqliteUpdate:@"loopend" newTime:loopEnd];
 }
 
--(IBAction)addTime:(id)sender
+/*!
+ * Moves the loop start time of the current track ahead by 0.001 if possible.
+ * @return
+ */
+- (IBAction)addTime:(id)sender
 {
-    if (loopTime >= loopEnd - .001)
+    if (loopTime >= loopEnd - 0.001)
     {
         return;
     }
-    [self sqliteUpdate:@"loopstart" newTime:loopTime + .001];
+    [self sqliteUpdate:@"loopstart" newTime:loopTime + 0.001];
     setTime.text = [NSString stringWithFormat:@"%f", loopTime];
 }
 
--(IBAction)addTimeEnd:(id)sender
+/*!
+ * Moves the loop end time of the current track ahead by 0.001 if possible.
+ * @return
+ */
+- (IBAction)addTimeEnd:(id)sender
 {
     if (loopEnd >= [presenter getAudioDuration])
     {
         return;
     }
-    loopEnd += .001;
+    loopEnd += 0.001;
     [self sqliteUpdate:@"loopend" newTime:loopEnd];
     setTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
 }
 
--(IBAction)subtractTime:(id)sender
+/*!
+ * Moves the loop start time of the current track back by 0.001 if possible.
+ * @return
+ */
+- (IBAction)subtractTime:(id)sender
 {
     if (loopTime <= 0)
     {
         return;
     }
-    [self sqliteUpdate:@"loopstart" newTime:loopTime-.001];
+    [self sqliteUpdate:@"loopstart" newTime:loopTime - 0.001];
     setTime.text = [NSString stringWithFormat:@"%f", loopTime];
 }
 
--(IBAction)subtractTimeEnd:(id)sender
+/*!
+ * Moves the loop end time of the current track back by 0.001 if possible.
+ * @return
+ */
+- (IBAction)subtractTimeEnd:(id)sender
 {
-    if (loopEnd <= loopTime + .001)
+    if (loopEnd <= loopTime + 0.001)
     {
         return;
     }
-    loopEnd -= .001;
+    loopEnd -= 0.001;
     [self sqliteUpdate:@"loopend" newTime:loopEnd];
     setTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
 }
 
--(NSInteger)sqliteUpdate:(NSString*)field1 newTime:(double)newTime
+/*!
+ * Updates the current track's entry in the database.
+ * @param field1 The field to update.
+ * @param newTime The new value to insert in the field.
+ * @return The result code of the database query.
+ */
+- (NSInteger)sqliteUpdate:(NSString*)field1 newTime:(double)newTime
 {
     [self openDB];
+    /// The result code of the database query.
     NSInteger result = 0;
     if ([field1 isEqual: @"loopstart"])
     {
@@ -180,6 +221,7 @@
     }
     else
     {
+        /// The database query to update with.
         NSString *querySQL;
         if ([field1 isEqual: @"enabled"])
         {
@@ -199,7 +241,7 @@
     return result;
 }
 
--(IBAction)shuffleTime:(id)sender
+- (IBAction)shuffleTime:(id)sender
 {
     if ([shuffleTime.text doubleValue] > 0)
     {
@@ -211,7 +253,7 @@
     }
 }
 
--(IBAction)shuffleRepeats:(id)sender
+- (IBAction)shuffleRepeats:(id)sender
 {
     if ([shuffleRepeats.text intValue] > 0)
     {
@@ -224,7 +266,7 @@
 }
 
 
--(IBAction)setFade:(id)sender
+- (IBAction)setFade:(id)sender
 {
     if ([fadeText.text doubleValue] >= 0)
     {
@@ -237,12 +279,12 @@
     }
 }
 
--(IBAction)enabledSwitch:(id)sender
+- (IBAction)enabledSwitch:(id)sender
 {
     [self sqliteUpdate:@"enabled" newTime:enabledSwitch.on];
 }
 
--(IBAction)close:(id)sender
+- (IBAction)close:(id)sender
 {
     [shuffleTime resignFirstResponder];
     [shuffleRepeats resignFirstResponder];
@@ -252,18 +294,18 @@
     [fadeText resignFirstResponder];
 }
 
--(IBAction)shuffleChange:(id)sender
+- (IBAction)shuffleChange:(id)sender
 {
     shuffleSetting = [shuffle selectedSegmentIndex];
 }
 
--(void)returned
+- (void)returned
 {
     setTime.text = [NSString stringWithFormat:@"%f", loopTime];
     setTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
 }
 
--(IBAction)loopFinder:(id)sender
+- (IBAction)loopFinder:(id)sender
 {
     if ([presenter isSongListEmpty])
     {
@@ -275,9 +317,15 @@
     }
 }
 
--(IBAction)addSong:(id)sender
+/*!
+ * Prompts the user to add tracks to the app from iTunes.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)addSong:(id)sender
 {
     addingSong = true;
+    /// The picker to use when adding tracks.
     MPMediaPickerController *picker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeAnyAudio];
     
     [picker setDelegate: self];
@@ -289,7 +337,12 @@
                      completion:nil];
 }
 
--(IBAction)renameSong:(id)sender
+/*!
+ * Prompts the user to rename the current track.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)renameSong:(id)sender
 {
     if ([presenter isSongListEmpty])
     {
@@ -300,16 +353,24 @@
     [self showTwoButtonMessageInput:@"Rename Track" :@"Enter a new name for the track." :@"Rename" :[presenter getSongName]];
 }
 
--(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+/*!
+ * Sent to the delegate when the user clicks a button on an alert view.
+ * @discussion The receiver is automatically dismissed after this method is invoked.
+ * @param alertView The alert view containing the button.
+ * @param buttonIndex The index of the button that was clicked. The button indices start at 0.
+ * @return
+ */
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     if (buttonIndex == 0)
     {
         return;
     }
+    /// The new name of the playlist or song.
     NSString* newName = [[alertView textFieldAtIndex:0] text];
     if ([newName isEqualToString:@""])
     {
-        [self showErrorMessage:@"The playlist name cannot be blank."];
+        [self showErrorMessage:@"The name cannot be blank."];
         return;
     }
     if (alertIndex == 0)
@@ -374,7 +435,12 @@
     }
 }
 
--(IBAction)replaceSong:(id)sender
+/*!
+ * Prompts the user to replace the current track with one from the device's iTunes library.
+ * @param sender The object that called this method.
+ * @return
+ */
+- (IBAction)replaceSong:(id)sender
 {
     if ([presenter isSongListEmpty])
     {
@@ -382,6 +448,7 @@
         return;
     }
     addingSong = false;
+    /// The picker to use to replace the current track.
     MPMediaPickerController *picker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeAnyAudio];
     
     [picker setDelegate: self];
@@ -402,7 +469,9 @@
     {
         for (MPMediaItem *item in collection.items)
         {
+            /// The name of the track in the current iteration.
             NSString *itemName = [item valueForProperty:MPMediaItemPropertyTitle];
+            /// The resource URL of the track in the current iteration.
             NSURL *itemURL = [item valueForProperty:MPMediaItemPropertyAssetURL];
             [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", itemName]];
             if (sqlite3_step(statement) == SQLITE_ROW)
@@ -426,7 +495,9 @@
     {
         for (MPMediaItem *item in collection.items)
         {
+            /// The name of the track in the current iteration.
             NSString *itemName = [item valueForProperty:MPMediaItemPropertyTitle];
+            /// The resource URL of the track in the current iteration.
             NSURL *itemURL = [item valueForProperty:MPMediaItemPropertyAssetURL];
             [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", itemName]];
             if (sqlite3_step(statement) == SQLITE_ROW && ![itemName isEqualToString:[presenter getSongName]])
@@ -456,7 +527,12 @@
                              completion:nil];
 }
 
--(IBAction)deleteSong:(id)sender
+/*!
+ * Navigates to the track deletion screen.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)deleteSong:(id)sender
 {
     if ([presenter isSongListEmpty])
     {
@@ -469,12 +545,12 @@
 }
 
 
--(IBAction)choosePlaylist:(id)sender
+- (IBAction)choosePlaylist:(id)sender
 {
     [self changeScreen:@"choosePlaylist"];
 }
 
--(IBAction)modifyPlaylist:(id)sender
+- (IBAction)modifyPlaylist:(id)sender
 {
     if (!playlistIndex)
     {
@@ -490,13 +566,13 @@
     }
 }
 
--(IBAction)newPlaylist:(id)sender
+- (IBAction)newPlaylist:(id)sender
 {
     alertIndex = 2;
     [self showTwoButtonMessageInput:@"New Playlist" :@"Enter the name of the playlist." :@"Add" :nil];
 }
 
--(IBAction)renamePlaylist:(id)sender
+- (IBAction)renamePlaylist:(id)sender
 {
     if (playlistIndex)
     {
@@ -509,7 +585,7 @@
     }
 }
 
--(IBAction)deletePlaylist:(id)sender
+- (IBAction)deletePlaylist:(id)sender
 {
     [self changeScreen:@"deletePlaylist"];
 }

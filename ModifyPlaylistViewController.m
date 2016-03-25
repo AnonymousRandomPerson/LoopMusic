@@ -21,13 +21,15 @@
     [super viewDidLoad];
 }
 
--(IBAction)confirmButton:(id)sender
+- (IBAction)confirmButton:(id)sender
 {
     [self dismissViewControllerAnimated:true completion:nil];
     [self openDB];
+    /// The database string containing the IDs of the tracks in the playlist.
     NSString* trackString = @"";
     for (NSString *item in selectedItems)
     {
+        /// The ID of the track in the current iteration.
         NSInteger trackIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Tracks WHERE name = \"%@\"", item]];
         if (trackIndex)
         {

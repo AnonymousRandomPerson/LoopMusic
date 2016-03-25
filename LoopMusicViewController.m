@@ -8,14 +8,23 @@
 
 #import "LoopMusicViewController.h"
 
+/// The time that the current track will loop back to when looping.
 double loopTime = 0;
+/// The time that the current track will loop back from when looping.
 double loopEnd = 0;
+/// The name of the current track.
 NSString *settingsSongString = @"";
+/// The base amount of time to play a track before shuffling.
 double timeShuffle = -1;
+/// The actual amount of time to play a track before shuffling.
 double timeShuffle2 = -1;
+/// The number of times to repeat a track before shuffling.
 NSInteger repeatsShuffle = -1;
+/// The setting for how to shuffle tracks.
 NSUInteger shuffleSetting = 0;
+/// The amount of time to fade out a track before shuffling.
 double fadeSetting = 0;
+/// The index of the currently selected playlist.
 NSInteger playlistIndex = 0;
 
 @interface LoopMusicViewController ()
@@ -79,10 +88,13 @@ NSInteger playlistIndex = 0;
     repeats = 0;
     musicNumber = -1;
     
+    /// The file path of the settings file.
     NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
+    /// The contents of the settings file.
     NSString *contentOfFile = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
     if (contentOfFile)
     {
+        /// The contents of the settings file, split into individual settings.
         NSArray *splitSettings = [contentOfFile componentsSeparatedByString:@","];
         shuffleSetting = [splitSettings[0] integerValue];
         timeShuffle = [splitSettings[1] doubleValue];
@@ -100,6 +112,7 @@ NSInteger playlistIndex = 0;
         repeatsShuffle = 3;
         fadeSetting = 2;
         playlistIndex = 0;
+        /// The text to write to the a new settings file.
         NSString *newSettings = [NSString stringWithFormat:@"%lu,%f,%li,%f,%li", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting, (long)playlistIndex];
         [newSettings writeToFile:filePath atomically:true encoding:NSUTF8StringEncoding error:nil];
     }
@@ -113,6 +126,11 @@ NSInteger playlistIndex = 0;
     dim.on = false;
 }
 
+/*!
+ * Checks if the current track needs to be looped or shuffled.
+ * @param timer The timer that called this function.
+ * @return
+ */
 - (void)timeDec:(NSTimer*)timer
 {
     if (playing)
@@ -185,6 +203,13 @@ NSInteger playlistIndex = 0;
     }
 }
 
+/*!
+ * Called when a sound has finished playing.
+ * @param data The audio player that finished playing.
+ * @param flag YES on successful completion of playback; NO if playback stopped because the system could not decode the audio data.
+ * @discussion This method is not called upon an audio interruption. Rather, an audio player is paused upon interruption—the sound has not finished playing.
+ * @return
+ */
 - (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)data successfully:(BOOL)flag
 {
     if (audioPlayer.playing)
@@ -207,7 +232,7 @@ NSInteger playlistIndex = 0;
 }
 
 // Change song
--(void)playMusic
+- (void)playMusic
 {
     if ([self isSongListEmpty])
     {
@@ -272,6 +297,7 @@ NSInteger playlistIndex = 0;
     {
         do
         {
+            /// Random number to choose a new track with.
             NSInteger random = -1;
             do
             {
@@ -348,9 +374,10 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(void)setAudioPlayer:(NSURL*)newURL
+- (void)setAudioPlayer:(NSURL*)newURL
 {
     // Change audio player settings
+    /// Data about errors that occur when initializing the audio players.
     NSError *error;
     audioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:newURL
                                                          error:&error];
@@ -371,12 +398,12 @@ NSInteger playlistIndex = 0;
     audioPlayer2.volume = volumeSet;
 }
 
--(void)updateVolumeDec
+- (void)updateVolumeDec
 {
     volumeDec = fadeSetting > 0 ? volumeSet / (fadeSetting * 5000) : 0;
 }
 
--(IBAction)randomSong:(id)sender
+- (IBAction)randomSong:(id)sender
 {
     if ([self isSongListEmpty])
     {
@@ -400,7 +427,7 @@ NSInteger playlistIndex = 0;
     [self playMusic];
 }
 
--(IBAction)playSong:(id)sender
+- (IBAction)playSong:(id)sender
 {
     if ([self isSongListEmpty])
     {
@@ -427,7 +454,7 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(IBAction)stopSong:(id)sender
+- (IBAction)stopSong:(id)sender
 {
     if ([self isSongListEmpty])
     {
@@ -446,7 +473,7 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(void)chooseSong:(NSString*)newSong
+- (void)chooseSong:(NSString*)newSong
 {
     playing=false;
     chooseSongString=true;
@@ -455,7 +482,7 @@ NSInteger playlistIndex = 0;
     [self playMusic];
 }
 
--(IBAction)searchSong:(id)sender
+- (IBAction)searchSong:(id)sender
 {
     if ([self isSongListEmpty])
     {
@@ -465,66 +492,67 @@ NSInteger playlistIndex = 0;
     [self changeScreen:@"search"];
 }
 
--(IBAction)settings:(id)sender
+- (IBAction)settings:(id)sender
 {
     settingsSongString = songName.text;
     [self changeScreen:@"settings"];
 }
 
--(NSInteger)setLoopTime:(double)newLoopTime
+- (NSInteger)setLoopTime:(double)newLoopTime
 {
     loopTime = newLoopTime;
+    /// The result code of the database update query for setting the loop time.
     NSInteger result = [self updateDBResult:[NSString stringWithFormat:@"UPDATE Tracks SET loopstart = %f WHERE name = \"%@\"", newLoopTime, songName.text]];
     if (audioPlayer.playing)
     {
-        audioPlayer2.currentTime = newLoopTime-delay;
+        audioPlayer2.currentTime = newLoopTime - delay;
         [audioPlayer2 prepareToPlay];
     }
     else if (audioPlayer2.playing)
     {
-        audioPlayer.currentTime = newLoopTime-delay;
+        audioPlayer.currentTime = newLoopTime - delay;
         [audioPlayer prepareToPlay];
     }
     return result;
 }
 
--(long long)getTime
+/*!
+ * Gets the current system time in microseconds.
+ * @return The current system time in microseconds.
+ */
+- (long long)getTime
 {
     gettimeofday(&t, nil);
-    //returns time in microseconds
+    // Returns time in microseconds
     return t.tv_sec * 1000000 + t.tv_usec;
 }
 
--(void)setDelay:(float)newDelay
+- (void)setDelay:(float)newDelay
 {
     delay = newDelay;
 }
 
--(IBAction)close:(id)sender
-{
-}
-
--(void)setOccupied:(bool)newOccupied
+- (void)setOccupied:(bool)newOccupied
 {
     occupied = newOccupied;
 }
 
--(NSString*)getSongName
+- (NSString*)getSongName
 {
     return songName.text;
 }
 
--(void)setNewSongName:(NSString*)newName
+- (void)setNewSongName:(NSString*)newName
 {
     songName.text = newName;
 }
 
--(double)getAudioDuration
+- (double)getAudioDuration
 {
     return audioPlayer.duration;
 }
 
--(void)testTime
+- (void)testTime
 {
     double test = loopEnd - delay - 5;
     if (test < 0)
@@ -534,7 +562,7 @@ NSInteger playlistIndex = 0;
     [self setCurrentTime:test];
 }
 
--(void)setCurrentTime:(double)newCurrentTime
+- (void)setCurrentTime:(double)newCurrentTime
 {
     if (audioPlayer.playing)
     {
@@ -550,12 +578,12 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(float)getVolume
+- (float)getVolume
 {
     return volumeSet;
 }
 
--(void)setVolume:(double)newVolume
+- (void)setVolume:(double)newVolume
 {
     if (newVolume < 0 || newVolume > 1)
     {
@@ -568,7 +596,7 @@ NSInteger playlistIndex = 0;
     [self openUpdateDB:[NSString stringWithFormat:@"UPDATE Tracks SET volume = %f WHERE name = \"%@\"", newVolume, songName.text]];
 }
 
--(float)findTime
+- (float)findTime
 {
     if (audioPlayer.playing)
     {
@@ -584,7 +612,7 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(IBAction)dim:(id)sender
+- (IBAction)dim:(id)sender
 {
     if (dim.on)
     {
@@ -631,69 +659,68 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(double)getDelay
+- (double)getDelay
 {
     return delay;
 }
 
--(bool)getEnabled
+- (bool)getEnabled
 {
     return enabled;
 }
 
--(void)setInitBright:(float)newBright
+- (void)setInitBright:(float)newBright
 {
     initBright = newBright;
 }
 
--(float)getInitBright
+- (float)getInitBright
 {
     return initBright;
 }
 
--(double)timeVariance
+- (double)timeVariance
 {
     return (((double)((int)(arc4random() % 60 - 30))) / 60.0 + timeShuffle) * 60000000.0;
 }
 
-- (void)onKeyboardDidHide:(NSNotification *)notification
-{
-    [[UIApplication sharedApplication] setIdleTimerDisabled:YES];
-}
-
 // Screen changing helpers
 
--(IBAction)changeScreen:(NSString*)screen
+- (IBAction)changeScreen:(NSString*)screen
 {
+    /// The storyboard for the app.
     UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main"
                                                          bundle:nil];
+    /// The view controller to change to.
     UIViewController *newVC = [storyboard instantiateViewControllerWithIdentifier:screen];
     [self presentViewController:newVC
                        animated:true
                      completion:nil];
 }
 
--(IBAction)back:(id)sender
+- (IBAction)back:(id)sender
 {
     [self dismissViewControllerAnimated:true completion:nil];
 }
 
 // Database helpers
 
--(void)openDB
+- (void)openDB
 {
     sqlite3_open([[[NSString alloc] initWithString:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0] stringByAppendingPathComponent: @"Tracks.db"]] UTF8String], &trackData);
 }
 
--(void)prepareQuery:(NSString*)query
+- (void)prepareQuery:(NSString*)query
 {
     sqlite3_prepare_v2(trackData, [query UTF8String], -1, &statement, NULL);
 }
 
--(void)updateDB:(NSString*)query
+- (void)updateDB:(NSString*)query
 {
+    /// The statement to execute the query with.
     sqlite3_stmt *tempStatement;
     sqlite3_prepare_v2(trackData, [query UTF8String], -1, &tempStatement, NULL);
+    /// The result code for the query.
     NSInteger result = sqlite3_step(tempStatement);
     if (result != 101)
     {
@@ -702,10 +729,12 @@ NSInteger playlistIndex = 0;
     sqlite3_finalize(tempStatement);
 }
 
--(NSInteger)getIntegerDB:(NSString*)query
+- (NSInteger)getIntegerDB:(NSString*)query
 {
+    /// The statement to execute the query with.
     sqlite3_stmt *tempStatement;
     sqlite3_prepare_v2(trackData, [query UTF8String], -1, &tempStatement, NULL);
+    /// The integer obtained from the query.
     NSInteger returnValue = -1;
     if (sqlite3_step(tempStatement) == SQLITE_ROW)
     {
@@ -715,10 +744,17 @@ NSInteger playlistIndex = 0;
     return returnValue;
 }
 
--(NSString*)getStringDB:(NSString*)query
+/*!
+ * Gets a string from a database query.
+ * @param query The query to get a string from.
+ * @return The string obtained from the query.
+ */
+- (NSString*)getStringDB:(NSString*)query
 {
+    /// The statement to execute the query with.
     sqlite3_stmt *tempStatement;
     sqlite3_prepare_v2(trackData, [query UTF8String], -1, &tempStatement, NULL);
+    /// The string obtained from the query.
     NSString *returnValue = @"";
     if (sqlite3_step(tempStatement) == SQLITE_ROW)
     {
@@ -728,14 +764,14 @@ NSInteger playlistIndex = 0;
     return returnValue;
 }
 
--(void)openUpdateDB:(NSString*)query
+- (void)openUpdateDB:(NSString*)query
 {
     [self openDB];
     [self updateDB:query];
     sqlite3_close(trackData);
 }
 
--(NSInteger)updateDBResult:(NSString*)query
+- (NSInteger)updateDBResult:(NSString*)query
 {
     [self openDB];
     [self prepareQuery:query];
@@ -745,10 +781,11 @@ NSInteger playlistIndex = 0;
     return returnValue;
 }
 
--(NSInteger)initializeTotalSongs
+- (NSInteger)initializeTotalSongs
 {
     [self prepareQuery:[NSString stringWithFormat:@"SELECT COUNT(*) FROM Tracks"]];
     sqlite3_step(statement);
+    /// The number of tracks in the database.
     const char* countText = (const char *) sqlite3_column_text(statement, 0);
     if (countText)
     {
@@ -766,7 +803,7 @@ NSInteger playlistIndex = 0;
     return totalSongs;
 }
 
--(void)incrementTotalSongs
+- (void)incrementTotalSongs
 {
     totalSongs++;
     if (!playlistIndex)
@@ -775,7 +812,7 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(void)decrementTotalSongs
+- (void)decrementTotalSongs
 {
     totalSongs--;
     if (!playlistIndex)
@@ -784,25 +821,26 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(void)incrementPlaylistSongs
+- (void)incrementPlaylistSongs
 {
     totalPlaylistSongs++;
 }
 
--(void)decrementPlaylistSongs
+- (void)decrementPlaylistSongs
 {
     totalPlaylistSongs--;
 }
 
--(void)updatePlaylistSongs
+- (void)updatePlaylistSongs
 {
     [self openDB];
+    /// All tracks in the playlist.
     NSArray *songList = [self getSongIndices];
     totalPlaylistSongs = songList ? songList.count : 0;
     sqlite3_close(trackData);
 }
 
--(NSString*)getPlaylistName
+- (NSString*)getPlaylistName
 {
     if ([playlistName.text isEqualToString:@"All tracks"])
     {
@@ -814,11 +852,12 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(void)updatePlaylistName
+- (void)updatePlaylistName
 {
     if (playlistIndex)
     {
         [self openDB];
+        /// The name of the current playlist.
         NSString* newName = [self getStringDB:[NSString stringWithFormat:@"SELECT name FROM Playlists where id = %ld", (long)playlistIndex]];
         [self updatePlaylistName:newName];
         sqlite3_close(trackData);
@@ -834,7 +873,7 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(void)updatePlaylistName:(NSString*)name
+- (void)updatePlaylistName:(NSString*)name
 {
     if (name && ![name isEqualToString:@"All tracks"])
     {
@@ -846,12 +885,14 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(NSArray*)getSongIndices
+- (NSArray*)getSongIndices
 {
+    /// The IDs of all tracks in the current playlist.
     NSArray *splitSongs = nil;
     [self prepareQuery:[NSString stringWithFormat:@"SELECT tracks FROM Playlists WHERE id = %ld", (long)playlistIndex]];
     if (sqlite3_step(statement) == SQLITE_ROW)
     {
+        /// The database string containing the current playlist's track IDs.
         NSString *trackString = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
         splitSongs = [trackString componentsSeparatedByString:@","];
     }
@@ -863,7 +904,7 @@ NSInteger playlistIndex = 0;
     return splitSongs;
 }
 
--(NSMutableArray*)getSongList
+- (NSMutableArray*)getSongList
 {
     if (!playlistIndex)
     {
@@ -871,9 +912,12 @@ NSInteger playlistIndex = 0;
     }
     else
     {
+        /// The names of all tracks in the current playlist.
         NSMutableArray *songs;
+        /// The name of the track in the current iteration.
         NSString *songListName;
         [self openDB];
+        /// The IDs of all tracks in the current playlist.
         NSArray* splitSongs = [self getSongIndices];
         if (!splitSongs)
         {
@@ -882,6 +926,7 @@ NSInteger playlistIndex = 0;
         }
         for (NSInteger i = 0; i < splitSongs.count; i++)
         {
+            /// The ID of the track in the current iteration.
             NSString *trackIndex = [splitSongs objectAtIndex:i];
             [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM Tracks WHERE id = \"%@\"", trackIndex]];
             if (sqlite3_step(statement) == SQLITE_ROW)
@@ -904,9 +949,16 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(NSMutableArray*)getNameList:(NSString*)table
+/*!
+ * Gets the names of all entries in a table.
+ * @param table The name of the table to get entries from.
+ * @return An array containing the names of all entries in a table.
+ */
+- (NSMutableArray*)getNameList:(NSString*)table
 {
+    /// The names of all entries in a table.
     NSMutableArray *items = [NSMutableArray arrayWithCapacity:8];
+    /// The name of the item in the current iteration.
     NSString *itemListName;
     [self openDB];
     [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM %@ ORDER BY name", table]];
@@ -920,28 +972,30 @@ NSInteger playlistIndex = 0;
     return items;
 }
 
--(NSMutableArray*)getTotalSongList
+- (NSMutableArray*)getTotalSongList
 {
     return [self getNameList:@"Tracks"];
 }
 
--(bool)isSongListEmpty
+- (bool)isSongListEmpty
 {
     return !totalSongs;
 }
 
--(NSMutableArray*)getPlaylistList
+- (NSMutableArray*)getPlaylistList
 {
     return [self getNameList:@"Playlists"];
 }
 
--(void)showErrorMessage:(NSString*)message
+- (void)showErrorMessage:(NSString*)message
 {
     if (NSClassFromString(@"UIAlertController"))
     {
+        /// The error dialogue being displayed.
         UIAlertController *error = [UIAlertController alertControllerWithTitle:@"Error"
                                                                        message:message
                                                                 preferredStyle:UIAlertControllerStyleAlert];
+        /// The "Okay" button on the error dialogue.
         UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Okay", @"OK action")
                                                                 style:UIAlertActionStyleDefault
                                                               handler:nil];
@@ -950,6 +1004,7 @@ NSInteger playlistIndex = 0;
     }
     else
     {
+        /// The error dialogue being displayed.
         UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Error"
                                                         message:message
                                                        delegate:self
@@ -959,20 +1014,22 @@ NSInteger playlistIndex = 0;
     }
 }
 
--(void)showNoSongMessage
+- (void)showNoSongMessage
 {
     [self showErrorMessage:@"You need to add a song first."];
 }
 
--(void)showTwoButtonMessage:(NSString*)title :(NSString*)message :(NSString*)okay
+- (void)showTwoButtonMessage:(NSString*)title :(NSString*)message :(NSString*)okay
 {
+    /// The message dialogue box to display.
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:okay, nil];
     alert.alertViewStyle = UIAlertViewStyleDefault;
     [alert show];
 }
 
--(void)showTwoButtonMessageInput:(NSString*)title :(NSString*)message :(NSString*)okay :(NSString*)initText
+- (void)showTwoButtonMessageInput:(NSString*)title :(NSString*)message :(NSString*)okay :(NSString*)initText
 {
+    /// The message dialogue box to display.
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:okay, nil];
     alert.alertViewStyle = UIAlertViewStylePlainTextInput;
     if (initText)

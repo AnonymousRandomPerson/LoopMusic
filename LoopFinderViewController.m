@@ -29,6 +29,7 @@
     
     finderSetTime.text = [NSString stringWithFormat:@"%f", loopTime];
     finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
+    /// Timer to load the current track name and the main screen of the app.
     NSTimer *loadTimer = [NSTimer scheduledTimerWithTimeInterval:.1
                                                           target:self
                                                         selector:@selector(loadSettings:)
@@ -36,13 +37,18 @@
                                                          repeats:NO];
 }
 
--(void)loadSettings:(NSTimer*)loadTimer
+/*!
+ * Loads the current track name and the main screen of the app.
+ * @param loadTimer The timer that called this function.
+ * @return
+ */
+- (void)loadSettings:(NSTimer*)loadTimer
 {
     presenter = (LoopMusicViewController*)(self.presentingViewController).presentingViewController;
     finderSongName.text = [presenter getSongName];
 }
 
--(IBAction)setCurrentTime:(id)sender
+- (IBAction)setCurrentTime:(id)sender
 {
     if ([setCurrentTime.text isEqual:@""]  || [setCurrentTime.text doubleValue] > [presenter getAudioDuration])
     {
@@ -52,12 +58,17 @@
     [presenter setCurrentTime:[setCurrentTime.text doubleValue]];
 }
 
--(IBAction)testTime:(id)sender
+/*!
+ * Sets the playback time to five seconds before the loop time.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)testTime:(id)sender
 {
     [presenter testTime];
 }
 
--(IBAction)finderSetTime:(id)sender
+- (IBAction)finderSetTime:(id)sender
 {
     if ([finderSetTime.text doubleValue] >= loopEnd || [finderSetTime.text doubleValue] < 0 || [finderSetTime.text isEqual:@""])
     {
@@ -68,7 +79,7 @@
     [self sqliteUpdate:@"loopstart" newTime:loopTime];
 }
 
--(IBAction)finderSetTimeEnd:(id)sender
+- (IBAction)finderSetTimeEnd:(id)sender
 {
     if ([finderSetTimeEnd.text doubleValue] <= loopTime || [finderSetTimeEnd.text isEqual:@""])
     {
@@ -83,50 +94,77 @@
     [self sqliteUpdate:@"loopend" newTime:loopEnd];
 }
 
--(IBAction)finderAddTime:(id)sender
+/*!
+ * Moves the loop start time of the current track ahead by 0.001 if possible.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)finderAddTime:(id)sender
 {
-    if (loopTime >= loopEnd-.001)
+    if (loopTime >= loopEnd - 0.001)
     {
         return;
     }
-    [self sqliteUpdate:@"loopstart" newTime:loopTime+.001];
+    [self sqliteUpdate:@"loopstart" newTime:loopTime + 0.001];
     finderSetTime.text = [NSString stringWithFormat:@"%f", loopTime];
 }
 
--(IBAction)finderAddTimeEnd:(id)sender
+/*!
+ * Moves the loop end time of the current track ahead by 0.001 if possible.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)finderAddTimeEnd:(id)sender
 {
     if (loopEnd >= [presenter getAudioDuration])
     {
         return;
     }
-    loopEnd += .001;
+    loopEnd += 0.001;
     [self sqliteUpdate:@"loopend" newTime:loopEnd];
     finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
 }
 
--(IBAction)finderSubtractTime:(id)sender
+/*!
+ * Moves the loop start time of the current track back by 0.001 if possible.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)finderSubtractTime:(id)sender
 {
     if (loopTime <= 0)
     {
         return;
     }
-    [self sqliteUpdate:@"loopstart" newTime:loopTime-.001];
+    [self sqliteUpdate:@"loopstart" newTime:loopTime - 0.001];
     finderSetTime.text = [NSString stringWithFormat:@"%f", loopTime];
 }
 
--(IBAction)finderSubtractTimeEnd:(id)sender
+/*!
+ * Moves the loop end time of the current track back by 0.001 if possible.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)finderSubtractTimeEnd:(id)sender
 {
-    if (loopEnd <= loopTime + .001)
+    if (loopEnd <= loopTime + 0.001)
     {
         return;
     }
-    loopEnd -= .001;
+    loopEnd -= 0.001;
     [self sqliteUpdate:@"loopend" newTime:loopEnd];
     finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
 }
 
--(NSInteger)sqliteUpdate:(NSString*)field1 newTime:(double)newTime
+/*!
+ * Updates the current track's entry in the database.
+ * @param field1 The field to update.
+ * @param newTime The new value to insert in the field.
+ * @return The result code of the database query.
+ */
+- (NSInteger)sqliteUpdate:(NSString*)field1 newTime:(double)newTime
 {
+    /// The result code of the database query.
     NSInteger result = 0;
     if ([field1 isEqual: @"loopstart"])
     {
@@ -143,7 +181,7 @@
     return result;
 }
 
--(IBAction)setTimeButton:(id)sender
+- (IBAction)setTimeButton:(id)sender
 {
     if ([findTimeText.text isEqual: @"Time"])
     {
@@ -153,7 +191,7 @@
     [self finderSetTime:self];
 }
 
--(IBAction)setEndButton:(id)sender
+- (IBAction)setEndButton:(id)sender
 {
     if ([findTimeText.text isEqual: @"Time"])
     {
@@ -163,19 +201,29 @@
     [self finderSetTimeEnd:self];
 }
 
--(IBAction)findTime:(id)sender
+/*!
+ * Gets the playback time of the current track.
+ * @param sender The object that called this function.
+ * @return The playback time of the current track.
+ */
+- (IBAction)findTime:(id)sender
 {
     findTimeText.text = [NSString stringWithFormat:@"%f", [presenter findTime] + [presenter getDelay]];
 }
 
--(IBAction)close:(id)sender
+/*!
+ * Cleans up UI elements when the screen is closing.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)close:(id)sender
 {
     [finderSetTime resignFirstResponder];
     [finderSetTimeEnd resignFirstResponder];
     [setCurrentTime resignFirstResponder];
 }
 
--(IBAction)back:(id)sender
+- (IBAction)back:(id)sender
 {
     [(SettingsViewController*)self.presentingViewController returned];
     [super back:sender];

@@ -13,6 +13,7 @@
 
 @interface MultipleSearchBase : SearchBase
 {
+    /// The selected items in the list.
     NSMutableArray *selectedItems;
 }
 

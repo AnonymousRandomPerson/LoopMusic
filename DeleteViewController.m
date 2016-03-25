@@ -20,7 +20,14 @@
     [super viewDidLoad];
 }
 
--(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+/*!
+ * Sent to the delegate when the user clicks a button on an alert view.
+ * @discussion The receiver is automatically dismissed after this method is invoked.
+ * @param alertView The alert view containing the button.
+ * @param buttonIndex The index of the button that was clicked. The button indices start at 0.
+ * @return
+ */
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     if (buttonIndex)
     {
@@ -29,6 +36,7 @@
         
         for (NSString *item in selectedItems)
         {
+            /// The ID of the track to be deleted.
             NSInteger deleteIndex = 0;
             
             if (playlistIndex)
@@ -39,9 +47,11 @@
             [presenter decrementTotalSongs];
             if (playlistIndex)
             {
+                /// The IDs of the tracks in the current playlist.
                 NSArray *splitSongs = [self getSongIndices];
                 if (splitSongs)
                 {
+                    /// The ID of the track to be deleted as a string.
                     NSString *deleteIndexString = [NSString stringWithFormat:@"%ld", (long)deleteIndex];
                     if ([splitSongs containsObject:deleteIndexString])
                     {
@@ -54,8 +64,9 @@
     }
 }
 
--(IBAction)deleteButton:(id)sender
+- (IBAction)deleteButton:(id)sender
 {
+    /// The name of the track to be deleted.
     NSString* deleteText;
     if (selectedItems.count == 0)
     {

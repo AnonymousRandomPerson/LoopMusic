@@ -13,7 +13,12 @@
 
 @interface ModifyPlaylistViewController : MultipleSearchBase
 
--(IBAction)confirmButton:(id)sender;
+/*!
+ * Modifies the current playlist.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)confirmButton:(id)sender;
 
 @end
 

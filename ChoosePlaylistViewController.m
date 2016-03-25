@@ -31,7 +31,7 @@
     [self dismissViewControllerAnimated:true completion:nil];
 }
 
--(void)selectItem:(NSString *)item
+- (void)selectItem:(NSString *)item
 {
     [self openDB];
     playlistIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Playlists WHERE name = \"%@\"", item]];

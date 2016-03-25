@@ -16,6 +16,7 @@
 
 - (void)viewDidLoad
 {
+    /// Timer to load the main screen of the app.
     NSTimer *loadTimer = [NSTimer scheduledTimerWithTimeInterval:.1
                                                           target:self
                                                         selector:@selector(loadPresenter:)
@@ -23,7 +24,12 @@
                                                          repeats:NO];
 }
 
--(void)loadPresenter:(NSTimer*)loadTimer
+/*!
+ * Loads the main screen of the app.
+ * @param loadTimer The timer that called this function.
+ * @return
+ */
+- (void)loadPresenter:(NSTimer*)loadTimer
 {
     presenter = (LoopMusicViewController*)self.presentingViewController;
     while (presenter.presentingViewController)
@@ -33,6 +39,12 @@
     
 }
 
+/*!
+ * Tells the data source to return the number of rows in a given section of a table view.
+ * @param tableView The table-view object requesting this information.
+ * @param section An index number identifying a section in tableView.
+ * @return The number of rows in section.
+ */
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     if (tableView == self.searchDisplayController.searchResultsTableView)
@@ -45,10 +57,19 @@
     }
 }
 
+/*!
+ * Asks the data source for a cell to insert in a particular location of the table view.
+ * @discussion The returned UITableViewCell object is frequently one that the application reuses for performance reasons. You should fetch a previously created cell object that is marked for reuse by sending a dequeueReusableCellWithIdentifier: message to tableView. Various attributes of a table cell are set automatically based on whether the cell is a separator and on information the data source provides, such as for accessory views and editing controls.
+ * @param tableView A table-view object requesting the cell.
+ * @param indexPath An index path locating a row in tableView.
+ * @return An object inheriting from UITableViewCell that the table view can use for the specified row. An assertion is raised if you return nil.
+ */
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    /// The name of the table.
     static NSString *simpleTableIdentifier = @"SongList";
     
+    /// The cell to use for the specified row.
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:simpleTableIdentifier];
     
     if (cell == nil)
@@ -79,17 +100,33 @@
     }
 }
 
--(void)selectItem:(NSString*)item
+- (void)selectItem:(NSString*)item
 {
 }
 
+/*!
+ * Filters the list of items according to the search query.
+ * @param searchText The search query to filter the list with.
+ * @param scope The scope of the search query.
+ * @return
+ */
 - (void)filterContentForSearchText:(NSString*)searchText scope:(NSString*)scope
 {
+    /// The predicate to filter the list with.
     NSPredicate *resultPredicate = [NSPredicate predicateWithFormat:@"SELF contains[c] %@", searchText];
     searchedItems = [[NSMutableArray alloc] initWithArray:[items filteredArrayUsingPredicate:resultPredicate]];
 }
 
--(BOOL)searchDisplayController:(UISearchDisplayController *)controller shouldReloadTableForSearchString:(NSString *)searchString
+/*!
+ * Asks the delegate if the table view should be reloaded for a given search string.
+ * @discussion If you don’t implement this method, then the results table is reloaded as soon as the search string changes.
+ 
+ You might implement this method if you want to perform an asynchronous search. You would initiate the search in this method, then return NO. You would reload the table when you have results.
+ * @param controller The search display controller for which the receiver is the delegate.
+ * @param searchString The string in the search bar.
+ * @return YES if the display controller should reload the data in its table view, otherwise NO.
+ */
+- (BOOL)searchDisplayController:(UISearchDisplayController *)controller shouldReloadTableForSearchString:(NSString *)searchString
 {
     [self filterContentForSearchText:searchString
                                scope:[[self.searchDisplayController.searchBar scopeButtonTitles] objectAtIndex:[self.searchDisplayController.searchBar selectedScopeButtonIndex]]];
