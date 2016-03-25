@@ -140,15 +140,17 @@ NSInteger playlistIndex = 0;
             [audioPlayer2 play];
             [audioPlayer stop];
             [audioPlayer prepareToPlay];
-            audioPlayer.currentTime=loopTime - delay;
+            audioPlayer.currentTime = loopTime - delay;
+            [self disableIdleTimer];
             repeats++;
         }
-        if (audioPlayer2.currentTime >= loopEnd - delay)
+        else if (audioPlayer2.currentTime >= loopEnd - delay)
         {
             [audioPlayer play];
             [audioPlayer2 stop];
             [audioPlayer2 prepareToPlay];
             audioPlayer2.currentTime = loopTime - delay;
+            [self disableIdleTimer];
             repeats++;
         }
         if (!occupied)
@@ -242,7 +244,7 @@ NSInteger playlistIndex = 0;
     {
         totalPlaylistSongs = totalSongs;
     }
-    [UIApplication sharedApplication].idleTimerDisabled = YES;
+    [self disableIdleTimer];
     playing = false;
     valid = false;
     
@@ -372,6 +374,16 @@ NSInteger playlistIndex = 0;
         [self openDB];
         [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET loopend = %f WHERE id=\"%li\"", loopEnd, (long)musicNumber]];
     }
+}
+
+/*!
+ * Disables the device sleep timer.
+ * @return
+ */
+- (void)disableIdleTimer
+{
+    [UIApplication sharedApplication].idleTimerDisabled = NO;
+    [UIApplication sharedApplication].idleTimerDisabled = YES;
 }
 
 - (void)setAudioPlayer:(NSURL*)newURL
