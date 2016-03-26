@@ -112,7 +112,7 @@ NSInteger playlistIndex = 0;
         repeatsShuffle = 3;
         fadeSetting = 2;
         playlistIndex = 0;
-        /// The text to write to the a new settings file.
+        /// The text to write to the new settings file.
         NSString *newSettings = [NSString stringWithFormat:@"%lu,%f,%li,%f,%li", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting, (long)playlistIndex];
         [newSettings writeToFile:filePath atomically:true encoding:NSUTF8StringEncoding error:nil];
     }
@@ -233,7 +233,6 @@ NSInteger playlistIndex = 0;
     
 }
 
-// Change song
 - (void)playMusic
 {
     if ([self isSongListEmpty])
