@@ -173,7 +173,7 @@ extern NSInteger playlistIndex;
  * @param sender The name of the screen to navigate to.
  * @return
  */
-- (IBAction)changeScreen:(NSString*)screen;
+- (IBAction)changeScreen:(NSString *)screen;
 /*!
  * Navigates to the previous screen.
  * @param sender The object that called this function.
@@ -191,31 +191,31 @@ extern NSInteger playlistIndex;
  * @param query The query to prepare.
  * @return
  */
-- (void)prepareQuery:(NSString*)query;
+- (void)prepareQuery:(NSString *)query;
 /*!
  * Executes a query to update the database.
  * @param query The query to update the database with.
  * @return
  */
-- (void)updateDB:(NSString*)query;
+- (void)updateDB:(NSString *)query;
 /*!
  * Gets an integer from a database query.
  * @param query The database query to get an integer with.
  * @return The integer obtained from the database query.
  */
-- (NSInteger)getIntegerDB:(NSString*)query;
+- (NSInteger)getIntegerDB:(NSString *)query;
 /*!
  * Opens the database and updates it.
  * @param query The query to update the database with.
  * @return
  */
-- (void)openUpdateDB:(NSString*)query;
+- (void)openUpdateDB:(NSString *)query;
 /*!
  * Executes a query to update the database.
  * @param query The query to update the database with.
  * @return The result code of the query.
  */
-- (NSInteger)updateDBResult:(NSString*)query;
+- (NSInteger)updateDBResult:(NSString *)query;
 
 /*!
  * Loads the total number of tracks in the app.
@@ -276,7 +276,7 @@ extern NSInteger playlistIndex;
  * Gets the name of the current playlist.
  * @return The name of the current playlist.
  */
-- (NSString*)getPlaylistName;
+- (NSString *)getPlaylistName;
 /*!
  * Updates the name of the current playlist according to the playlist index.
  * @return
@@ -287,7 +287,7 @@ extern NSInteger playlistIndex;
  * @param name The new name of the current playlist.
  * @return
  */
-- (void)updatePlaylistName:(NSString*)name;
+- (void)updatePlaylistName:(NSString *)name;
 
 /*!
  * Plays a track.
@@ -310,7 +310,7 @@ extern NSInteger playlistIndex;
  * @param newSong The name of the track to play.
  * @return
  */
-- (void)chooseSong:(NSString*)newSong;
+- (void)chooseSong:(NSString *)newSong;
 /*!
  * Sets the time offset for track looping.
  * @param newDelay The time to set the time offset to.
@@ -326,13 +326,13 @@ extern NSInteger playlistIndex;
  * Gets the name of the current track.
  * @return The name of the current track.
  */
-- (NSString*)getSongName;
+- (NSString *)getSongName;
 /*!
  * Sets the name of the current track.
  * @param The name to set the current track to.
  * @return
  */
-- (void)setNewSongName:(NSString*)newName;
+- (void)setNewSongName:(NSString *)newName;
 /*!
  * Gets the duration of the current track.
  * @return The duration of the current track.
@@ -403,7 +403,7 @@ extern NSInteger playlistIndex;
  * @param message The error message to display.
  * @return
  */
-- (void)showErrorMessage:(NSString*)message;
+- (void)showErrorMessage:(NSString *)message;
 /*!
  * Displays an error message stating that a track needs to be added to the app.
  * @return
@@ -416,7 +416,7 @@ extern NSInteger playlistIndex;
  * @param okay The text to display in the confirmation button.
  * @return
  */
-- (void)showTwoButtonMessage:(NSString*)title :(NSString*)message :(NSString*)okay;
+- (void)showTwoButtonMessage:(NSString *)title :(NSString *)message :(NSString *)okay;
 /*!
  * Shows a message dialogue with a text input and confirmation/cancel buttons.
  * @param title The title of the message dialogue box.
@@ -425,6 +425,6 @@ extern NSInteger playlistIndex;
  * @param initText The initial text to display in the text input box.
  * @return
  */
-- (void)showTwoButtonMessageInput:(NSString*)title :(NSString*)message :(NSString*)okay :(NSString*)initText;
+- (void)showTwoButtonMessageInput:(NSString *)title :(NSString *)message :(NSString *)okay :(NSString *)initText;
 
 @end

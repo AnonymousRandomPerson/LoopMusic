@@ -36,7 +36,6 @@
     {
         presenter = (LoopMusicViewController*)presenter.presentingViewController;
     }
-    
 }
 
 /*!
@@ -80,10 +79,15 @@
     if (tableView == self.searchDisplayController.searchResultsTableView)
     {
         cell.textLabel.text = [searchedItems objectAtIndex:indexPath.row];
+        table = tableView;
     }
     else
     {
         cell.textLabel.text = [items objectAtIndex:indexPath.row];
+        if (!self.searchDisplayController.active)
+        {
+            table = tableView;
+        }
     }
     return cell;
 }
@@ -129,8 +133,28 @@
 - (BOOL)searchDisplayController:(UISearchDisplayController *)controller shouldReloadTableForSearchString:(NSString *)searchString
 {
     [self filterContentForSearchText:searchString
-                               scope:[[self.searchDisplayController.searchBar scopeButtonTitles] objectAtIndex:[self.searchDisplayController.searchBar selectedScopeButtonIndex]]];
+                               scope:[self getScope]];
     return YES;
+}
+
+/*!
+ * Gets the scope of the search.
+ * @return The scope of the search.
+ */
+- (NSString*)getScope
+{
+    return [[self.searchDisplayController.searchBar scopeButtonTitles] objectAtIndex:[self.searchDisplayController.searchBar selectedScopeButtonIndex]];
+}
+
+- (void)restoreSearch:(NSString *)lastSearch :(CGPoint)lastPosition
+{
+    if (lastSearch != nil && ![lastSearch isEqualToString:@""])
+    {
+        self.searchDisplayController.active = true;
+        self.searchDisplayController.searchBar.text = lastSearch;
+        table = self.searchDisplayController.searchResultsTableView;
+    }
+    [table setContentOffset:lastPosition];
 }
 
 - (void)didReceiveMemoryWarning

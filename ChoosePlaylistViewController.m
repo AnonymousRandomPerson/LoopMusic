@@ -14,6 +14,11 @@
 
 @implementation ChoosePlaylistViewController
 
+/// The last search query the user entered.
+static NSString* lastSearch;
+/// The last scroll position the user was at.
+static CGPoint lastPosition;
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -23,12 +28,21 @@
         [items removeObject:@"All tracks"];
         [items insertObject:@"All tracks" atIndex:0];
     }
+    [self restoreSearch:lastSearch
+                       :lastPosition];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     [super tableView:tableView didSelectRowAtIndexPath:indexPath];
     [self dismissViewControllerAnimated:true completion:nil];
+}
+
+- (IBAction)back:(id)sender
+{
+    lastSearch = self.searchDisplayController.searchBar.text;
+    lastPosition = table.contentOffset;
+    [super back:sender];
 }
 
 - (void)selectItem:(NSString *)item

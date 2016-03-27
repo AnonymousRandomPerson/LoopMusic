@@ -14,10 +14,17 @@
 
 @implementation SearchViewController
 
+/// The last search query the user entered.
+static NSString* lastSearch;
+/// The last scroll position the user was at.
+static CGPoint lastPosition;
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     items = [self getSongList];
+    [self restoreSearch:lastSearch
+                       :lastPosition];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
@@ -26,7 +33,14 @@
     [self dismissViewControllerAnimated:true completion:nil];
 }
 
--(void)selectItem:(NSString *)item
+- (IBAction)back:(id)sender
+{
+    lastSearch = self.searchDisplayController.searchBar.text;
+    lastPosition = table.contentOffset;
+    [super back:sender];
+}
+
+- (void)selectItem:(NSString *)item
 {
     [presenter chooseSong:item];
 }

@@ -27,6 +27,13 @@ double fadeSetting = 0;
 /// The index of the currently selected playlist.
 NSInteger playlistIndex = 0;
 
+/// The amount of time that time shuffle can vary by.
+const static int TIMEVARIANCE = 30;
+/// The time before the loop point that testing time will move the playback timer to.
+const static double TESTTIMEOFFSET = 5;
+/// The time offset before swapping to the fast timer.
+const static double TIMERSWAPTIME = 5;
+
 @interface LoopMusicViewController ()
 
 @end
@@ -79,11 +86,7 @@ NSInteger playlistIndex = 0;
     songString = @"";
     chooseSongString = false;
     delay = 0;
-    timer = [NSTimer scheduledTimerWithTimeInterval:.0001
-                                             target:self
-                                           selector:@selector(timeDec:)
-                                           userInfo:nil
-                                            repeats:YES];
+    [self activateSlowTimer];
     time = [self getTime];
     repeats = 0;
     musicNumber = -1;
@@ -127,6 +130,74 @@ NSInteger playlistIndex = 0;
 }
 
 /*!
+ * Activates the slow loop timer.
+ * @return
+ */
+- (void)activateSlowTimer
+{
+    if (timer)
+    {
+        [timer invalidate];
+    }
+    timer = [NSTimer scheduledTimerWithTimeInterval:2
+                                             target:self
+                                           selector:@selector(timeDecSparse:)
+                                           userInfo:nil
+                                            repeats:YES];
+}
+
+/*!
+ * Activates the fast loop timer.
+ * @return
+ */
+- (void)activateFastTimer
+{
+    if (timer)
+    {
+        [timer invalidate];
+    }
+    timer = [NSTimer scheduledTimerWithTimeInterval:.0001
+                                             target:self
+                                           selector:@selector(timeDec:)
+                                           userInfo:nil
+                                            repeats:YES];
+}
+
+/*!
+ * Checks if the fast timer needs to be activated.
+ * @param callTimer The timer that called this function.
+ * @return
+ */
+- (void)timeDecSparse:(NSTimer*)callTimer
+{
+    [self timeDec:callTimer];
+    if (playing)
+    {
+        /// The time that the fast timer will activate at.
+        double swapTime = loopEnd - delay - TIMERSWAPTIME;
+        /// Whether the fast timer will be activated.
+        bool willSwap = false;
+        if (audioPlayer.currentTime >= swapTime ||
+            audioPlayer2.currentTime >= swapTime)
+        {
+            willSwap = true;
+        }
+        else if (timeShuffle > 0)
+        {
+            if (([self getTime] - time) >= timeShuffle2 - TIMERSWAPTIME && shuffleSetting == 1)
+            {
+                willSwap = true;
+            }
+        }
+        if (willSwap)
+        {
+            [self activateFastTimer];
+        }
+        [self disableIdleTimer];
+    }
+}
+
+/*!
  * Checks if the current track needs to be looped or shuffled.
  * @param timer The timer that called this function.
  * @return
@@ -141,7 +212,7 @@ NSInteger playlistIndex = 0;
             [audioPlayer stop];
             [audioPlayer prepareToPlay];
             audioPlayer.currentTime = loopTime - delay;
-            [self disableIdleTimer];
+            [self activateSlowTimer];
             repeats++;
         }
         else if (audioPlayer2.currentTime >= loopEnd - delay)
@@ -150,7 +221,7 @@ NSInteger playlistIndex = 0;
             [audioPlayer2 stop];
             [audioPlayer2 prepareToPlay];
             audioPlayer2.currentTime = loopTime - delay;
-            [self disableIdleTimer];
+            [self activateSlowTimer];
             repeats++;
         }
         if (!occupied)
@@ -159,14 +230,14 @@ NSInteger playlistIndex = 0;
             {
                 if (repeats >= repeatsShuffle)
                 {
-                    buffer=true;
+                    buffer = true;
                 }
             }
             if (timeShuffle > 0)
             {
                 if (([self getTime] - time) >= timeShuffle2 && shuffleSetting == 1)
                 {
-                    buffer=true;
+                    buffer = true;
                 }
             }
             if (buffer)
@@ -177,6 +248,7 @@ NSInteger playlistIndex = 0;
                     time = [self getTime];
                     choose = false;
                     [self playMusic];
+                    [self activateSlowTimer];
                     return;
                 }
                 else if (audioPlayer.volume > 0)
@@ -193,12 +265,14 @@ NSInteger playlistIndex = 0;
                 [audioPlayer2 play];
                 audioPlayer.currentTime = loopTime - delay;
                 [audioPlayer prepareToPlay];
+                [self activateSlowTimer];
             }
             else
             {
                 [audioPlayer play];
                 audioPlayer2.currentTime = loopTime - delay;
                 [audioPlayer2 prepareToPlay];
+                [self activateSlowTimer];
             }
             repeats++;
         }
@@ -484,7 +558,7 @@ NSInteger playlistIndex = 0;
     }
 }
 
-- (void)chooseSong:(NSString*)newSong
+- (void)chooseSong:(NSString *)newSong
 {
     playing=false;
     chooseSongString=true;
@@ -548,12 +622,12 @@ NSInteger playlistIndex = 0;
     occupied = newOccupied;
 }
 
-- (NSString*)getSongName
+- (NSString *)getSongName
 {
     return songName.text;
 }
 
-- (void)setNewSongName:(NSString*)newName
+- (void)setNewSongName:(NSString *)newName
 {
     songName.text = newName;
 }
@@ -565,7 +639,7 @@ NSInteger playlistIndex = 0;
 
 - (void)testTime
 {
-    double test = loopEnd - delay - 5;
+    double test = loopEnd - delay - TESTTIMEOFFSET;
     if (test < 0)
     {
         test = 0;
@@ -586,6 +660,10 @@ NSInteger playlistIndex = 0;
         [audioPlayer2 stop];
         audioPlayer2.currentTime = newCurrentTime;
         [audioPlayer2 play];
+    }
+    if (newCurrentTime > loopEnd - TIMERSWAPTIME)
+    {
+        [self activateFastTimer];
     }
 }
 
@@ -692,12 +770,12 @@ NSInteger playlistIndex = 0;
 
 - (double)timeVariance
 {
-    return (((double)((int)(arc4random() % 60 - 30))) / 60.0 + timeShuffle) * 60000000.0;
+    return (((double)((int)(arc4random() % 60 - TIMEVARIANCE))) / 60.0 + timeShuffle) * 60000000.0;
 }
 
 // Screen changing helpers
 
-- (IBAction)changeScreen:(NSString*)screen
+- (IBAction)changeScreen:(NSString *)screen
 {
     /// The storyboard for the app.
     UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main"
@@ -721,12 +799,12 @@ NSInteger playlistIndex = 0;
     sqlite3_open([[[NSString alloc] initWithString:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0] stringByAppendingPathComponent: @"Tracks.db"]] UTF8String], &trackData);
 }
 
-- (void)prepareQuery:(NSString*)query
+- (void)prepareQuery:(NSString *)query
 {
     sqlite3_prepare_v2(trackData, [query UTF8String], -1, &statement, NULL);
 }
 
-- (void)updateDB:(NSString*)query
+- (void)updateDB:(NSString *)query
 {
     /// The statement to execute the query with.
     sqlite3_stmt *tempStatement;
@@ -740,7 +818,7 @@ NSInteger playlistIndex = 0;
     sqlite3_finalize(tempStatement);
 }
 
-- (NSInteger)getIntegerDB:(NSString*)query
+- (NSInteger)getIntegerDB:(NSString *)query
 {
     /// The statement to execute the query with.
     sqlite3_stmt *tempStatement;
@@ -760,7 +838,7 @@ NSInteger playlistIndex = 0;
  * @param query The query to get a string from.
  * @return The string obtained from the query.
  */
-- (NSString*)getStringDB:(NSString*)query
+- (NSString *)getStringDB:(NSString *)query
 {
     /// The statement to execute the query with.
     sqlite3_stmt *tempStatement;
@@ -775,14 +853,14 @@ NSInteger playlistIndex = 0;
     return returnValue;
 }
 
-- (void)openUpdateDB:(NSString*)query
+- (void)openUpdateDB:(NSString *)query
 {
     [self openDB];
     [self updateDB:query];
     sqlite3_close(trackData);
 }
 
-- (NSInteger)updateDBResult:(NSString*)query
+- (NSInteger)updateDBResult:(NSString *)query
 {
     [self openDB];
     [self prepareQuery:query];
@@ -851,7 +929,7 @@ NSInteger playlistIndex = 0;
     sqlite3_close(trackData);
 }
 
-- (NSString*)getPlaylistName
+- (NSString *)getPlaylistName
 {
     if ([playlistName.text isEqualToString:@"All tracks"])
     {
@@ -869,7 +947,7 @@ NSInteger playlistIndex = 0;
     {
         [self openDB];
         /// The name of the current playlist.
-        NSString* newName = [self getStringDB:[NSString stringWithFormat:@"SELECT name FROM Playlists where id = %ld", (long)playlistIndex]];
+        NSString * newName = [self getStringDB:[NSString stringWithFormat:@"SELECT name FROM Playlists where id = %ld", (long)playlistIndex]];
         [self updatePlaylistName:newName];
         sqlite3_close(trackData);
         if ([newName isEqualToString:@""])
@@ -884,7 +962,7 @@ NSInteger playlistIndex = 0;
     }
 }
 
-- (void)updatePlaylistName:(NSString*)name
+- (void)updatePlaylistName:(NSString *)name
 {
     if (name && ![name isEqualToString:@"All tracks"])
     {
@@ -965,7 +1043,7 @@ NSInteger playlistIndex = 0;
  * @param table The name of the table to get entries from.
  * @return An array containing the names of all entries in a table.
  */
-- (NSMutableArray*)getNameList:(NSString*)table
+- (NSMutableArray*)getNameList:(NSString *)table
 {
     /// The names of all entries in a table.
     NSMutableArray *items = [NSMutableArray arrayWithCapacity:8];
@@ -998,7 +1076,7 @@ NSInteger playlistIndex = 0;
     return [self getNameList:@"Playlists"];
 }
 
-- (void)showErrorMessage:(NSString*)message
+- (void)showErrorMessage:(NSString *)message
 {
     if (NSClassFromString(@"UIAlertController"))
     {
@@ -1030,7 +1108,7 @@ NSInteger playlistIndex = 0;
     [self showErrorMessage:@"You need to add a song first."];
 }
 
-- (void)showTwoButtonMessage:(NSString*)title :(NSString*)message :(NSString*)okay
+- (void)showTwoButtonMessage:(NSString *)title :(NSString *)message :(NSString *)okay
 {
     /// The message dialogue box to display.
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:okay, nil];
@@ -1038,7 +1116,7 @@ NSInteger playlistIndex = 0;
     [alert show];
 }
 
-- (void)showTwoButtonMessageInput:(NSString*)title :(NSString*)message :(NSString*)okay :(NSString*)initText
+- (void)showTwoButtonMessageInput:(NSString *)title :(NSString *)message :(NSString *)okay :(NSString *)initText
 {
     /// The message dialogue box to display.
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:okay, nil];

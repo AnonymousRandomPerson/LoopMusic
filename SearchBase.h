@@ -37,7 +37,15 @@
  * @param The name of the item that was selected.
  * @return
  */
-- (void)selectItem:(NSString*)item;
+- (void)selectItem:(NSString *)item;
+
+/*!
+ * Restores the previous search query when this screen was last used.
+ * @param lastSearch The previous search string.
+ * @param lastPosition The previous search position.
+ * @return
+ */
+- (void)restoreSearch:(NSString *)lastSearch :(CGPoint)lastPosition;
 
 @end
 
