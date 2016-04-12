@@ -75,7 +75,7 @@ const static double TIMERSWAPTIME = 5;
     
     sqlite3_close(trackData);
     // Set up audio player
-    playing=true;
+    playing = true;
     audioSession = [AVAudioSession sharedInstance];
     [audioSession setCategory:AVAudioSessionCategoryPlayback
                         error:nil];
@@ -265,15 +265,14 @@ const static double TIMERSWAPTIME = 5;
                 [audioPlayer2 play];
                 audioPlayer.currentTime = loopTime - delay;
                 [audioPlayer prepareToPlay];
-                [self activateSlowTimer];
             }
             else
             {
                 [audioPlayer play];
                 audioPlayer2.currentTime = loopTime - delay;
                 [audioPlayer2 prepareToPlay];
-                [self activateSlowTimer];
             }
+            [self activateSlowTimer];
             repeats++;
         }
     }
@@ -309,6 +308,7 @@ const static double TIMERSWAPTIME = 5;
 
 - (void)playMusic
 {
+    playing = false;
     if ([self isSongListEmpty])
     {
         return;
@@ -318,7 +318,6 @@ const static double TIMERSWAPTIME = 5;
         totalPlaylistSongs = totalSongs;
     }
     [self disableIdleTimer];
-    playing = false;
     valid = false;
     
     [self openDB];
@@ -428,11 +427,7 @@ const static double TIMERSWAPTIME = 5;
     [self updateVolumeDec];
     if (!timer)
     {
-        timer = [NSTimer scheduledTimerWithTimeInterval:.0001
-                                                 target:self
-                                               selector:@selector(timeDec:)
-                                               userInfo:nil
-                                                repeats:YES];
+        [self activateSlowTimer];
     }
     playing = true;
     [audioPlayer play];
@@ -471,9 +466,11 @@ const static double TIMERSWAPTIME = 5;
         NSLog(@"%@", [error description]);
         return;
     }
+    audioPlayer.delegate = self;
     audioPlayer.numberOfLoops = 0;
     audioPlayer2 = [[AVAudioPlayer alloc] initWithContentsOfURL:newURL
                                                           error:&error];
+    audioPlayer2.delegate = self;
     audioPlayer2.numberOfLoops = 0;
     [audioPlayer stop];
     [audioPlayer2 stop];
@@ -530,11 +527,7 @@ const static double TIMERSWAPTIME = 5;
         playing = true;
         if (!timer)
         {
-            timer = [NSTimer scheduledTimerWithTimeInterval:.0001
-                                                     target:self
-                                                   selector:@selector(timeDec:)
-                                                   userInfo:nil
-                                                    repeats:YES];
+            [self activateSlowTimer];
         }
     }
 }
@@ -546,8 +539,17 @@ const static double TIMERSWAPTIME = 5;
         [self showNoSongMessage];
         return;
     }
+    [self stopPlayers];
+}
+
+/*!
+ * Stops all audio players.
+ * @return
+ */
+- (void)stopPlayers
+{
     [UIApplication sharedApplication].idleTimerDisabled = NO;
-    playing=false;
+    playing = false;
     if (audioPlayer.playing)
     {
         [audioPlayer stop];
@@ -556,13 +558,17 @@ const static double TIMERSWAPTIME = 5;
     {
         [audioPlayer2 stop];
     }
+    if (timer)
+    {
+        [timer invalidate];
+    }
 }
 
 - (void)chooseSong:(NSString *)newSong
 {
-    playing=false;
-    chooseSongString=true;
-    choose=true;
+    playing = false;
+    chooseSongString = true;
+    choose = true;
     chooseSongText = newSong;
     [self playMusic];
 }
@@ -1126,6 +1132,10 @@ const static double TIMERSWAPTIME = 5;
         [alert textFieldAtIndex:0].text = initText;
     }
     [alert show];
+}
+
+- (void)audioPlayerBeginInterruption:(AVAudioPlayer *)player {
+    [self stopPlayers];
 }
 
 - (void)didReceiveMemoryWarning

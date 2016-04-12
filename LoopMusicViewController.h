@@ -30,7 +30,7 @@ extern double fadeSetting;
 /// The index of the currently selected playlist.
 extern NSInteger playlistIndex;
 
-@interface LoopMusicViewController : UIViewController
+@interface LoopMusicViewController : UIViewController<AVAudioPlayerDelegate>
 {
     /// The starting audio player for playing tracks.
     AVAudioPlayer *audioPlayer;
@@ -426,5 +426,12 @@ extern NSInteger playlistIndex;
  * @return
  */
 - (void)showTwoButtonMessageInput:(NSString *)title :(NSString *)message :(NSString *)okay :(NSString *)initText;
+
+/*!
+ * Upon interruption, your application’s audio session is deactivated and the audio player pauses. You cannot use the audio player again until you receive a notification that the interruption has ended.
+ * @param player The player that was interrupted.
+ * @return
+ */
+- (void)audioPlayerBeginInterruption:(AVAudioPlayer *)player;
 
 @end
