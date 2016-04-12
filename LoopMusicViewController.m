@@ -561,6 +561,7 @@ const static double TIMERSWAPTIME = 5;
     if (timer)
     {
         [timer invalidate];
+        timer = nil;
     }
 }
 
