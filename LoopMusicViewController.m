@@ -247,7 +247,10 @@ const static double TIMERSWAPTIME = 5;
                     buffer = false;
                     time = [self getTime];
                     choose = false;
-                    [self playMusic];
+                    if (playing)
+                    {
+                        [self playMusic];
+                    }
                     [self activateSlowTimer];
                     return;
                 }
@@ -287,7 +290,7 @@ const static double TIMERSWAPTIME = 5;
  */
 - (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)data successfully:(BOOL)flag
 {
-    if (audioPlayer.playing)
+    if (data == audioPlayer)
     {
         [audioPlayer2 play];
         [audioPlayer stop];
@@ -295,7 +298,7 @@ const static double TIMERSWAPTIME = 5;
         [audioPlayer prepareToPlay];
         repeats++;
     }
-    else if (audioPlayer2.playing)
+    else if (data == audioPlayer2)
     {
         [audioPlayer play];
         [audioPlayer2 stop];
@@ -366,7 +369,7 @@ const static double TIMERSWAPTIME = 5;
             return;
         }
     }
-    // If chosen song text is a number
+    // If chosen song text is a number.
     else
     {
         do
