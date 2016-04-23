@@ -80,7 +80,7 @@
     {
         deleteText = @"these tracks";
     }
-    [self showTwoButtonMessage:@"Delete Playlist" :[NSString stringWithFormat:@"Delete %@?", deleteText] :@"Okay"];
+    [self showTwoButtonMessage:@"Delete Track" :[NSString stringWithFormat:@"Delete %@?", deleteText] :@"Okay"];
 }
 
 @end
