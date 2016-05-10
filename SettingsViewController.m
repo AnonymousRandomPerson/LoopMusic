@@ -33,11 +33,11 @@
     shuffle.selectedSegmentIndex = shuffleSetting;
     fadeText.text = [NSString stringWithFormat:@"%f", fadeSetting];
     /// Timer to load settings for the app.
-    NSTimer *loadTimer = [NSTimer scheduledTimerWithTimeInterval:.1
-                                                          target:self
-                                                        selector:@selector(loadSettings:)
-                                                        userInfo:nil
-                                                         repeats:NO];
+    [NSTimer scheduledTimerWithTimeInterval:.1
+                                     target:self
+                                   selector:@selector(loadSettings:)
+                                   userInfo:nil
+                                    repeats:NO];
 }
 
 /*!

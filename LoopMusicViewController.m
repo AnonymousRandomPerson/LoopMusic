@@ -31,8 +31,6 @@ NSInteger playlistIndex = 0;
 const static int TIMEVARIANCE = 30;
 /// The time before the loop point that testing time will move the playback timer to.
 const static double TESTTIMEOFFSET = 5;
-/// The time offset before swapping to the fast timer.
-const static double TIMERSWAPTIME = 5;
 
 @interface LoopMusicViewController ()
 
@@ -74,19 +72,16 @@ const static double TIMERSWAPTIME = 5;
     sqlite3_finalize(statement);
     
     sqlite3_close(trackData);
-    // Set up audio player
+    // Set up audio player.
     playing = true;
-    audioSession = [AVAudioSession sharedInstance];
-    [audioSession setCategory:AVAudioSessionCategoryPlayback
-                        error:nil];
-    [audioSession setActive:YES
-                      error:nil];
+    
+    audioPlayer = [[AudioPlayer alloc] init];
+    loopTimer = [[AudioTimer alloc] initWithPlayer:audioPlayer];
+    
     [[UIApplication sharedApplication] beginReceivingRemoteControlEvents];
     choose = false;
     songString = @"";
     chooseSongString = false;
-    delay = 0;
-    [self activateSlowTimer];
     time = [self getTime];
     repeats = 0;
     musicNumber = -1;
@@ -124,189 +119,117 @@ const static double TIMERSWAPTIME = 5;
         [self updatePlaylistSongs];
         [self updatePlaylistName];
     }
+    
     [self playMusic];
     initBright = [UIScreen mainScreen].brightness;
     dim.on = false;
 }
 
 /*!
- * Activates the slow loop timer.
+ * Updates the loop timer when loop conditions change.
  * @return
  */
-- (void)activateSlowTimer
+- (void)updateLoopTimer
 {
-    if (timer)
+    NSTimeInterval blockTime = loopEnd - audioPlayer.currentTime;
+    [self cancelFadeTimer];
+    if (!occupied && shuffleSetting == 1 && timeShuffle > 0)
     {
-        [timer invalidate];
-    }
-    timer = [NSTimer scheduledTimerWithTimeInterval:2
-                                             target:self
-                                           selector:@selector(timeDecSparse:)
-                                           userInfo:nil
-                                            repeats:YES];
-}
-
-/*!
- * Activates the fast loop timer.
- * @return
- */
-- (void)activateFastTimer
-{
-    if (timer)
-    {
-        [timer invalidate];
-    }
-    timer = [NSTimer scheduledTimerWithTimeInterval:.0001
-                                             target:self
-                                           selector:@selector(timeDec:)
-                                           userInfo:nil
-                                            repeats:YES];
-}
-
-/*!
- * Checks if the fast timer needs to be activated.
- * @param callTimer The timer that called this function.
- * @return
- */
-- (void)timeDecSparse:(NSTimer*)callTimer
-{
-    [self timeDec:callTimer];
-    if (playing)
-    {
-        /// The time that the fast timer will activate at.
-        double swapTime = loopEnd - delay - TIMERSWAPTIME;
-        /// Whether the fast timer will be activated.
-        bool willSwap = false;
-        if (audioPlayer.currentTime >= swapTime ||
-            audioPlayer2.currentTime >= swapTime)
+        NSTimeInterval shuffleTime = (timeShuffle2 - [self getTime] + time) / 1000000;
+        if (shuffleTime < blockTime)
         {
-            willSwap = true;
+            blockTime = shuffleTime;
+            buffer = true;
         }
-        else if (timeShuffle > 0)
+    }
+    
+    AEBlockSchedulerBlock audioBlock =
+    ^(const AudioTimeStamp *intervalStartTime, UInt32 offsetInFrames)
+    {
+        if (playing)
         {
-            if (([self getTime] - time) >= timeShuffle2 - TIMERSWAPTIME && shuffleSetting == 1)
+            NSLog(@"%u %hd %f", offsetInFrames, intervalStartTime->mSMPTETime.mSubframeDivisor, audioPlayer->audioPlayer.currentTime);
+            audioPlayer->audioPlayer.currentTime = loopTime;
+        }
+    };
+    
+    AEBlockSchedulerBlock mainBlock =
+    ^(const AudioTimeStamp *intervalStartTime, UInt32 offsetInFrames)
+    {
+        if (playing)
+        {
+            [self updateLoopTimer];
+            if (!occupied)
             {
-                willSwap = true;
+                if (repeatsShuffle > 0 && shuffleSetting == 2)
+                {
+                    if (repeats >= repeatsShuffle)
+                    {
+                        buffer = true;
+                    }
+                }
+                if (buffer)
+                {
+                    if (fadeSetting > 0)
+                    {
+                        [self shuffleTrack];
+                    }
+                    else
+                    {
+                        fadeTimer = [NSTimer scheduledTimerWithTimeInterval:.0001
+                                                                    target:self
+                                                                   selector:@selector(fadeOut:)
+                                                                   userInfo:nil
+                                                                    repeats:YES];
+                    }
+                }
             }
         }
-        if (willSwap)
-        {
-            [self activateFastTimer];
-        }
-        [self disableIdleTimer];
+    };
+    
+    [loopTimer changeBlock:blockTime
+                          :audioBlock
+                          :mainBlock
+                          :audioPlayer.currentTime];
+}
+
+- (void)cancelFadeTimer
+{
+    if (fadeTimer)
+    {
+        [fadeTimer invalidate];
+        fadeTimer = nil;
     }
 }
 
 /*!
- * Checks if the current track needs to be looped or shuffled.
+ * Shuffles the currently playing track.
+ * @return
+ */
+- (void)shuffleTrack
+{
+    buffer = false;
+    time = [self getTime];
+    choose = false;
+    [self playMusic];
+}
+
+/*!
+ * Gradually fades out a track.
  * @param timer The timer that called this function.
  * @return
  */
-- (void)timeDec:(NSTimer*)timer
+- (void)fadeOut:(NSTimer *)timer
 {
-    if (playing)
+    if (++fadeTime > fadeSetting * 5000)
     {
-        if (audioPlayer.currentTime >= loopEnd - delay)
-        {
-            [audioPlayer2 play];
-            [audioPlayer stop];
-            [audioPlayer prepareToPlay];
-            audioPlayer.currentTime = loopTime - delay;
-            [self activateSlowTimer];
-            repeats++;
-        }
-        else if (audioPlayer2.currentTime >= loopEnd - delay)
-        {
-            [audioPlayer play];
-            [audioPlayer2 stop];
-            [audioPlayer2 prepareToPlay];
-            audioPlayer2.currentTime = loopTime - delay;
-            [self activateSlowTimer];
-            repeats++;
-        }
-        if (!occupied)
-        {
-            if (repeatsShuffle > 0 && shuffleSetting == 2)
-            {
-                if (repeats >= repeatsShuffle)
-                {
-                    buffer = true;
-                }
-            }
-            if (timeShuffle > 0)
-            {
-                if (([self getTime] - time) >= timeShuffle2 && shuffleSetting == 1)
-                {
-                    buffer = true;
-                }
-            }
-            if (buffer)
-            {
-                if (++fadeTime > fadeSetting * 5000)
-                {
-                    buffer = false;
-                    time = [self getTime];
-                    choose = false;
-                    if (playing)
-                    {
-                        [self playMusic];
-                    }
-                    [self activateSlowTimer];
-                    return;
-                }
-                else if (audioPlayer.volume > 0)
-                {
-                    audioPlayer.volume -= volumeDec;
-                    audioPlayer2.volume -= volumeDec;
-                }
-            }
-        }
-        if (!audioPlayer2.playing && !audioPlayer.playing && time > 10000)
-        {
-            if (audioPlayer.currentTime == 0)
-            {
-                [audioPlayer2 play];
-                audioPlayer.currentTime = loopTime - delay;
-                [audioPlayer prepareToPlay];
-            }
-            else
-            {
-                [audioPlayer play];
-                audioPlayer2.currentTime = loopTime - delay;
-                [audioPlayer2 prepareToPlay];
-            }
-            [self activateSlowTimer];
-            repeats++;
-        }
+        NSLog(@"Fade");
+        [self shuffleTrack];
     }
-}
-
-/*!
- * Called when a sound has finished playing.
- * @param data The audio player that finished playing.
- * @param flag YES on successful completion of playback; NO if playback stopped because the system could not decode the audio data.
- * @discussion This method is not called upon an audio interruption. Rather, an audio player is paused upon interruption—the sound has not finished playing.
- * @return
- */
-- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)data successfully:(BOOL)flag
-{
-    if (data == audioPlayer)
+    else if (audioPlayer.volume > 0)
     {
-        [audioPlayer2 play];
-        [audioPlayer stop];
-        audioPlayer.currentTime = loopTime - delay;
-        [audioPlayer prepareToPlay];
-        repeats++;
+        audioPlayer.volume -= volumeDec;
     }
-    else if (data == audioPlayer2)
-    {
-        [audioPlayer play];
-        [audioPlayer2 stop];
-        audioPlayer2.currentTime = loopTime - delay;
-        [audioPlayer2 prepareToPlay];
-        repeats++;
-    }
-    
 }
 
 - (void)playMusic
@@ -350,7 +273,7 @@ const static double TIMERSWAPTIME = 5;
                 loopEnd = sqlite3_column_double(statement, 3);
                 volumeSet = sqlite3_column_double(statement, 4);
                 enabled = sqlite3_column_int(statement, 5);
-                if (sqlite3_column_text(statement, 6) != nil) {
+                if (sqlite3_column_text(statement, 6)) {
                     url = [NSURL URLWithString:[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)]];
                 }
                 else
@@ -406,7 +329,7 @@ const static double TIMERSWAPTIME = 5;
                 loopEnd = sqlite3_column_double(statement, 3);
                 volumeSet = sqlite3_column_double(statement, 4);
                 enabled = sqlite3_column_int(statement, 5);
-                if (sqlite3_column_text(statement, 6) != nil)
+                if (sqlite3_column_text(statement, 6))
                 {
                     url = [NSURL URLWithString:[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)]];
                 }
@@ -425,16 +348,10 @@ const static double TIMERSWAPTIME = 5;
         songName.text = nameField;
     }
     sqlite3_close(trackData);
-    NSLog(@"%@", songName.text);
     [self setAudioPlayer:url];
     [self updateVolumeDec];
-    if (!timer)
-    {
-        [self activateSlowTimer];
-    }
     playing = true;
     [audioPlayer play];
-    [audioPlayer2 prepareToPlay];
     repeats = 0;
     fadeTime = 0;
     buffer = false;
@@ -445,6 +362,7 @@ const static double TIMERSWAPTIME = 5;
         [self openDB];
         [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET loopend = %f WHERE id=\"%li\"", loopEnd, (long)musicNumber]];
     }
+    [self updateLoopTimer];
 }
 
 /*!
@@ -459,28 +377,19 @@ const static double TIMERSWAPTIME = 5;
 
 - (void)setAudioPlayer:(NSURL*)newURL
 {
-    // Change audio player settings
+    // Change audio player settings.
     /// Data about errors that occur when initializing the audio players.
     NSError *error;
-    audioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:newURL
-                                                         error:&error];
-    if (audioPlayer == nil)
+    [audioPlayer initAudioPlayer:newURL
+                                :error];
+    if (error)
     {
         NSLog(@"%@", [error description]);
         return;
     }
-    audioPlayer.delegate = self;
-    audioPlayer.numberOfLoops = 0;
-    audioPlayer2 = [[AVAudioPlayer alloc] initWithContentsOfURL:newURL
-                                                          error:&error];
-    audioPlayer2.delegate = self;
-    audioPlayer2.numberOfLoops = 0;
     [audioPlayer stop];
-    [audioPlayer2 stop];
     audioPlayer.currentTime = 0;
-    audioPlayer2.currentTime = loopTime - delay;
     audioPlayer.volume = volumeSet;
-    audioPlayer2.volume = volumeSet;
 }
 
 - (void)updateVolumeDec
@@ -499,16 +408,7 @@ const static double TIMERSWAPTIME = 5;
     repeats = 0;
     choose = false;
     playing = false;
-    audioPlayer.currentTime = 0;
-    audioPlayer2.currentTime = 0;
-    if (audioPlayer.playing)
-    {
-        [audioPlayer stop];
-    }
-    if (audioPlayer2.playing)
-    {
-        [audioPlayer2 stop];
-    }
+    [audioPlayer stop];
     [self playMusic];
 }
 
@@ -519,19 +419,14 @@ const static double TIMERSWAPTIME = 5;
         [self showNoSongMessage];
         return;
     }
-    if (!audioPlayer.playing && !audioPlayer2.playing)
+    if (!audioPlayer.playing)
     {
         time = [self getTime];
         repeats = 0;
         audioPlayer.currentTime = 0;
-        audioPlayer2.currentTime = loopTime - delay;
         [audioPlayer play];
-        [audioPlayer2 prepareToPlay];
         playing = true;
-        if (!timer)
-        {
-            [self activateSlowTimer];
-        }
+        [self updateLoopTimer];
     }
 }
 
@@ -542,30 +437,20 @@ const static double TIMERSWAPTIME = 5;
         [self showNoSongMessage];
         return;
     }
-    [self stopPlayers];
+    [self stopPlayer];
 }
 
 /*!
- * Stops all audio players.
+ * Stops the audio player.
  * @return
  */
-- (void)stopPlayers
+- (void)stopPlayer
 {
     [UIApplication sharedApplication].idleTimerDisabled = NO;
     playing = false;
-    if (audioPlayer.playing)
-    {
-        [audioPlayer stop];
-    }
-    if (audioPlayer2.playing)
-    {
-        [audioPlayer2 stop];
-    }
-    if (timer)
-    {
-        [timer invalidate];
-        timer = nil;
-    }
+    [audioPlayer stop];
+    [loopTimer cancelBlock];
+    [self cancelFadeTimer];
 }
 
 - (void)chooseSong:(NSString *)newSong
@@ -598,16 +483,6 @@ const static double TIMERSWAPTIME = 5;
     loopTime = newLoopTime;
     /// The result code of the database update query for setting the loop time.
     NSInteger result = [self updateDBResult:[NSString stringWithFormat:@"UPDATE Tracks SET loopstart = %f WHERE name = \"%@\"", newLoopTime, songName.text]];
-    if (audioPlayer.playing)
-    {
-        audioPlayer2.currentTime = newLoopTime - delay;
-        [audioPlayer2 prepareToPlay];
-    }
-    else if (audioPlayer2.playing)
-    {
-        audioPlayer.currentTime = newLoopTime - delay;
-        [audioPlayer prepareToPlay];
-    }
     return result;
 }
 
@@ -618,18 +493,21 @@ const static double TIMERSWAPTIME = 5;
 - (long long)getTime
 {
     gettimeofday(&t, nil);
-    // Returns time in microseconds
     return t.tv_sec * 1000000 + t.tv_usec;
-}
-
-- (void)setDelay:(float)newDelay
-{
-    delay = newDelay;
 }
 
 - (void)setOccupied:(bool)newOccupied
 {
     occupied = newOccupied;
+    if (occupied)
+    {
+        [self cancelFadeTimer];
+        audioPlayer.volume = volumeSet;
+    }
+    else
+    {
+        [self updateLoopTimer];
+    }
 }
 
 - (NSString *)getSongName
@@ -649,7 +527,7 @@ const static double TIMERSWAPTIME = 5;
 
 - (void)testTime
 {
-    double test = loopEnd - delay - TESTTIMEOFFSET;
+    double test = loopEnd - TESTTIMEOFFSET;
     if (test < 0)
     {
         test = 0;
@@ -659,22 +537,8 @@ const static double TIMERSWAPTIME = 5;
 
 - (void)setCurrentTime:(double)newCurrentTime
 {
-    if (audioPlayer.playing)
-    {
-        [audioPlayer stop];
-        audioPlayer.currentTime = newCurrentTime;
-        [audioPlayer play];
-    }
-    else if (audioPlayer2.playing)
-    {
-        [audioPlayer2 stop];
-        audioPlayer2.currentTime = newCurrentTime;
-        [audioPlayer2 play];
-    }
-    if (newCurrentTime > loopEnd - TIMERSWAPTIME)
-    {
-        [self activateFastTimer];
-    }
+    audioPlayer.currentTime = newCurrentTime;
+    [self updateLoopTimer];
 }
 
 - (float)getVolume
@@ -689,7 +553,6 @@ const static double TIMERSWAPTIME = 5;
         return;
     }
     audioPlayer.volume = newVolume;
-    audioPlayer2.volume = newVolume;
     volumeSet = newVolume;
     [self updateVolumeDec];
     [self openUpdateDB:[NSString stringWithFormat:@"UPDATE Tracks SET volume = %f WHERE name = \"%@\"", newVolume, songName.text]];
@@ -700,10 +563,6 @@ const static double TIMERSWAPTIME = 5;
     if (audioPlayer.playing)
     {
         return audioPlayer.currentTime;
-    }
-    else if (audioPlayer2.playing)
-    {
-        return audioPlayer2.currentTime;
     }
     else
     {
@@ -735,7 +594,7 @@ const static double TIMERSWAPTIME = 5;
 
 - (void)remoteControlReceivedWithEvent:(UIEvent *)event
 {
-    //if it is a remote control event handle it correctly
+    // If it is a remote control event, handle it correctly.
     if (event.type == UIEventTypeRemoteControl)
     {
         if (event.subtype == UIEventSubtypeRemoteControlPlay)
@@ -758,11 +617,6 @@ const static double TIMERSWAPTIME = 5;
     }
 }
 
-- (double)getDelay
-{
-    return delay;
-}
-
 - (bool)getEnabled
 {
     return enabled;
@@ -783,7 +637,7 @@ const static double TIMERSWAPTIME = 5;
     return (((double)((int)(arc4random() % 60 - TIMEVARIANCE))) / 60.0 + timeShuffle) * 60000000.0;
 }
 
-// Screen changing helpers
+// Screen changing helpers.
 
 - (IBAction)changeScreen:(NSString *)screen
 {
@@ -1115,7 +969,7 @@ const static double TIMERSWAPTIME = 5;
 
 - (void)showNoSongMessage
 {
-    [self showErrorMessage:@"You need to add a song first."];
+    [self showErrorMessage:@"You need to add a track first."];
 }
 
 - (void)showTwoButtonMessage:(NSString *)title :(NSString *)message :(NSString *)okay
@@ -1136,10 +990,6 @@ const static double TIMERSWAPTIME = 5;
         [alert textFieldAtIndex:0].text = initText;
     }
     [alert show];
-}
-
-- (void)audioPlayerBeginInterruption:(AVAudioPlayer *)player {
-    [self stopPlayers];
 }
 
 - (void)didReceiveMemoryWarning

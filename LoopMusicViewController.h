@@ -8,10 +8,9 @@
 
 #import <UIKit/UIKit.h>
 #import <sqlite3.h>
-#import <AVFoundation/AVFoundation.h>
-#import <AudioToolbox/AudioToolbox.h>
 #import <sys/time.h>
 #import <MediaPlayer/MediaPlayer.h>
+#import "AudioTimer.h"
 
 /// The time that the current track will loop back to when looping.
 extern double loopTime;
@@ -30,16 +29,12 @@ extern double fadeSetting;
 /// The index of the currently selected playlist.
 extern NSInteger playlistIndex;
 
-@interface LoopMusicViewController : UIViewController<AVAudioPlayerDelegate>
+@interface LoopMusicViewController : UIViewController
 {
-    /// The starting audio player for playing tracks.
-    AVAudioPlayer *audioPlayer;
-    /// The secondary audio player for gapless playback.
-    AVAudioPlayer *audioPlayer2;
-    /// The current audio session that the audio players are using.
-    AVAudioSession *audioSession;
+    /// The audio player that plays tracks.
+    AudioPlayer *audioPlayer;
     
-    /// The database index of the currentl track.
+    /// The database index of the current track.
     NSInteger musicNumber;
     /// The resource URL of the current track.
     NSURL *url;
@@ -51,8 +46,6 @@ extern NSInteger playlistIndex;
     bool chooseSongString;
     /// Whether a track is playing.
     bool playing;
-    /// Time offset for track looping.
-    float delay;
     /// The amount of milliseconds that the current track has been fading out for.
     double fadeTime;
     /// The amount to decrement volume per tick when fading out.
@@ -113,8 +106,10 @@ extern NSInteger playlistIndex;
     /// The initial brightness that the screen was at when the app started.
     float initBright;
     
-    /// Timer for checking when to loop the current track.
-    NSTimer *timer;
+    /// Timer used to loop tracks.
+    AudioTimer *loopTimer;
+    /// Timer used to fade a track.
+    NSTimer *fadeTimer;
 }
 
 /// Button to randomize the current track.
@@ -312,11 +307,6 @@ extern NSInteger playlistIndex;
  */
 - (void)chooseSong:(NSString *)newSong;
 /*!
- * Sets the time offset for track looping.
- * @param newDelay The time to set the time offset to.
- */
-- (void)setDelay:(float)newDelay;
-/*!
  * Sets whether a screen other than the main screen is showing.
  * @param newOccupied Whether a screen other than the main screen is showing.
  * @return
@@ -372,11 +362,6 @@ extern NSInteger playlistIndex;
  */
 - (void)setCurrentTime:(double)newCurrentTime;
 /*!
- * Gets the time offset for track looping.
- * @return The time offset for track looping.
- */
-- (double)getDelay;
-/*!
  * Gets whether the current track is enabled in shuffle.
  * @return Whether the current track is enabled in shuffle.
  */
@@ -426,12 +411,5 @@ extern NSInteger playlistIndex;
  * @return
  */
 - (void)showTwoButtonMessageInput:(NSString *)title :(NSString *)message :(NSString *)okay :(NSString *)initText;
-
-/*!
- * Upon interruption, your application’s audio session is deactivated and the audio player pauses. You cannot use the audio player again until you receive a notification that the interruption has ended.
- * @param player The player that was interrupted.
- * @return
- */
-- (void)audioPlayerBeginInterruption:(AVAudioPlayer *)player;
 
 @end

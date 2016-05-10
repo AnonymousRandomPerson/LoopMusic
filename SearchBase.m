@@ -17,11 +17,11 @@
 - (void)viewDidLoad
 {
     /// Timer to load the main screen of the app.
-    NSTimer *loadTimer = [NSTimer scheduledTimerWithTimeInterval:.1
-                                                          target:self
-                                                        selector:@selector(loadPresenter:)
-                                                        userInfo:nil
-                                                         repeats:NO];
+    [NSTimer scheduledTimerWithTimeInterval:.1
+                                     target:self
+                                   selector:@selector(loadPresenter:)
+                                   userInfo:nil
+                                    repeats:NO];
 }
 
 /*!

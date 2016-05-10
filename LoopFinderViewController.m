@@ -30,11 +30,11 @@
     finderSetTime.text = [NSString stringWithFormat:@"%f", loopTime];
     finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
     /// Timer to load the current track name and the main screen of the app.
-    NSTimer *loadTimer = [NSTimer scheduledTimerWithTimeInterval:.1
-                                                          target:self
-                                                        selector:@selector(loadSettings:)
-                                                        userInfo:nil
-                                                         repeats:NO];
+    [NSTimer scheduledTimerWithTimeInterval:.1
+                                     target:self
+                                   selector:@selector(loadSettings:)
+                                   userInfo:nil
+                                    repeats:NO];
 }
 
 /*!
@@ -208,7 +208,7 @@
  */
 - (IBAction)findTime:(id)sender
 {
-    findTimeText.text = [NSString stringWithFormat:@"%f", [presenter findTime] + [presenter getDelay]];
+    findTimeText.text = [NSString stringWithFormat:@"%f", [presenter findTime]];
 }
 
 /*!
@@ -226,7 +226,7 @@
 - (IBAction)back:(id)sender
 {
     [(SettingsViewController*)self.presentingViewController returned];
-    [super back:sender];
+    [self dismissViewControllerAnimated:true completion:nil];
 }
 
 - (void)didReceiveMemoryWarning
