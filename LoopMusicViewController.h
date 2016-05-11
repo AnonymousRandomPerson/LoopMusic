@@ -10,12 +10,8 @@
 #import <sqlite3.h>
 #import <sys/time.h>
 #import <MediaPlayer/MediaPlayer.h>
-#import "AudioTimer.h"
+#import "AudioPlayer.h"
 
-/// The time that the current track will loop back to when looping.
-extern double loopTime;
-/// The time that the current track will loop back from when looping.
-extern double loopEnd;
 /// The name of the current track.
 extern NSString *settingsSongString;
 /// The base amount of time to play a track before shuffling.
@@ -44,8 +40,6 @@ extern NSInteger playlistIndex;
     NSString *songString;
     /// Whether a track is being chosen by its name.
     bool chooseSongString;
-    /// Whether a track is playing.
-    bool playing;
     /// The amount of milliseconds that the current track has been fading out for.
     double fadeTime;
     /// The amount to decrement volume per tick when fading out.
@@ -63,8 +57,6 @@ extern NSInteger playlistIndex;
     IBOutlet UILabel *songName;
     /// Button to go to playback settings.
     IBOutlet UIButton *settings;
-    /// Switch to dim the screen brightness.
-    IBOutlet UISwitch *dim;
     /// Label for the name of the current playlist.
     IBOutlet UILabel *playlistName;
     
@@ -92,23 +84,16 @@ extern NSInteger playlistIndex;
     /// The currently active statement to the track database.
     sqlite3_stmt *statement;
     
-    /// Used to get the current system time.
-    struct timeval t;
     /// The time that the current track started playing at.
     long long time;
     /// The number of times the current track has repeated.
     NSUInteger repeats;
-    /// Flag for shuffling the current track.
-    bool buffer;
     /// Whether a screen other than the main screen is showing.
     bool occupied;
     
-    /// The initial brightness that the screen was at when the app started.
-    float initBright;
-    
     /// Timer used to loop tracks.
-    AudioTimer *loopTimer;
-    /// Timer used to fade a track.
+    NSTimer *shuffleTimer;
+    /// Timer used to fade out tracks.
     NSTimer *fadeTimer;
 }
 
@@ -124,8 +109,6 @@ extern NSInteger playlistIndex;
 @property(nonatomic, retain) UILabel *songName;
 /// Button to go to playback settings.
 @property(nonatomic, retain) UIButton *settings;
-/// Switch to dim the screen brightness.
-@property(nonatomic, retain) UISwitch *dim;
 
 /*!
  * Chooses a random track to be played.
@@ -157,12 +140,6 @@ extern NSInteger playlistIndex;
  * @return
  */
 - (IBAction)settings:(id)sender;
-/*!
- * Toggles the dimming of the screen.
- * @param sender The object that called this function.
- * @return
- */
-- (IBAction)dim:(id)sender;
 /*!
  * Navigates to a certain screen.
  * @param sender The name of the screen to navigate to.
@@ -366,17 +343,6 @@ extern NSInteger playlistIndex;
  * @return Whether the current track is enabled in shuffle.
  */
 - (bool)getEnabled;
-/*!
- * Sets the initial brightness of the screen.
- * @param newBright The initial brightness of the screen.
- * @return
- */
-- (void)setInitBright:(float)newBright;
-/*!
- * Gets the initial brightness of the screen.
- * @return The initial brightness of the screen.
- */
-- (float)getInitBright;
 /*!
  * Varies the amount of time to play the current track before shuffling.
  * @return A randomly varied amount of time to play the current track before shuffling.

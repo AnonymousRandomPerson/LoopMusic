@@ -27,8 +27,6 @@
     [self openDB];
     sqlite3_open(dbPath, &trackData);
     
-    finderSetTime.text = [NSString stringWithFormat:@"%f", loopTime];
-    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
     /// Timer to load the current track name and the main screen of the app.
     [NSTimer scheduledTimerWithTimeInterval:.1
                                      target:self
@@ -45,6 +43,8 @@
 - (void)loadSettings:(NSTimer*)loadTimer
 {
     presenter = (LoopMusicViewController*)(self.presentingViewController).presentingViewController;
+    finderSetTime.text = [NSString stringWithFormat:@"%f", presenter->audioPlayer.loopStart];
+    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", presenter->audioPlayer.loopEnd];
     finderSongName.text = [presenter getSongName];
 }
 
@@ -70,28 +70,28 @@
 
 - (IBAction)finderSetTime:(id)sender
 {
-    if ([finderSetTime.text doubleValue] >= loopEnd || [finderSetTime.text doubleValue] < 0 || [finderSetTime.text isEqual:@""])
+    if ([finderSetTime.text doubleValue] >= audioPlayer.loopEnd || [finderSetTime.text doubleValue] < 0 || [finderSetTime.text isEqual:@""])
     {
-        finderSetTime.text = [NSString stringWithFormat:@"%f", loopTime];
+        finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
         return;
     }
     [presenter setLoopTime:[finderSetTime.text doubleValue]];
-    [self sqliteUpdate:@"loopstart" newTime:loopTime];
+    [self sqliteUpdate:@"loopstart" newTime:audioPlayer.loopStart];
 }
 
 - (IBAction)finderSetTimeEnd:(id)sender
 {
-    if ([finderSetTimeEnd.text doubleValue] <= loopTime || [finderSetTimeEnd.text isEqual:@""])
+    if ([finderSetTimeEnd.text doubleValue] <= audioPlayer.loopStart || [finderSetTimeEnd.text isEqual:@""])
     {
-        finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
+        finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
         return;
     }
     if ([finderSetTimeEnd.text doubleValue] > [presenter getAudioDuration])
     {
         finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", [presenter getAudioDuration]];
     }
-    loopEnd = [finderSetTimeEnd.text doubleValue];
-    [self sqliteUpdate:@"loopend" newTime:loopEnd];
+    audioPlayer.loopEnd = [finderSetTimeEnd.text doubleValue];
+    [self sqliteUpdate:@"loopend" newTime:audioPlayer.loopEnd];
 }
 
 /*!
@@ -101,12 +101,12 @@
  */
 - (IBAction)finderAddTime:(id)sender
 {
-    if (loopTime >= loopEnd - 0.001)
+    if (audioPlayer.loopStart >= audioPlayer.loopEnd - 0.001)
     {
         return;
     }
-    [self sqliteUpdate:@"loopstart" newTime:loopTime + 0.001];
-    finderSetTime.text = [NSString stringWithFormat:@"%f", loopTime];
+    [self sqliteUpdate:@"loopstart" newTime:audioPlayer.loopStart + 0.001];
+    finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
 }
 
 /*!
@@ -116,13 +116,13 @@
  */
 - (IBAction)finderAddTimeEnd:(id)sender
 {
-    if (loopEnd >= [presenter getAudioDuration])
+    if (audioPlayer.loopEnd >= [presenter getAudioDuration])
     {
         return;
     }
-    loopEnd += 0.001;
-    [self sqliteUpdate:@"loopend" newTime:loopEnd];
-    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
+    audioPlayer.loopEnd += 0.001;
+    [self sqliteUpdate:@"loopend" newTime:audioPlayer.loopEnd];
+    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
 }
 
 /*!
@@ -132,12 +132,12 @@
  */
 - (IBAction)finderSubtractTime:(id)sender
 {
-    if (loopTime <= 0)
+    if (audioPlayer.loopStart <= 0)
     {
         return;
     }
-    [self sqliteUpdate:@"loopstart" newTime:loopTime - 0.001];
-    finderSetTime.text = [NSString stringWithFormat:@"%f", loopTime];
+    [self sqliteUpdate:@"loopstart" newTime:audioPlayer.loopStart - 0.001];
+    finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
 }
 
 /*!
@@ -147,13 +147,13 @@
  */
 - (IBAction)finderSubtractTimeEnd:(id)sender
 {
-    if (loopEnd <= loopTime + 0.001)
+    if (audioPlayer.loopEnd <= audioPlayer.loopStart + 0.001)
     {
         return;
     }
-    loopEnd -= 0.001;
-    [self sqliteUpdate:@"loopend" newTime:loopEnd];
-    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
+    audioPlayer.loopEnd -= 0.001;
+    [self sqliteUpdate:@"loopend" newTime:audioPlayer.loopEnd];
+    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
 }
 
 /*!
@@ -225,7 +225,6 @@
 
 - (IBAction)back:(id)sender
 {
-    [(SettingsViewController*)self.presentingViewController returned];
     [self dismissViewControllerAnimated:true completion:nil];
 }
 

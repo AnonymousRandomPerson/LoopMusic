@@ -14,7 +14,7 @@
 
 @implementation SettingsViewController
 
-@synthesize back, volumeAdjust, setTime, setTimeEnd, shuffle, shuffleRepeats, shuffleTime, enabledSwitch, fadeText;
+@synthesize back, volumeAdjust, shuffle, shuffleRepeats, shuffleTime, enabledSwitch, fadeText;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -26,8 +26,6 @@
 {
     self.shuffle.selectedSegmentIndex = shuffleSetting;
     
-    setTime.text = [NSString stringWithFormat:@"%f", loopTime];
-    setTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
     shuffleTime.text = [NSString stringWithFormat:@"%f", timeShuffle];
     shuffleRepeats.text = [NSString stringWithFormat:@"%li", (long)repeatsShuffle];
     shuffle.selectedSegmentIndex = shuffleSetting;
@@ -120,90 +118,6 @@
     [self setVolume:self];
 }
 
-- (IBAction)setTime:(id)sender
-{
-    if ([setTime.text doubleValue] >= loopEnd || [setTime.text doubleValue] < 0 || [setTime.text isEqual:@""])
-    {
-        setTime.text = [NSString stringWithFormat:@"%f", loopTime];
-        return;
-    }
-    [presenter setLoopTime:[setTime.text doubleValue]];
-    [self sqliteUpdate:@"loopstart" newTime:loopTime];
-}
-
-- (IBAction)setTimeEnd:(id)sender
-{
-    if ([setTimeEnd.text doubleValue] <= loopTime || [setTimeEnd.text isEqual:@""])
-    {
-        [self sqliteUpdate:@"loopend" newTime:loopEnd];;
-        return;
-    }
-    if ([setTimeEnd.text doubleValue] > [presenter getAudioDuration])
-    {
-        setTimeEnd.text = [NSString stringWithFormat:@"%f", [presenter getAudioDuration]];
-    }
-    loopEnd = [setTimeEnd.text doubleValue];
-    [self sqliteUpdate:@"loopend" newTime:loopEnd];
-}
-
-/*!
- * Moves the loop start time of the current track ahead by 0.001 if possible.
- * @return
- */
-- (IBAction)addTime:(id)sender
-{
-    if (loopTime >= loopEnd - 0.001)
-    {
-        return;
-    }
-    [self sqliteUpdate:@"loopstart" newTime:loopTime + 0.001];
-    setTime.text = [NSString stringWithFormat:@"%f", loopTime];
-}
-
-/*!
- * Moves the loop end time of the current track ahead by 0.001 if possible.
- * @return
- */
-- (IBAction)addTimeEnd:(id)sender
-{
-    if (loopEnd >= [presenter getAudioDuration])
-    {
-        return;
-    }
-    loopEnd += 0.001;
-    [self sqliteUpdate:@"loopend" newTime:loopEnd];
-    setTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
-}
-
-/*!
- * Moves the loop start time of the current track back by 0.001 if possible.
- * @return
- */
-- (IBAction)subtractTime:(id)sender
-{
-    if (loopTime <= 0)
-    {
-        return;
-    }
-    [self sqliteUpdate:@"loopstart" newTime:loopTime - 0.001];
-    setTime.text = [NSString stringWithFormat:@"%f", loopTime];
-}
-
-/*!
- * Moves the loop end time of the current track back by 0.001 if possible.
- * @return
- */
-- (IBAction)subtractTimeEnd:(id)sender
-{
-    if (loopEnd <= loopTime + 0.001)
-    {
-        return;
-    }
-    loopEnd -= 0.001;
-    [self sqliteUpdate:@"loopend" newTime:loopEnd];
-    setTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
-}
-
 /*!
  * Updates the current track's entry in the database.
  * @param field1 The field to update.
@@ -215,24 +129,17 @@
     [self openDB];
     /// The result code of the database query.
     NSInteger result = 0;
-    if ([field1 isEqual: @"loopstart"])
+    /// The database query to update with.
+    NSString *querySQL;
+    if ([field1 isEqual: @"enabled"])
     {
-        result = [presenter setLoopTime:newTime];
+        querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET enabled = %i WHERE name = \"%@\"", enabledSwitch.on, settingsSongString];
     }
     else
     {
-        /// The database query to update with.
-        NSString *querySQL;
-        if ([field1 isEqual: @"enabled"])
-        {
-            querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET enabled = %i WHERE name = \"%@\"", enabledSwitch.on, settingsSongString];
-        }
-        else
-        {
-            querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, settingsSongString];
-        }
-        result = [self updateDBResult:querySQL];
+        querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, settingsSongString];
     }
+    result = [self updateDBResult:querySQL];
     if (result != 101)
     {
         [self showErrorMessage:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]];
@@ -288,8 +195,6 @@
 {
     [shuffleTime resignFirstResponder];
     [shuffleRepeats resignFirstResponder];
-    [setTime resignFirstResponder];
-    [setTimeEnd resignFirstResponder];
     [volumeAdjust resignFirstResponder];
     [fadeText resignFirstResponder];
 }
@@ -297,12 +202,6 @@
 - (IBAction)shuffleChange:(id)sender
 {
     shuffleSetting = [shuffle selectedSegmentIndex];
-}
-
-- (void)returned
-{
-    setTime.text = [NSString stringWithFormat:@"%f", loopTime];
-    setTimeEnd.text = [NSString stringWithFormat:@"%f", loopEnd];
 }
 
 - (IBAction)loopFinder:(id)sender

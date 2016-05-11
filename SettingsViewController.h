@@ -13,10 +13,6 @@
     IBOutlet UIButton *back;
     /// Text field to change the relative volume of the current track.
     IBOutlet UITextField *volumeAdjust;
-    /// Text field to change the time the current track will loop back to.
-    IBOutlet UITextField *setTime;
-    /// Text field to change the time the current track will loop back from.
-    IBOutlet UITextField *setTimeEnd;
     /// Text field to change the time that a track will play for before shuffling.
     IBOutlet UITextField *shuffleTime;
     /// Text field to change the number of times a track will loop before shuffling.
@@ -40,10 +36,6 @@
 @property(nonatomic, retain) UIButton *back;
 /// Text field to change the relative volume of the current track.
 @property(nonatomic, retain) UITextField *volumeAdjust;
-/// Text field to change the time the current track will loop back to.
-@property(nonatomic, retain) UITextField *setTime;
-/// Text field to change the time the current track will loop back from.
-@property(nonatomic, retain) UITextField *setTimeEnd;
 /// Text field to change the time that a track will play for before shuffling.
 @property(nonatomic, retain) UITextField *shuffleTime;
 /// Text field to change the number of times a track will loop before shuffling.
@@ -67,18 +59,6 @@
  * @return
  */
 - (IBAction)setVolume:(id)sender;
-/*!
- * Sets the time the current track will loop back to.
- * @param sender The object that called this function.
- * @return
- */
-- (IBAction)setTime:(id)sender;
-/*!
- * Sets the time the current track wil loop back from.
- * @param sender The object that called this function.
- * @return
- */
-- (IBAction)setTimeEnd:(id)sender;
 /*!
  * Sets the time that a track will play for before shuffling.
  * @param sender The object that called this function.
@@ -151,10 +131,5 @@
  * @return
  */
 - (IBAction)deletePlaylist:(id)sender;
-/*!
- * Refreshes the loop time text fields when the screen is made visible.
- * @return
- */
-- (void)returned;
 
 @end

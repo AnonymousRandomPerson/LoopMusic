@@ -9,6 +9,13 @@
 #import <Foundation/Foundation.h>
 #import "AudioPlayer.h"
 
+/// The frame rate of the audio player.
+static const int FRAMERATE = 44100;
+/// Represents a 0 value on an unsigned sample.
+static const int MIDSAMPLEVALUE = 32768;
+/// Represents the lowest possible unsigned sample value.
+static const int MAXSAMPLEVALUE = 65535;
+
 @implementation AudioPlayer
 
 - (id)init
@@ -16,6 +23,7 @@
     self = [super init];
     _audioController = [[AEAudioController alloc] initWithAudioDescription:AEAudioStreamBasicDescriptionNonInterleaved16BitStereo
                                                              inputEnabled:false];
+    _audioController.automaticLatencyManagement = false;
     /// Holds error messages that may occur during audio controller initialization.
     NSError *error;
     bool result = [_audioController start:&error];
@@ -26,68 +34,139 @@
     return self;
 }
 
-- (AEAudioController *)audioController
-{
-    return _audioController;
-}
-
 - (NSTimeInterval)currentTime
 {
-    return audioPlayer.currentTime;
+    return _currentFrame / (NSTimeInterval)FRAMERATE;
 }
 
 - (void)setCurrentTime:(NSTimeInterval)currentTime
 {
-    audioPlayer.currentTime = currentTime;
+    _currentFrame = currentTime * FRAMERATE;
 }
 
 - (float)volume
 {
-    return audioPlayer.volume;
+    return _volume;
 }
 
 - (void)setVolume:(float)volume
 {
-    audioPlayer.volume = volume;
+    if (volume < 0)
+    {
+        volume = 0;
+    }
+    _volume = volume;
 }
 
 - (bool)playing
 {
-    return audioPlayer.channelIsPlaying;
-}
-
-- (void)setPlaying:(bool)playing
-{
-    audioPlayer.channelIsPlaying = playing;
+    return _playing;
 }
 
 - (double)duration
 {
-    return audioPlayer.duration;
+    return _numFrames / (NSTimeInterval)FRAMERATE;
+}
+
+- (NSTimeInterval)loopStart
+{
+    return _loopStart / (NSTimeInterval)FRAMERATE;
+}
+
+- (void)setLoopStart:(NSTimeInterval)loopStart
+{
+    _loopStart = loopStart * FRAMERATE;
+}
+
+- (NSTimeInterval)loopEnd
+{
+    return _loopEnd / (NSTimeInterval)FRAMERATE;
+}
+
+- (void)setLoopEnd:(NSTimeInterval)loopEnd
+{
+    _loopEnd = loopEnd * FRAMERATE;
 }
 
 - (void)play
 {
-    [audioPlayer playAtTime:0];
-    self.playing = true;
+    _playing = true;
+    if ([self numChannels] == 0)
+    {
+        [_audioController addChannels:@[_blockChannel]];
+    }
 }
 
 - (void)stop
 {
-    self.playing = false;
+    _playing = false;
+    if ([self numChannels] > 0)
+    {
+        [_audioController removeChannels:@[_blockChannel]];
+    }
+}
+
+/*!
+ * Gets the number of active channels in the audio controller.
+ * @return The number of active channels in the audio controller.
+ */
+- (NSInteger)numChannels
+{
+    return [[_audioController channels] count];
 }
 
 - (void)initAudioPlayer:(NSURL *)newURL :(NSError *)error
 {
-    if (audioPlayer)
+    AEAudioFileLoaderOperation *operation = [[AEAudioFileLoaderOperation alloc] initWithFileURL:newURL
+                                                                         targetAudioDescription:_audioController.audioDescription];
+    [operation start];
+    if (operation.error)
     {
-        [_audioController removeChannels:@[audioPlayer]];
+        error = operation.error;
     }
-    audioPlayer = [AEAudioFilePlayer audioFilePlayerWithURL:newURL
-                                                      error:&error];
-    if (!error)
+    else
     {
-        [_audioController addChannels:@[audioPlayer]];
+        _bufferList = operation.bufferList;
+        if (!_playingList)
+        {
+            _playingList = _bufferList;
+        }
+        _numFrames = operation.lengthInFrames;
+        
+        if (!_blockChannel)
+        {
+            _blockChannel =
+            [AEBlockChannel channelWithBlock:^(const AudioTimeStamp *time, UInt32 frames, AudioBufferList *audio)
+            {
+                /// The current frame number after this block is executed.
+                for (int i = 0; i < frames; i++)
+                {
+                    for (int j = 0; j < 2; j++)
+                    {
+                        UInt16 sample = ((UInt16 *)_playingList->mBuffers[j].mData)[_currentFrame];
+                        if (sample < MIDSAMPLEVALUE)
+                        {
+                            sample = sample * _volume;
+                        }
+                        else
+                        {
+                            sample = MAXSAMPLEVALUE - (MAXSAMPLEVALUE - sample) * _volume;
+                        }
+                        ((SInt16*)audio->mBuffers[j].mData)[i] = MIDSAMPLEVALUE - (MIDSAMPLEVALUE - sample) * 1;
+                    }
+                    _currentFrame++;
+                    if (_currentFrame >= _numFrames)
+                    {
+                        _currentFrame = 0;
+                    }
+                    else if (_currentFrame >= _loopEnd)
+                    {
+                        _currentFrame = _loopStart;
+                    }
+                }
+                _playingList = _bufferList;
+            }];
+        }
     }
 }
 
