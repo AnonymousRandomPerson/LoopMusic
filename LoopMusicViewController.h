@@ -141,6 +141,12 @@ extern NSInteger playlistIndex;
  */
 - (IBAction)settings:(id)sender;
 /*!
+ * Navigates to the loop finder screen.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)loopFinder:(id)sender;
+/*!
  * Navigates to a certain screen.
  * @param sender The name of the screen to navigate to.
  * @return
@@ -338,11 +344,6 @@ extern NSInteger playlistIndex;
  * @return
  */
 - (void)setCurrentTime:(double)newCurrentTime;
-/*!
- * Gets whether the current track is enabled in shuffle.
- * @return Whether the current track is enabled in shuffle.
- */
-- (bool)getEnabled;
 /*!
  * Varies the amount of time to play the current track before shuffling.
  * @return A randomly varied amount of time to play the current track before shuffling.

@@ -246,6 +246,7 @@ static const double TESTTIMEOFFSET = 5;
         totalPlaylistSongs = totalSongs;
     }
     valid = false;
+    audioPlayer.loading = true;
     
     [self openDB];
     if (chooseSongString)
@@ -376,7 +377,6 @@ static const double TESTTIMEOFFSET = 5;
         NSLog(@"%@", [error description]);
         return;
     }
-    audioPlayer.currentTime = 0;
     audioPlayer.volume = volumeSet;
 }
 
@@ -458,6 +458,18 @@ static const double TESTTIMEOFFSET = 5;
 {
     settingsSongString = songName.text;
     [self changeScreen:@"settings"];
+}
+
+- (IBAction)loopFinder:(id)sender
+{
+    if ([self isSongListEmpty])
+    {
+        [self showNoSongMessage];
+    }
+    else
+    {
+        [self changeScreen:@"loopFinder"];
+    }
 }
 
 - (NSInteger)setLoopTime:(double)newLoopTime
@@ -576,11 +588,6 @@ static const double TESTTIMEOFFSET = 5;
         }
         
     }
-}
-
-- (bool)getEnabled
-{
-    return enabled;
 }
 
 - (double)timeVariance
@@ -945,6 +952,7 @@ static const double TESTTIMEOFFSET = 5;
 
 - (void)didReceiveMemoryWarning
 {
+    [self showErrorMessage:@"Low on memory!"];
     [super didReceiveMemoryWarning];
 }
 

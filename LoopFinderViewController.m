@@ -42,9 +42,10 @@
  */
 - (void)loadSettings:(NSTimer*)loadTimer
 {
-    presenter = (LoopMusicViewController*)(self.presentingViewController).presentingViewController;
-    finderSetTime.text = [NSString stringWithFormat:@"%f", presenter->audioPlayer.loopStart];
-    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", presenter->audioPlayer.loopEnd];
+    presenter = (LoopMusicViewController*)(self.presentingViewController);
+    audioPlayer = presenter->audioPlayer;
+    finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
+    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
     finderSongName.text = [presenter getSongName];
 }
 
@@ -58,11 +59,6 @@
     [presenter setCurrentTime:[setCurrentTime.text doubleValue]];
 }
 
-/*!
- * Sets the playback time to five seconds before the loop time.
- * @param sender The object that called this function.
- * @return
- */
 - (IBAction)testTime:(id)sender
 {
     [presenter testTime];
@@ -94,11 +90,6 @@
     [self sqliteUpdate:@"loopend" newTime:audioPlayer.loopEnd];
 }
 
-/*!
- * Moves the loop start time of the current track ahead by 0.001 if possible.
- * @param sender The object that called this function.
- * @return
- */
 - (IBAction)finderAddTime:(id)sender
 {
     if (audioPlayer.loopStart >= audioPlayer.loopEnd - 0.001)
@@ -109,11 +100,6 @@
     finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
 }
 
-/*!
- * Moves the loop end time of the current track ahead by 0.001 if possible.
- * @param sender The object that called this function.
- * @return
- */
 - (IBAction)finderAddTimeEnd:(id)sender
 {
     if (audioPlayer.loopEnd >= [presenter getAudioDuration])
@@ -125,11 +111,6 @@
     finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
 }
 
-/*!
- * Moves the loop start time of the current track back by 0.001 if possible.
- * @param sender The object that called this function.
- * @return
- */
 - (IBAction)finderSubtractTime:(id)sender
 {
     if (audioPlayer.loopStart <= 0)
@@ -140,11 +121,6 @@
     finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
 }
 
-/*!
- * Moves the loop end time of the current track back by 0.001 if possible.
- * @param sender The object that called this function.
- * @return
- */
 - (IBAction)finderSubtractTimeEnd:(id)sender
 {
     if (audioPlayer.loopEnd <= audioPlayer.loopStart + 0.001)
@@ -201,21 +177,26 @@
     [self finderSetTimeEnd:self];
 }
 
-/*!
- * Gets the playback time of the current track.
- * @param sender The object that called this function.
- * @return The playback time of the current track.
- */
 - (IBAction)findTime:(id)sender
 {
     findTimeText.text = [NSString stringWithFormat:@"%f", [presenter findTime]];
 }
 
-/*!
- * Cleans up UI elements when the screen is closing.
- * @param sender The object that called this function.
- * @return
- */
+- (IBAction)findLoopTime:(id)sender
+{
+    NSTimeInterval foundTime = [audioPlayer findLoopTime];
+    if (foundTime == -1)
+    {
+        [self showErrorMessage:@"No suitable loop start times were found."];
+    }
+    else
+    {
+        finderSetTime.text = [NSString stringWithFormat:@"%f", foundTime];
+        [presenter setLoopTime:foundTime];
+        [self sqliteUpdate:@"loopstart" newTime:foundTime];
+    }
+}
+
 - (IBAction)close:(id)sender
 {
     [finderSetTime resignFirstResponder];
@@ -225,7 +206,8 @@
 
 - (IBAction)back:(id)sender
 {
-    [self dismissViewControllerAnimated:true completion:nil];
+    [presenter setOccupied:false];
+    [super back:sender];
 }
 
 - (void)didReceiveMemoryWarning

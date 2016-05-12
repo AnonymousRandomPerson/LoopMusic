@@ -21,8 +21,6 @@
     IBOutlet UITextField *fadeText;
     /// Buttons to choose how to shuffle tracks.
     IBOutlet UISegmentedControl *shuffle;
-    /// Switch that toggles whether the current track is enabled in shuffle.
-    IBOutlet UISwitch *enabledSwitch;
     /// The main screen of the app.
     LoopMusicViewController *presenter;
     
@@ -44,8 +42,6 @@
 @property(nonatomic, retain) UITextField *fadeText;
 /// Buttons to choose how to shuffle tracks.
 @property(nonatomic, retain) UISegmentedControl *shuffle;
-/// Switch that toggles whether the current track is enabled in shuffle.
-@property(nonatomic, retain) UISwitch *enabledSwitch;
 
 /*!
  * Navigates back to the main screen and saves the settings.
@@ -89,18 +85,6 @@
  * @return
  */
 - (IBAction)shuffleChange:(id)sender;
-/*!
- * Navigates to the loop finder screen.
- * @param sender The object that called this function.
- * @return
- */
-- (IBAction)loopFinder:(id)sender;
-/*!
- * Toggles whether the current track is enabled in shuffle.
- * @param sender The object that called this function.
- * @return
- */
-- (IBAction)enabledSwitch:(id)sender;
 /*!
  * Navigates to the playlist choosing screen.
  * @param sender The object that called this function.

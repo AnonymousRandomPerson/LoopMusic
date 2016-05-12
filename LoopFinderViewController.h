@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "SettingsViewController.h"
 
-@interface LoopFinderViewController : SettingsViewController
+@interface LoopFinderViewController : LoopMusicViewController
 {
     /// Text field to change the playback time of the current track.
     IBOutlet UITextField *setCurrentTime;
@@ -21,6 +21,9 @@
     IBOutlet UITextField *finderSetTimeEnd;
     /// Label displaying the most recently found playback time.
     IBOutlet UILabel *findTimeText;
+    
+    /// The main screen of the app.
+    LoopMusicViewController *presenter;
 }
 
 /// Text field to change the playback time of the current track.
@@ -39,6 +42,12 @@
  */
 - (IBAction)setCurrentTime:(id)sender;
 /*!
+ * Sets the playback time to five seconds before the loop time.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)testTime:(id)sender;
+/*!
  * Sets the loop start time of the current track.
  * @param sender The object that called this function.
  * @return
@@ -51,6 +60,30 @@
  */
 - (IBAction)finderSetTimeEnd:(id)sender;
 /*!
+ * Moves the loop start time of the current track ahead by 0.001 if possible.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)finderAddTime:(id)sender;
+/*!
+ * Moves the loop end time of the current track ahead by 0.001 if possible.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)finderAddTimeEnd:(id)sender;
+/*!
+ * Moves the loop start time of the current track back by 0.001 if possible.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)finderSubtractTime:(id)sender;
+/*!
+ * Moves the loop end time of the current track back by 0.001 if possible.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)finderSubtractTimeEnd:(id)sender;
+/*!
  * Sets the loop start time of the current track to the most recently found playback time.
  * @param sender The object that called this function.
  * @return
@@ -62,5 +95,29 @@
  * @return
  */
 - (IBAction)setEndButton:(id)sender;
+/*!
+ * Gets the playback time of the current track.
+ * @param sender The object that called this function.
+ * @return The playback time of the current track.
+ */
+- (IBAction)findTime:(id)sender;
+/*!
+ * Finds a suitable start time to loop to.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)findLoopTime:(id)sender;
+/*!
+ * Cleans up UI elements when the screen is closing.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)close:(id)sender;
+/*!
+ * Navigates to the previous screen.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)back:(id)sender;
 
 @end

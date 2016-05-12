@@ -10,11 +10,13 @@
 #import "AudioPlayer.h"
 
 /// The frame rate of the audio player.
-static const int FRAMERATE = 44100;
-/// Represents a 0 value on an unsigned sample.
-static const int MIDSAMPLEVALUE = 32768;
-/// Represents the lowest possible unsigned sample value.
-static const int MAXSAMPLEVALUE = 65535;
+static const UInt32 FRAMERATE = 44100;
+/// The number of frames that have to match for the loop finder to accept a time.
+static const UInt32 NUMMATCHINGFRAMES = 1;
+/// The range of the loop finder's search.
+static const float SEARCHRANGE = 1;
+/// The tolerance of the loop finder's search.
+static const float SEARCHTOLERANCE = 300;
 
 @implementation AudioPlayer
 
@@ -36,12 +38,12 @@ static const int MAXSAMPLEVALUE = 65535;
 
 - (NSTimeInterval)currentTime
 {
-    return _currentFrame / (NSTimeInterval)FRAMERATE;
+    return audioData->currentFrame / (NSTimeInterval)FRAMERATE;
 }
 
 - (void)setCurrentTime:(NSTimeInterval)currentTime
 {
-    _currentFrame = currentTime * FRAMERATE;
+    bufferAudioData->currentFrame = currentTime * FRAMERATE;
 }
 
 - (float)volume
@@ -65,7 +67,7 @@ static const int MAXSAMPLEVALUE = 65535;
 
 - (double)duration
 {
-    return _numFrames / (NSTimeInterval)FRAMERATE;
+    return audioData->numFrames / (NSTimeInterval)FRAMERATE;
 }
 
 - (NSTimeInterval)loopStart
@@ -86,6 +88,19 @@ static const int MAXSAMPLEVALUE = 65535;
 - (void)setLoopEnd:(NSTimeInterval)loopEnd
 {
     _loopEnd = loopEnd * FRAMERATE;
+}
+
+- (bool)loading
+{
+    return audioData->loading;
+}
+
+- (void)setLoading:(bool)loading
+{
+    if (audioData)
+    {
+        audioData->loading = loading;
+    }
 }
 
 - (void)play
@@ -117,6 +132,16 @@ static const int MAXSAMPLEVALUE = 65535;
 
 - (void)initAudioPlayer:(NSURL *)newURL :(NSError *)error
 {
+    if (freeData)
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            free(freeData->playingList->mBuffers[i].mData);
+        }
+        free(freeData->playingList);
+        free(freeData);
+        freeData = nil;
+    }
     AEAudioFileLoaderOperation *operation = [[AEAudioFileLoaderOperation alloc] initWithFileURL:newURL
                                                                          targetAudioDescription:_audioController.audioDescription];
     [operation start];
@@ -126,48 +151,121 @@ static const int MAXSAMPLEVALUE = 65535;
     }
     else
     {
-        _bufferList = operation.bufferList;
-        if (!_playingList)
-        {
-            _playingList = _bufferList;
-        }
-        _numFrames = operation.lengthInFrames;
+        /// Audio data to be loaded into the buffer.
+        AudioData *newData = malloc(sizeof(AudioData));
+        newData->numFrames = operation.lengthInFrames;
+        newData->playingList = operation.bufferList;
+        newData->loading = false;
+        newData->currentFrame = 0;
+        bufferAudioData = newData;
         
         if (!_blockChannel)
         {
             _blockChannel =
             [AEBlockChannel channelWithBlock:^(const AudioTimeStamp *time, UInt32 frames, AudioBufferList *audio)
             {
-                /// The current frame number after this block is executed.
+                AudioData *oldData = audioData;
+                audioData = bufferAudioData;
+                if (oldData != audioData)
+                {
+                    freeData = oldData;
+                }
                 for (int i = 0; i < frames; i++)
                 {
                     for (int j = 0; j < 2; j++)
                     {
-                        UInt16 sample = ((UInt16 *)_playingList->mBuffers[j].mData)[_currentFrame];
-                        if (sample < MIDSAMPLEVALUE)
-                        {
-                            sample = sample * _volume;
-                        }
-                        else
-                        {
-                            sample = MAXSAMPLEVALUE - (MAXSAMPLEVALUE - sample) * _volume;
-                        }
-                        ((SInt16*)audio->mBuffers[j].mData)[i] = MIDSAMPLEVALUE - (MIDSAMPLEVALUE - sample) * 1;
+                        ((SInt16 *)audio->mBuffers[j].mData)[i] = ((SInt16 *)audioData->playingList->mBuffers[j].mData)[audioData->currentFrame] * _volume;
                     }
-                    _currentFrame++;
-                    if (_currentFrame >= _numFrames)
+                    audioData->currentFrame++;
+                    if (audioData->currentFrame >= audioData->numFrames)
                     {
-                        _currentFrame = 0;
+                        audioData->currentFrame = 0;
                     }
-                    else if (_currentFrame >= _loopEnd)
+                    else if (!audioData->loading && audioData->currentFrame >= _loopEnd)
                     {
-                        _currentFrame = _loopStart;
+                        audioData->currentFrame = _loopStart;
                     }
                 }
-                _playingList = _bufferList;
             }];
         }
     }
+}
+
+- (NSTimeInterval)findLoopTime
+{
+    if (_loopEnd > audioData->numFrames - NUMMATCHINGFRAMES)
+    {
+        return -1;
+    }
+    
+    /// The range of the search in frames.
+    UInt32 searchRangeFrames = SEARCHRANGE * FRAMERATE;
+    if (audioData->numFrames < searchRangeFrames << 1 || _loopStart >= _loopEnd )
+    {
+        return -1;
+    }
+    
+    /// The end frames that must match with the start frames to be accepted.
+    SInt16 endFrames[NUMMATCHINGFRAMES * 2];
+    
+    /// For loop iterator.
+    UInt32 i, j;
+    /// Counter for filling arrays.
+    UInt32 arrayCounter = 0;
+    for (i = _loopEnd; i < _loopEnd + NUMMATCHINGFRAMES; i++)
+    {
+        for (j = 0; j < 2; j++)
+        {
+            endFrames[arrayCounter++] = ((SInt16 *)audioData->playingList->mBuffers[j].mData)[i];
+        }
+    }
+    
+    /// Whether an acceptable start point was found.
+    bool found;
+    /// The start point being examined.
+    UInt32 foundPoint = -1;
+    for (UInt32 k = 0; k < searchRangeFrames; k++)
+    {
+        for (int n = -1; n < 2; n += 2)
+        {
+            arrayCounter = 0;
+            foundPoint = _loopStart + k * n;
+            found = true;
+            for (i = foundPoint; i < foundPoint + NUMMATCHINGFRAMES; i++)
+            {
+                for (j = 0; j < 2; j++)
+                {
+                    /// The current sample from the loop start being compared.
+                    SInt16 startSample = ((SInt16 *)audioData->playingList->mBuffers[j].mData)[i];
+                    /// The current sample from the loop end being compared.
+                    SInt16 endSample = endFrames[arrayCounter++];
+                    if (abs(endSample - startSample) > SEARCHTOLERANCE)
+                    {
+                        found = false;
+                        break;
+                    }
+                    else if (arrayCounter > 5)
+                    {
+                        NSLog(@"%f", foundPoint / (NSTimeInterval)FRAMERATE);
+                    }
+                }
+                if (!found)
+                {
+                    break;
+                }
+            }
+            if (found)
+            {
+                break;
+            }
+        }
+        if (found)
+        {
+            break;
+        }
+    }
+    
+    return found ? foundPoint / (NSTimeInterval)FRAMERATE : -1;
 }
 
 @end

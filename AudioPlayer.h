@@ -11,6 +11,20 @@
 
 #import <TheAmazingAudioEngine.h>
 
+
+/// Contains data for an audio track.
+typedef struct AudioData
+{
+    /// The number of frames in the current track.
+    UInt32 numFrames;
+    /// The current playback frame of the audio player.
+    UInt32 currentFrame;
+    /// Whether a new track is being loaded.
+    bool loading;
+    /// The sample data for the playing track.
+    AudioBufferList *playingList;
+} AudioData;
+
 @interface AudioPlayer : NSObject
 {
     /// The audio controller that manages the audio player.
@@ -18,23 +32,23 @@
     /// The channel used to play audio.
     AEBlockChannel *_blockChannel;
     
-    /// The sample data for the queued track.
-    AudioBufferList *_bufferList;
-    /// The sample data for the playing track.
-    AudioBufferList *_playingList;
-    /// The number of frames in the current track.
-    UInt32 _numFrames;
-    /// The current playback frame of the audio player.
-    @public UInt32 _currentFrame;
+    /// Pointer to the current audio track.
+    AudioData *audioData;
+    /// Data for the current audio track.
+    AudioData audioDataStore;
+    /// Data for the queued audio track.
+    AudioData *bufferAudioData;
+    /// Audio data to free from memory.
+    AudioData *freeData;
     
     /// The current volume of the audio player.
     float _volume;
     /// Whether the audio player is currently playing.
     bool _playing;
     /// The time that the current track will loop back to when looping.
-    NSTimeInterval _loopStart;
+    UInt32 _loopStart;
     /// The time that the current track will loop back from when looping.
-    NSTimeInterval _loopEnd;
+    UInt32 _loopEnd;
 }
 
 /// The current playback time of the audio player.
@@ -49,6 +63,8 @@
 @property(nonatomic) NSTimeInterval loopStart;
 /// The time that the current track will loop back from when looping.
 @property(nonatomic) NSTimeInterval loopEnd;
+/// Whether a new track is being loaded.
+@property(nonatomic) bool loading;
 
 /*!
  * Starts playback of the audio player.
@@ -69,6 +85,12 @@
  * @return
  */
 - (void)initAudioPlayer:(NSURL *)newURL :(NSError *)error;
+
+/*!
+ * Finds a suitable start time to loop to.
+ * @return A suitable start time to loop to, or -1 if none were found.
+ */
+- (NSTimeInterval)findLoopTime;
 
 @end
 

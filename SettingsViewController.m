@@ -14,7 +14,7 @@
 
 @implementation SettingsViewController
 
-@synthesize back, volumeAdjust, shuffle, shuffleRepeats, shuffleTime, enabledSwitch, fadeText;
+@synthesize back, volumeAdjust, shuffle, shuffleRepeats, shuffleTime, fadeText;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -46,7 +46,6 @@
 - (void)loadSettings:(NSTimer*)loadTimer
 {
     presenter = (LoopMusicViewController*)self.presentingViewController;
-    enabledSwitch.on = [presenter getEnabled];
     volumeAdjust.text = [NSString stringWithFormat:@"%f", [presenter getVolume]];
     [presenter setOccupied:true];
 }
@@ -130,15 +129,7 @@
     /// The result code of the database query.
     NSInteger result = 0;
     /// The database query to update with.
-    NSString *querySQL;
-    if ([field1 isEqual: @"enabled"])
-    {
-        querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET enabled = %i WHERE name = \"%@\"", enabledSwitch.on, settingsSongString];
-    }
-    else
-    {
-        querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, settingsSongString];
-    }
+    NSString *querySQL = [NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, settingsSongString];
     result = [self updateDBResult:querySQL];
     if (result != 101)
     {
@@ -186,11 +177,6 @@
     }
 }
 
-- (IBAction)enabledSwitch:(id)sender
-{
-    [self sqliteUpdate:@"enabled" newTime:enabledSwitch.on];
-}
-
 - (IBAction)close:(id)sender
 {
     [shuffleTime resignFirstResponder];
@@ -202,18 +188,6 @@
 - (IBAction)shuffleChange:(id)sender
 {
     shuffleSetting = [shuffle selectedSegmentIndex];
-}
-
-- (IBAction)loopFinder:(id)sender
-{
-    if ([presenter isSongListEmpty])
-    {
-        [self showNoSongMessage];
-    }
-    else
-    {
-        [self changeScreen:@"loopFinder"];
-    }
 }
 
 /*!
