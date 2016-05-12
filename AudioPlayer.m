@@ -191,18 +191,20 @@ static const float SEARCHTOLERANCE = 300;
     }
 }
 
-- (NSTimeInterval)findLoopTime
+- (NSMutableArray *)findLoopTime
 {
+    /// Acceptable start points.
+    NSMutableArray *foundPoints = [[NSMutableArray alloc] init];
     if (_loopEnd > audioData->numFrames - NUMMATCHINGFRAMES)
     {
-        return -1;
+        return foundPoints;
     }
     
     /// The range of the search in frames.
     UInt32 searchRangeFrames = SEARCHRANGE * FRAMERATE;
     if (audioData->numFrames < searchRangeFrames << 1 || _loopStart >= _loopEnd )
     {
-        return -1;
+        return foundPoints;
     }
     
     /// The end frames that must match with the start frames to be accepted.
@@ -244,10 +246,6 @@ static const float SEARCHTOLERANCE = 300;
                         found = false;
                         break;
                     }
-                    else if (arrayCounter > 5)
-                    {
-                        NSLog(@"%f", foundPoint / (NSTimeInterval)FRAMERATE);
-                    }
                 }
                 if (!found)
                 {
@@ -261,11 +259,13 @@ static const float SEARCHTOLERANCE = 300;
         }
         if (found)
         {
-            break;
+            /// The found start point to add to the array.
+            NSNumber *number = [NSNumber numberWithDouble:foundPoint / (NSTimeInterval)FRAMERATE];
+            [foundPoints addObject:number];
         }
     }
     
-    return found ? foundPoint / (NSTimeInterval)FRAMERATE : -1;
+    return foundPoints;
 }
 
 @end

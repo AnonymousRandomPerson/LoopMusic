@@ -24,6 +24,13 @@
     
     /// The main screen of the app.
     LoopMusicViewController *presenter;
+    
+    /// Loop start points that have been found.
+    NSMutableArray *foundPoints;
+    /// The index of the found point being looked at.
+    NSUInteger pointIndex;
+    /// The sorting descriptor for the point array.
+    NSArray *pointSorter;
 }
 
 /// Text field to change the playback time of the current track.

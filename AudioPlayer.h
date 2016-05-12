@@ -87,10 +87,10 @@ typedef struct AudioData
 - (void)initAudioPlayer:(NSURL *)newURL :(NSError *)error;
 
 /*!
- * Finds a suitable start time to loop to.
- * @return A suitable start time to loop to, or -1 if none were found.
+ * Finds suitable start times to loop to.
+ * @return An array of suitable start times.
  */
-- (NSTimeInterval)findLoopTime;
+- (NSMutableArray *)findLoopTime;
 
 @end
 

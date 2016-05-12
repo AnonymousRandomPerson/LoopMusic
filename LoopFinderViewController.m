@@ -8,6 +8,8 @@
 
 #import "LoopFinderViewController.h"
 
+static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
+
 @interface LoopFinderViewController ()
 
 @end
@@ -24,6 +26,9 @@
 
 - (void)viewDidLoad
 {
+    NSSortDescriptor *descriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:true];
+    pointSorter = @[descriptor];
+    
     [self openDB];
     sqlite3_open(dbPath, &trackData);
     
@@ -71,33 +76,53 @@
         finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
         return;
     }
-    [presenter setLoopTime:[finderSetTime.text doubleValue]];
-    [self sqliteUpdate:@"loopstart" newTime:audioPlayer.loopStart];
+    [self setLoopStart:[finderSetTime.text doubleValue]];
 }
 
 - (IBAction)finderSetTimeEnd:(id)sender
 {
-    if ([finderSetTimeEnd.text doubleValue] <= audioPlayer.loopStart || [finderSetTimeEnd.text isEqual:@""])
+    /// The time that the loop end will be set to.
+    NSTimeInterval newTime = [finderSetTimeEnd.text doubleValue];
+    if (newTime <= audioPlayer.loopStart || [finderSetTimeEnd.text isEqual:@""])
     {
         finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
         return;
     }
-    if ([finderSetTimeEnd.text doubleValue] > [presenter getAudioDuration])
+    /// The duration of the current track.
+    NSTimeInterval duration = [presenter getAudioDuration];
+    if (newTime > duration)
     {
-        finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", [presenter getAudioDuration]];
+        newTime = duration;
     }
+    [self setLoopEnd:newTime];
     audioPlayer.loopEnd = [finderSetTimeEnd.text doubleValue];
     [self sqliteUpdate:@"loopend" newTime:audioPlayer.loopEnd];
 }
 
 - (IBAction)finderAddTime:(id)sender
 {
-    if (audioPlayer.loopStart >= audioPlayer.loopEnd - 0.001)
+    NSTimeInterval newTime;
+    if (foundPoints)
+    {
+        if (pointIndex < [foundPoints count] - 1)
+        {
+            pointIndex++;
+            newTime = [self getCurrentPoint];
+        }
+        else
+        {
+            newTime = audioPlayer.loopStart;
+        }
+    }
+    else
+    {
+        newTime = audioPlayer.loopStart + LOOPPOINTINCREMENT;
+    }
+    if (newTime >= audioPlayer.loopEnd)
     {
         return;
     }
-    [self sqliteUpdate:@"loopstart" newTime:audioPlayer.loopStart + 0.001];
-    finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
+    [self setLoopStart:newTime];
 }
 
 - (IBAction)finderAddTimeEnd:(id)sender
@@ -106,30 +131,43 @@
     {
         return;
     }
-    audioPlayer.loopEnd += 0.001;
-    [self sqliteUpdate:@"loopend" newTime:audioPlayer.loopEnd];
-    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
+    [self setLoopEnd:audioPlayer.loopEnd + LOOPPOINTINCREMENT];
 }
 
 - (IBAction)finderSubtractTime:(id)sender
 {
-    if (audioPlayer.loopStart <= 0)
+    /// The time that the loop start will be set to.
+    NSTimeInterval newTime;
+    if (foundPoints)
     {
-        return;
+        if (pointIndex > 0)
+        {
+            pointIndex--;
+            newTime = [self getCurrentPoint];
+        }
+        else
+        {
+            newTime = audioPlayer.loopStart;
+        }
     }
-    [self sqliteUpdate:@"loopstart" newTime:audioPlayer.loopStart - 0.001];
-    finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
+    else
+    {
+        newTime = audioPlayer.loopStart - LOOPPOINTINCREMENT;
+    }
+    if (newTime < 0)
+    {
+        newTime = 0;
+    }
+    [self setLoopStart:newTime];
 }
 
 - (IBAction)finderSubtractTimeEnd:(id)sender
 {
-    if (audioPlayer.loopEnd <= audioPlayer.loopStart + 0.001)
+    if (audioPlayer.loopEnd <= audioPlayer.loopStart + LOOPPOINTINCREMENT)
     {
         return;
     }
-    audioPlayer.loopEnd -= 0.001;
-    [self sqliteUpdate:@"loopend" newTime:audioPlayer.loopEnd];
-    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
+    [self setLoopEnd:audioPlayer.loopEnd - LOOPPOINTINCREMENT];
 }
 
 /*!
@@ -184,16 +222,26 @@
 
 - (IBAction)findLoopTime:(id)sender
 {
-    NSTimeInterval foundTime = [audioPlayer findLoopTime];
-    if (foundTime == -1)
+    foundPoints = [audioPlayer findLoopTime];
+    if ([foundPoints count] == 0)
     {
         [self showErrorMessage:@"No suitable loop start times were found."];
+        foundPoints = nil;
     }
     else
     {
-        finderSetTime.text = [NSString stringWithFormat:@"%f", foundTime];
-        [presenter setLoopTime:foundTime];
-        [self sqliteUpdate:@"loopstart" newTime:foundTime];
+        /// The number closest to the current loop start point.
+        NSNumber *closestNumber = (NSNumber *)foundPoints[0];
+        /// The point closest to the current loop start point.
+        NSTimeInterval closestPoint = [closestNumber doubleValue];
+        [self setLoopStart:closestPoint];
+        
+        [foundPoints sortUsingDescriptors:pointSorter];
+        pointIndex = [foundPoints indexOfObject:closestNumber];
+        if (pointIndex == NSNotFound)
+        {
+            pointIndex = [foundPoints count] >> 1;
+        }
     }
 }
 
@@ -208,6 +256,40 @@
 {
     [presenter setOccupied:false];
     [super back:sender];
+}
+
+/*!
+ * Sets the loop start point.
+ * @param loopStart The new loop start point.
+ * @return
+ */
+- (void)setLoopStart:(NSTimeInterval)loopStart
+{
+    audioPlayer.loopStart = loopStart;
+    [self sqliteUpdate:@"loopstart" newTime:audioPlayer.loopStart];
+    finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
+}
+
+/*!
+ * Sets the loop end point.
+ * @param loopEnd The new loop end point.
+ * @return
+ */
+- (void)setLoopEnd:(NSTimeInterval)loopEnd
+{
+    audioPlayer.loopEnd = loopEnd;
+    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
+    [self sqliteUpdate:@"loopend" newTime:audioPlayer.loopEnd];
+    foundPoints = nil;
+}
+
+/*!
+ * Gets the currently selected loop start point.
+ * @return The currently selected loop start point.
+ */
+- (NSTimeInterval)getCurrentPoint
+{
+    return [((NSNumber *)foundPoints[pointIndex]) doubleValue];
 }
 
 - (void)didReceiveMemoryWarning
