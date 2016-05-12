@@ -35,14 +35,24 @@ static CGPoint lastPosition;
 
 - (IBAction)back:(id)sender
 {
-    lastSearch = self.searchDisplayController.searchBar.text;
-    lastPosition = table.contentOffset;
+    [self savePosition];
     [super back:sender];
 }
 
 - (void)selectItem:(NSString *)item
 {
+    [self savePosition];
     [presenter chooseSong:item];
+}
+
+/*!
+ * Saves the current position of the search.
+ * @return
+ */
+- (void)savePosition
+{
+    lastSearch = self.searchDisplayController.searchBar.text;
+    lastPosition = table.contentOffset;
 }
 
 @end

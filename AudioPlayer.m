@@ -228,10 +228,14 @@ static const float SEARCHTOLERANCE = 300;
     UInt32 foundPoint = -1;
     for (UInt32 k = 0; k < searchRangeFrames; k++)
     {
-        for (int n = -1; n < 2; n += 2)
+        for (SInt32 n = -1; n < 2; n += 2)
         {
             arrayCounter = 0;
             foundPoint = _loopStart + k * n;
+            if (foundPoint >= audioData->numFrames)
+            {
+                continue;
+            }
             found = true;
             for (i = foundPoint; i < foundPoint + NUMMATCHINGFRAMES; i++)
             {
