@@ -49,6 +49,7 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 {
     presenter = (LoopMusicViewController*)(self.presentingViewController);
     audioPlayer = presenter->audioPlayer;
+    [presenter setOccupied:true];
     finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
     finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
     finderSongName.text = [presenter getSongName];
@@ -254,6 +255,7 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 
 - (IBAction)back:(id)sender
 {
+    sqlite3_close(trackData);
     [presenter setOccupied:false];
     [super back:sender];
 }
