@@ -67,7 +67,7 @@ static const float SEARCHTOLERANCE = 300;
 
 - (double)duration
 {
-    return audioData->numFrames / (NSTimeInterval)FRAMERATE;
+    return bufferAudioData->numFrames / (NSTimeInterval)FRAMERATE;
 }
 
 - (NSTimeInterval)loopStart

@@ -181,14 +181,7 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 {
     /// The result code of the database query.
     NSInteger result = 0;
-    if ([field1 isEqual: @"loopstart"])
-    {
-        result = [presenter setLoopTime:newTime];
-    }
-    else
-    {
-        result = [self updateDBResult:[NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, settingsSongString]];
-    }
+    result = [self updateDBResult:[NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, finderSongName.text]];
     if (result != 101)
     {
         [self showErrorMessage:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]];
