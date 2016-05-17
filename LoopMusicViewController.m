@@ -138,7 +138,7 @@ static const double TESTTIMEOFFSET = 5;
 - (void)activateFadeTimer
 {
     [self stopFadeTimer];
-    fadeTimer = [NSTimer scheduledTimerWithTimeInterval:.01
+    fadeTimer = [NSTimer scheduledTimerWithTimeInterval:0.01
                                                 target:self
                                                selector:@selector(fadeOut:)
                                                userInfo:nil

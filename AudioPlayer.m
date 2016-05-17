@@ -33,7 +33,32 @@ static const float SEARCHTOLERANCE = 300;
     {
         NSLog(@"%@", [error description]);
     }
+    
+    [NSTimer scheduledTimerWithTimeInterval:0.5
+                                     target:self
+                                   selector:@selector(checkFree:)
+                                   userInfo:nil
+                                    repeats:YES];
     return self;
+}
+
+/*!
+ * Checks if memory can be freed.
+ * @param timer The timer that called this function.
+ * @return
+ */
+- (void)checkFree:(NSTimer *)timer
+{
+    if (freeData)
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            free(freeData->playingList->mBuffers[i].mData);
+        }
+        free(freeData->playingList);
+        free(freeData);
+        freeData = nil;
+    }
 }
 
 - (NSTimeInterval)currentTime
@@ -132,16 +157,6 @@ static const float SEARCHTOLERANCE = 300;
 
 - (void)initAudioPlayer:(NSURL *)newURL :(NSError *)error
 {
-    if (freeData)
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            free(freeData->playingList->mBuffers[i].mData);
-        }
-        free(freeData->playingList);
-        free(freeData);
-        freeData = nil;
-    }
     AEAudioFileLoaderOperation *operation = [[AEAudioFileLoaderOperation alloc] initWithFileURL:newURL
                                                                          targetAudioDescription:_audioController.audioDescription];
     [operation start];
