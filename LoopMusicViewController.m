@@ -952,7 +952,7 @@ static const double TESTTIMEOFFSET = 5;
 
 - (void)didReceiveMemoryWarning
 {
-    [self showErrorMessage:@"Low on memory!"];
+    NSLog(@"Low on memory!");
     [super didReceiveMemoryWarning];
 }
 
