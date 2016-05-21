@@ -152,6 +152,7 @@ static const float SEARCHTOLERANCE = 300;
     {
         [_audioController addChannels:@[_blockChannel]];
     }
+    [self startFreeTimer];
 }
 
 - (void)stop
