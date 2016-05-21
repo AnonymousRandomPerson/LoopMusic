@@ -33,13 +33,25 @@ static const float SEARCHTOLERANCE = 300;
     {
         NSLog(@"%@", [error description]);
     }
+    [self startFreeTimer];
     
-    [NSTimer scheduledTimerWithTimeInterval:0.5
-                                     target:self
-                                   selector:@selector(checkFree:)
-                                   userInfo:nil
-                                    repeats:YES];
     return self;
+}
+
+/*!
+ * Starts the free timer if it isn't already started.
+ * @return
+ */
+- (void)startFreeTimer
+{
+    if (!freeTimer)
+    {
+        freeTimer = [NSTimer scheduledTimerWithTimeInterval:0.5
+                                                     target:self
+                                                   selector:@selector(checkFree:)
+                                                   userInfo:nil
+                                                    repeats:YES];
+    }
 }
 
 /*!
@@ -58,6 +70,11 @@ static const float SEARCHTOLERANCE = 300;
         free(freeData->playingList);
         free(freeData);
         freeData = nil;
+    }
+    if (!_playing)
+    {
+        [freeTimer invalidate];
+        freeTimer = nil;
     }
 }
 

@@ -59,6 +59,8 @@ extern NSInteger playlistIndex;
     IBOutlet UIButton *settings;
     /// Label for the name of the current playlist.
     IBOutlet UILabel *playlistName;
+    /// Symbol for whether the player is playing.
+    IBOutlet UILabel *playSymbol;
     
     /// The database ID for the loading track.
     NSString *idField;

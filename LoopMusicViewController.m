@@ -363,6 +363,7 @@ static const double TESTTIMEOFFSET = 5;
     }
     [audioPlayer play];
     [self activateShuffleTimer];
+    playSymbol.hidden = false;
 }
 
 - (void)setAudioPlayer:(NSURL*)newURL
@@ -412,6 +413,7 @@ static const double TESTTIMEOFFSET = 5;
         audioPlayer.currentTime = 0;
         [audioPlayer play];
         [self activateShuffleTimer];
+        playSymbol.hidden = false;
     }
 }
 
@@ -434,6 +436,7 @@ static const double TESTTIMEOFFSET = 5;
     [audioPlayer stop];
     [self stopShuffleTimer];
     [self stopFadeTimer];
+    playSymbol.hidden = true;
 }
 
 - (void)chooseSong:(NSString *)newSong

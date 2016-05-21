@@ -49,6 +49,9 @@ typedef struct AudioData
     UInt32 _loopStart;
     /// The time that the current track will loop back from when looping.
     UInt32 _loopEnd;
+    
+    /// Timer for freeing tracks from memory.
+    NSTimer *freeTimer;
 }
 
 /// The current playback time of the audio player.
