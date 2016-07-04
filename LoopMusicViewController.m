@@ -263,18 +263,15 @@ static const double TESTTIMEOFFSET = 5;
                 audioPlayer.loopStart = 0;
                 audioPlayer.loopEnd = 0;
                 volumeSet = 0.3;
-                enabled = 1;
                 [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET loopstart = %f WHERE name = \"%@\"", audioPlayer.loopStart, nameField]];
                 [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET loopend = 0 WHERE name = \"%@\"", nameField]];
                 [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET volume = 0.3 WHERE name = \"%@\"", nameField]];
-                [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET enabled = 1 WHERE name = \"%@\"", nameField]];
             }
             else
             {
                 audioPlayer.loopStart = sqlite3_column_double(statement, 2);
                 audioPlayer.loopEnd = sqlite3_column_double(statement, 3);
                 volumeSet = sqlite3_column_double(statement, 4);
-                enabled = sqlite3_column_int(statement, 5);
                 if (sqlite3_column_text(statement, 6)) {
                     url = [NSURL URLWithString:[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)]];
                 }
@@ -297,56 +294,48 @@ static const double TESTTIMEOFFSET = 5;
     // If chosen song text is a number.
     else
     {
+        /// Random number to choose a new track with.
+        NSInteger random = -1;
         do
         {
-            /// Random number to choose a new track with.
-            NSInteger random = -1;
-            do
-            {
-                random = arc4random() % totalPlaylistSongs;
-                if (playlistIndex)
-                {
-                    NSArray *splitSongs = [self getSongIndices];
-                    if (splitSongs && splitSongs.count > random)
-                    {
-                        random = [[splitSongs objectAtIndex:random] integerValue];
-                    }
-                }
-            } while (musicNumber == random && totalPlaylistSongs != 1);
-            musicNumber = random;
-            timeShuffle2 = [self timeVariance];
+            random = arc4random() % totalPlaylistSongs;
             if (playlistIndex)
             {
-                [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks WHERE id = %li", (long)musicNumber]];
+                NSArray *splitSongs = [self getSongIndices];
+                if (splitSongs && splitSongs.count > random)
+                {
+                    random = [[splitSongs objectAtIndex:random] integerValue];
+                }
+            }
+        } while (musicNumber == random && totalPlaylistSongs != 1);
+        musicNumber = random;
+        timeShuffle2 = [self timeVariance];
+        if (playlistIndex)
+        {
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks WHERE id = %li", (long)musicNumber]];
+        }
+        else
+        {
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks ORDER BY id LIMIT 1 OFFSET \"%li\"", (long)musicNumber]];
+        }
+        if (sqlite3_step(statement) == SQLITE_ROW)
+        {
+            idField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
+            nameField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 1)];
+            audioPlayer.loopStart = sqlite3_column_double(statement, 2);
+            audioPlayer.loopEnd = sqlite3_column_double(statement, 3);
+            volumeSet = sqlite3_column_double(statement, 4);
+            if (sqlite3_column_text(statement, 6))
+            {
+                url = [NSURL URLWithString:[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)]];
             }
             else
             {
-                [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks ORDER BY id LIMIT 1 OFFSET \"%li\"", (long)musicNumber]];
+                url = nil;
             }
-            if (sqlite3_step(statement) == SQLITE_ROW)
-            {
-                idField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
-                nameField = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 1)];
-                audioPlayer.loopStart = sqlite3_column_double(statement, 2);
-                audioPlayer.loopEnd = sqlite3_column_double(statement, 3);
-                volumeSet = sqlite3_column_double(statement, 4);
-                enabled = sqlite3_column_int(statement, 5);
-                if (sqlite3_column_text(statement, 6))
-                {
-                    url = [NSURL URLWithString:[[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 6)]];
-                }
-                else
-                {
-                    url = nil;
-                }
-                musicNumber = [idField intValue];
-            }
-            else
-            {
-                enabled = false;
-            }
-            sqlite3_finalize(statement);
-        } while (!enabled);
+            musicNumber = [idField intValue];
+        }
+        sqlite3_finalize(statement);
         songName.text = nameField;
     }
     sqlite3_close(trackData);
