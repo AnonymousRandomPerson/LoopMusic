@@ -10,7 +10,7 @@
 #define AudioPlayer_h
 
 #import <TheAmazingAudioEngine.h>
-
+#import <math.h>
 
 /// Contains data for an audio track.
 typedef struct AudioData
@@ -43,6 +43,8 @@ typedef struct AudioData
     
     /// The current volume of the audio player.
     float _volume;
+    /// The global volume of the app.
+    float _globalVolume;
     /// Whether the audio player is currently playing.
     bool _playing;
     /// The time that the current track will loop back to when looping.
@@ -58,6 +60,8 @@ typedef struct AudioData
 @property(nonatomic) NSTimeInterval currentTime;
 /// The current volume of the audio player.
 @property(nonatomic) float volume;
+/// The global volume of the app.
+@property(nonatomic) float globalVolume;
 /// Whether the audio player is currently playing.
 @property(nonatomic, readonly) bool playing;
 /// The duration of the track in the audio player.

@@ -94,6 +94,7 @@ static const double TESTTIMEOFFSET = 5;
         repeatsShuffle = [splitSettings[2] integerValue];
         fadeSetting = splitSettings.count > 3 ? [splitSettings[3] doubleValue] : 0;
         playlistIndex = splitSettings.count > 4 ? [splitSettings[4] integerValue] : 0;
+        volumeSlider.value = splitSettings.count > 5 ? [splitSettings[5] floatValue] : 0;
     }
     else
     {
@@ -104,10 +105,10 @@ static const double TESTTIMEOFFSET = 5;
         repeatsShuffle = 3;
         fadeSetting = 2;
         playlistIndex = 0;
-        /// The text to write to the new settings file.
-        NSString *newSettings = [NSString stringWithFormat:@"%lu,%f,%li,%f,%li", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting, (long)playlistIndex];
-        [newSettings writeToFile:filePath atomically:true encoding:NSUTF8StringEncoding error:nil];
+        volumeSlider.value = 0;
+        [self saveSettings];
     }
+    [self setGlobalVolume:nil];
     if (playlistIndex)
     {
         [self updatePlaylistSongs];
@@ -462,6 +463,21 @@ static const double TESTTIMEOFFSET = 5;
     {
         [self changeScreen:@"loopFinder"];
     }
+}
+
+- (IBAction)setGlobalVolume:(id)sender
+{
+    float scaledVolume = 0;
+    if (volumeSlider.value > volumeSlider.minimumValue)
+    {
+        scaledVolume = pow(2.0, volumeSlider.value);
+    }
+    audioPlayer.globalVolume = scaledVolume;
+}
+
+- (IBAction)saveGlobalVolume:(id)sender
+{
+    [self saveSettings];
 }
 
 - (NSInteger)setLoopTime:(double)newLoopTime
@@ -940,6 +956,15 @@ static const double TESTTIMEOFFSET = 5;
         [alert textFieldAtIndex:0].text = initText;
     }
     [alert show];
+}
+
+- (void)saveSettings
+{
+    /// The string to write to the settings file.
+    NSString *fileWriteString = [NSString stringWithFormat:@"%lu,%f,%li,%f,%li,%f", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting, (long)playlistIndex, volumeSlider.value];
+    /// The file path of the settings file.
+    NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
+    [fileWriteString writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 }
 
 - (void)didReceiveMemoryWarning

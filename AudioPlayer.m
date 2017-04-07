@@ -90,7 +90,7 @@ static const float SEARCHTOLERANCE = 300;
 
 - (float)volume
 {
-    return _volume;
+    return fminf(_volume * _globalVolume, 1);
 }
 
 - (void)setVolume:(float)volume
@@ -100,6 +100,15 @@ static const float SEARCHTOLERANCE = 300;
         volume = 0;
     }
     _volume = volume;
+}
+
+- (void)setGlobalVolume:(float)globalVolume
+{
+    if (globalVolume < 0)
+    {
+        globalVolume = 0;
+    }
+    _globalVolume = globalVolume;
 }
 
 - (bool)playing
@@ -207,7 +216,12 @@ static const float SEARCHTOLERANCE = 300;
                 {
                     for (int j = 0; j < 2; j++)
                     {
-                        ((SInt16 *)audio->mBuffers[j].mData)[i] = ((SInt16 *)audioData->playingList->mBuffers[j].mData)[audioData->currentFrame] * _volume;
+                        float currentVolume = _volume * _globalVolume;
+                        if (currentVolume > 1)
+                        {
+                            currentVolume = 1;
+                        }
+                        ((SInt16 *)audio->mBuffers[j].mData)[i] = ((SInt16 *)audioData->playingList->mBuffers[j].mData)[audioData->currentFrame] * currentVolume;
                     }
                     audioData->currentFrame++;
                     if (audioData->currentFrame >= audioData->numFrames)

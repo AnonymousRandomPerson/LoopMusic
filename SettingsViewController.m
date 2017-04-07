@@ -54,11 +54,7 @@
 {
     [presenter setOccupied:false];
     shuffleSetting = [shuffle selectedSegmentIndex];
-    /// The string to write to the settings file.
-    NSString *fileWriteString = [NSString stringWithFormat:@"%lu,%f,%li,%f,%li", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting, (long)playlistIndex];
-    /// The file path of the settings file.
-    NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
-    [fileWriteString writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+    [self saveSettings];
     [super back:sender];
 }
 

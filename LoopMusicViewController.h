@@ -61,6 +61,8 @@ extern NSInteger playlistIndex;
     IBOutlet UILabel *playlistName;
     /// Symbol for whether the player is playing.
     IBOutlet UILabel *playSymbol;
+    /// Slider for adjusting the global volume of the app.
+    IBOutlet UISlider *volumeSlider;
     
     /// The database ID for the loading track.
     NSString *idField;
@@ -160,6 +162,18 @@ extern NSInteger playlistIndex;
  * @return
  */
 - (IBAction)back:(id)sender;
+/*!
+ * Sets the global volume of the app.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)setGlobalVolume:(id)sender;
+/*!
+ * Saves the global volume of the app to the settings file.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)saveGlobalVolume:(id)sender;
 
 /*!
  * Opens the track database.
@@ -380,5 +394,10 @@ extern NSInteger playlistIndex;
  * @return
  */
 - (void)showTwoButtonMessageInput:(NSString *)title :(NSString *)message :(NSString *)okay :(NSString *)initText;
+
+/*!
+ * Saves the non-track-specific settings of the app.
+ */
+- (void)saveSettings;
 
 @end
