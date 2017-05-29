@@ -7,6 +7,7 @@
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12088"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+        <capability name="Constraints with non-1.0 multipliers" minToolsVersion="5.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -93,7 +94,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="bRb-WC-AMs">
-                                <rect key="frame" x="46" y="193" width="30" height="30"/>
+                                <rect key="frame" x="46" y="248" width="30" height="30"/>
                                 <state key="normal" title="Play">
                                     <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
@@ -102,7 +103,7 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="right" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="qO1-pU-Pmq">
-                                <rect key="frame" x="247" y="193" width="33" height="30"/>
+                                <rect key="frame" x="247" y="248" width="33" height="30"/>
                                 <state key="normal" title="Stop">
                                     <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
@@ -110,8 +111,8 @@
                                     <action selector="stopSong:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="o4A-Py-xx0"/>
                                 </connections>
                             </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="right" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3sO-4y-4m2">
-                                <rect key="frame" x="178" y="125" width="99" height="30"/>
+                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="right" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3sO-4y-4m2">
+                                <rect key="frame" x="180" y="165" width="99" height="30"/>
                                 <state key="normal" title="Random Track">
                                     <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
@@ -126,7 +127,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kPk-Do-5np">
-                                <rect key="frame" x="46" y="293" width="57" height="30"/>
+                                <rect key="frame" x="47" y="502" width="57" height="30"/>
                                 <state key="normal" title="Settings">
                                     <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
@@ -135,7 +136,7 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6dM-KI-621">
-                                <rect key="frame" x="47" y="125" width="102" height="30"/>
+                                <rect key="frame" x="47" y="165" width="102" height="30"/>
                                 <state key="normal" title="Choose Track">
                                     <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
@@ -150,21 +151,15 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <slider opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="-2" maxValue="2" translatesAutoresizingMaskIntoConstraints="NO" id="idY-Fr-F03">
-                                <rect key="frame" x="44" y="255" width="238" height="31"/>
+                                <rect key="frame" x="39" y="381" width="238" height="31"/>
                                 <connections>
                                     <action selector="saveGlobalVolume:" destination="vXZ-lx-hvc" eventType="touchUpOutside" id="1fA-jv-Rmf"/>
                                     <action selector="saveGlobalVolume:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="bP7-Jn-IvA"/>
                                     <action selector="setGlobalVolume:" destination="vXZ-lx-hvc" eventType="valueChanged" id="2Hp-8M-kMi"/>
                                 </connections>
                             </slider>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Volume" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="pER-TL-t6s">
-                                <rect key="frame" x="131" y="226" width="58" height="21"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <nil key="textColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="right" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="4ro-d2-Z0x">
-                                <rect key="frame" x="197" y="293" width="83" height="30"/>
+                                <rect key="frame" x="197" y="502" width="83" height="30"/>
                                 <state key="normal" title="Loop Finder">
                                     <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
@@ -178,33 +173,39 @@
                                 <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Volume" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="pER-TL-t6s">
+                                <rect key="frame" x="129" y="352" width="58" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="ao7-As-jf5" firstAttribute="top" secondItem="tne-Gd-byn" secondAttribute="bottom" constant="8" id="15H-0L-Tso"/>
-                            <constraint firstItem="kPk-Do-5np" firstAttribute="top" secondItem="idY-Fr-F03" secondAttribute="bottom" constant="8" id="5fA-wi-JsW"/>
                             <constraint firstItem="QXm-7J-bFf" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="6UI-fJ-Abs"/>
-                            <constraint firstItem="qO1-pU-Pmq" firstAttribute="top" secondItem="3sO-4y-4m2" secondAttribute="bottom" constant="37" id="6z4-a4-oIT"/>
-                            <constraint firstItem="bRb-WC-AMs" firstAttribute="top" secondItem="6dM-KI-621" secondAttribute="bottom" constant="38" id="9p9-Jc-Ysi"/>
                             <constraint firstItem="idY-Fr-F03" firstAttribute="width" secondItem="tne-Gd-byn" secondAttribute="width" id="AmJ-Kj-wFn"/>
+                            <constraint firstItem="mQu-h2-UKm" firstAttribute="top" secondItem="4ro-d2-Z0x" secondAttribute="bottom" constant="36" id="Jo0-uq-ios"/>
                             <constraint firstItem="ao7-As-jf5" firstAttribute="width" secondItem="kh9-bI-dsS" secondAttribute="height" multiplier="280:667" id="Jpa-Xy-COL"/>
                             <constraint firstItem="6dM-KI-621" firstAttribute="leading" secondItem="tne-Gd-byn" secondAttribute="leading" id="Md3-b6-jez"/>
                             <constraint firstItem="idY-Fr-F03" firstAttribute="top" secondItem="pER-TL-t6s" secondAttribute="bottom" constant="8" id="MyW-jr-tBB"/>
+                            <constraint firstItem="bRb-WC-AMs" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" id="O8C-0k-TK7"/>
+                            <constraint firstItem="3sO-4y-4m2" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" multiplier="2:3" id="aSj-rd-MPX"/>
                             <constraint firstItem="3sO-4y-4m2" firstAttribute="trailing" secondItem="tne-Gd-byn" secondAttribute="trailing" id="aiZ-Ie-Of8"/>
                             <constraint firstItem="idY-Fr-F03" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="b9i-dB-2jg"/>
                             <constraint firstItem="ao7-As-jf5" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="bM6-Vh-aEU"/>
-                            <constraint firstItem="6dM-KI-621" firstAttribute="top" secondItem="QXm-7J-bFf" secondAttribute="bottom" constant="18" id="dhc-uY-hoG"/>
+                            <constraint firstItem="QXm-7J-bFf" firstAttribute="top" secondItem="tne-Gd-byn" secondAttribute="bottom" constant="47" id="fDW-TH-8jG"/>
                             <constraint firstItem="tne-Gd-byn" firstAttribute="width" secondItem="kh9-bI-dsS" secondAttribute="height" multiplier="117:284" id="feo-Je-5Q0"/>
                             <constraint firstItem="pER-TL-t6s" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="iJV-ul-hav"/>
-                            <constraint firstItem="pER-TL-t6s" firstAttribute="top" secondItem="bRb-WC-AMs" secondAttribute="bottom" constant="3" id="j0I-nf-Zpk"/>
                             <constraint firstItem="tne-Gd-byn" firstAttribute="top" secondItem="uIr-Ix-2ZE" secondAttribute="bottom" constant="8" id="orr-cG-PTE"/>
-                            <constraint firstItem="4ro-d2-Z0x" firstAttribute="top" secondItem="idY-Fr-F03" secondAttribute="bottom" constant="8" id="pEO-rA-rd8"/>
+                            <constraint firstItem="6dM-KI-621" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" multiplier="2:3" id="q0Z-0H-MTK"/>
                             <constraint firstItem="kPk-Do-5np" firstAttribute="leading" secondItem="tne-Gd-byn" secondAttribute="leading" id="r15-XQ-iOv"/>
+                            <constraint firstItem="pER-TL-t6s" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" multiplier="4:3" id="rBf-Gm-YOC"/>
+                            <constraint firstItem="qO1-pU-Pmq" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" id="rPJ-Qa-fOS"/>
                             <constraint firstItem="tne-Gd-byn" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="rUI-Ub-dcX"/>
                             <constraint firstItem="bRb-WC-AMs" firstAttribute="leading" secondItem="tne-Gd-byn" secondAttribute="leading" id="rbI-bw-vWo"/>
-                            <constraint firstItem="3sO-4y-4m2" firstAttribute="top" secondItem="QXm-7J-bFf" secondAttribute="bottom" constant="18" id="rfM-li-Bh1"/>
-                            <constraint firstItem="QXm-7J-bFf" firstAttribute="top" secondItem="tne-Gd-byn" secondAttribute="bottom" constant="37" id="tiA-TP-wCg"/>
                             <constraint firstItem="qO1-pU-Pmq" firstAttribute="trailing" secondItem="tne-Gd-byn" secondAttribute="trailing" id="uhY-nh-mZE"/>
+                            <constraint firstItem="mQu-h2-UKm" firstAttribute="top" secondItem="kPk-Do-5np" secondAttribute="bottom" constant="36" id="vxY-EF-tyQ"/>
                             <constraint firstItem="4ro-d2-Z0x" firstAttribute="trailing" secondItem="tne-Gd-byn" secondAttribute="trailing" id="yfr-9E-hQt"/>
                         </constraints>
                     </view>
