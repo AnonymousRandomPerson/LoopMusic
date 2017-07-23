@@ -195,11 +195,11 @@
 {
     addingSong = true;
     /// The picker to use when adding tracks.
-    MPMediaPickerController *picker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeAnyAudio];
+    MPMediaPickerController *picker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeMusic];
     
     [picker setDelegate: self];
     [picker setAllowsPickingMultipleItems: YES];
-    picker.prompt = @"Add songs";
+    picker.prompt = @"Add tracks";
     
     [self presentViewController:picker
                        animated:true
@@ -318,11 +318,11 @@
     }
     addingSong = false;
     /// The picker to use to replace the current track.
-    MPMediaPickerController *picker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeAnyAudio];
+    MPMediaPickerController *picker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeMusic];
     
     [picker setDelegate: self];
     [picker setAllowsPickingMultipleItems: NO];
-    picker.prompt = @"Replace song";
+    picker.prompt = @"Replace track";
     
     [self presentViewController:picker
                        animated:true
@@ -364,27 +364,16 @@
     {
         for (MPMediaItem *item in collection.items)
         {
-            /// The name of the track in the current iteration.
-            NSString *itemName = [item valueForProperty:MPMediaItemPropertyTitle];
             /// The resource URL of the track in the current iteration.
             NSURL *itemURL = [item valueForProperty:MPMediaItemPropertyAssetURL];
-            [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", itemName]];
-            if (sqlite3_step(statement) == SQLITE_ROW && ![itemName isEqualToString:[presenter getSongName]])
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", [presenter getSongName]]];
+            if (sqlite3_step(statement) == SQLITE_ROW)
             {
-                [self showErrorMessage:@"Name is already used."];
-            }
-            else
-            {
-                sqlite3_finalize(statement);
-                [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", [presenter getSongName]]];
-                if (sqlite3_step(statement) == SQLITE_ROW)
-                {
-                    [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET url = \"%@\", name = \"%@\" WHERE name = \"%@\"", itemURL.absoluteString, itemName, [presenter getSongName]]];
-                    [presenter setAudioPlayer:itemURL];
-                    [presenter setNewSongName:itemName];
-                }
+                [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET url = \"%@\" WHERE name = \"%@\"", itemURL.absoluteString, [presenter getSongName]]];
+                [presenter setAudioPlayer:itemURL];
             }
             sqlite3_finalize(statement);
+            break;
         }
     }
     sqlite3_close(trackData);
