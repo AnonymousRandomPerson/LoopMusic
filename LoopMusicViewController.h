@@ -394,6 +394,11 @@ extern NSInteger playlistIndex;
  * @return
  */
 - (void)showTwoButtonMessageInput:(NSString *)title :(NSString *)message :(NSString *)okay :(NSString *)initText;
+/*!
+ * Gets the value of the global volume slider.
+ * @return The value of the global volume slider.
+ */
+- (float)getVolumeSliderValue;
 
 /*!
  * Saves the non-track-specific settings of the app.

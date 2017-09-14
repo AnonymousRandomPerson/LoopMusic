@@ -468,9 +468,10 @@ static const double TESTTIMEOFFSET = 5;
 - (IBAction)setGlobalVolume:(id)sender
 {
     float scaledVolume = 0;
-    if (volumeSlider.value > volumeSlider.minimumValue)
+    float unscaledVolume = [self getVolumeSliderValue];
+    if (unscaledVolume > volumeSlider.minimumValue)
     {
-        scaledVolume = pow(2.0, volumeSlider.value);
+        scaledVolume = pow(2.0, unscaledVolume);
     }
     audioPlayer.globalVolume = scaledVolume;
 }
@@ -961,10 +962,15 @@ static const double TESTTIMEOFFSET = 5;
 - (void)saveSettings
 {
     /// The string to write to the settings file.
-    NSString *fileWriteString = [NSString stringWithFormat:@"%lu,%f,%li,%f,%li,%f", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting, (long)playlistIndex, volumeSlider.value];
+    NSString *fileWriteString = [NSString stringWithFormat:@"%lu,%f,%li,%f,%li,%f", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting, (long)playlistIndex, [self getVolumeSliderValue]];
     /// The file path of the settings file.
     NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
     [fileWriteString writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+}
+
+- (float)getVolumeSliderValue
+{
+    return volumeSlider.value;
 }
 
 - (void)didReceiveMemoryWarning

@@ -448,6 +448,11 @@
     [self changeScreen:@"deletePlaylist"];
 }
 
+- (float)getVolumeSliderValue
+{
+    return [presenter getVolumeSliderValue];
+}
+
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
