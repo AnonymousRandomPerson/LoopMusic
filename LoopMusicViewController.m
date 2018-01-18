@@ -299,7 +299,7 @@ static const double TESTTIMEOFFSET = 5;
         NSInteger random = -1;
         do
         {
-            random = arc4random() % totalPlaylistSongs;
+            random = arc4random()% totalPlaylistSongs;
             if (playlistIndex)
             {
                 NSArray *splitSongs = [self getSongIndices];
