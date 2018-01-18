@@ -32,6 +32,8 @@ extern NSInteger playlistIndex;
     
     /// The database index of the current track.
     NSInteger musicNumber;
+    /// The index of the current track within the current playlist
+    NSInteger musicIndex;
     /// The resource URL of the current track.
     NSURL *url;
     /// Whether a track is being manually chosen by the user.
