@@ -358,6 +358,10 @@
                 }
             }
             sqlite3_finalize(statement);
+
+//            // This should be able to replace everything within the for loop, but hasn't been tested.
+//            [self addSongToDB:itemName :itemURL];
+//            [presenter incrementTotalSongs];
         }
     }
     else

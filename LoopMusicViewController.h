@@ -210,6 +210,18 @@ extern NSInteger playlistIndex;
  * @return The result code of the query.
  */
 - (NSInteger)updateDBResult:(NSString *)query;
+/*!
+ * Executes queries to add a song to the database.
+ * @param name The song name.
+ * @param url The song URL.
+ * @return
+ */
+- (void)addSongToDB:(NSString *)name :(NSURL *)url;
+/*!
+ * Wipes the database clean.
+ * @return
+ */
+- (void)wipeDB;
 
 /*!
  * Loads the total number of tracks in the app.

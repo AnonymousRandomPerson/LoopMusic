@@ -115,6 +115,48 @@ static const double TESTTIMEOFFSET = 5;
         [self updatePlaylistName];
     }
     
+// Load local test files from the testSongs/ directory if testing on the simulator
+#if TARGET_OS_SIMULATOR
+    NSString *localDir = @"testSongs/";
+    if(![self isSongListEmpty])
+    {
+        // Wipe the table clean before proceeding
+        [self wipeDB];
+    }
+    
+    
+    // RETRIEVING LOCAL RESOURCES
+    NSBundle *mainBundle;
+    mainBundle = [NSBundle mainBundle];
+    
+    NSArray *localTestTracks = [mainBundle pathsForResourcesOfType:nil inDirectory:localDir];
+    NSArray *localTestTrackURLs = [mainBundle URLsForResourcesWithExtension:nil subdirectory:localDir];
+    NSUInteger nLocalTracks = localTestTracks.count;
+    
+    if(nLocalTracks > 0)
+    {
+        NSLog(@"Simulator: Loading test tracks...");
+        [self openDB];
+        for(int trk = 0; trk < nLocalTracks; ++trk)
+        {
+            // Get the track name and display it
+            NSUInteger slashLocation = [localTestTracks[trk] rangeOfString:@"/" options:NSBackwardsSearch].location;
+            NSString *trackName = [localTestTracks[trk] substringFromIndex:slashLocation+1];
+            NSUInteger dotLocation = [trackName rangeOfString:@"." options:NSBackwardsSearch].location;
+            trackName = [trackName substringToIndex:dotLocation];
+            
+            NSLog(@"Track %i: %@", trk, trackName);
+            
+            // Load the track into the database with its URL
+            [self addSongToDB:trackName :localTestTrackURLs[trk]];
+        }
+        sqlite3_close(trackData);
+        NSLog(@"%ld tracks loaded.", totalSongs);
+    }
+#endif
+    
+    
+    
     [self playMusic];
 }
 
@@ -699,6 +741,40 @@ static const double TESTTIMEOFFSET = 5;
     sqlite3_finalize(statement);
     sqlite3_close(trackData);
     return returnValue;
+}
+
+- (void)addSongToDB:(NSString *)name :(NSURL *)url
+{
+    [self prepareQuery:[NSString stringWithFormat:@"SELECT url FROM Tracks WHERE name=\"%@\"", name]];
+    if (sqlite3_step(statement) == SQLITE_ROW)
+    {
+        [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET url = \"%@\" WHERE name = \"%@\"", url.absoluteString, name]];
+    }
+    else
+    {
+        sqlite3_finalize(statement);
+        [self prepareQuery:[NSString stringWithFormat:@"SELECT name FROM Tracks WHERE url=\"%@\"", url]];
+        if (sqlite3_step(statement) != SQLITE_ROW)
+        {
+            [self updateDB:[NSString stringWithFormat:@"INSERT INTO Tracks (name, loopstart, loopend, volume, enabled, url) VALUES (\"%@\", 0, 0, 0.3, 1, \"%@\")", name, url.absoluteString]];
+            [self incrementTotalSongs];
+        }
+    }
+    sqlite3_finalize(statement);
+}
+
+- (void)wipeDB
+{
+    [self openUpdateDB:@"DELETE FROM Tracks"];
+    
+    // Reset fields
+    musicNumber = -1;
+    url = nil;
+    songString = @"";
+    idField = @"";
+    nameField = @"";
+    totalSongs = 0;
+    totalPlaylistSongs = 0;
 }
 
 - (NSInteger)initializeTotalSongs
