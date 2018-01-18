@@ -133,10 +133,11 @@ static const double TESTTIMEOFFSET = 5;
     NSArray *localTestTrackURLs = [mainBundle URLsForResourcesWithExtension:nil subdirectory:localDir];
     NSUInteger nLocalTracks = localTestTracks.count;
     
-    if(nLocalTracks > 0)
+    if(nLocalTracks > 1)
     {
         NSLog(@"Simulator: Loading test tracks...");
         [self openDB];
+        int counter = -1;
         for(int trk = 0; trk < nLocalTracks; ++trk)
         {
             // Get the track name and display it
@@ -145,13 +146,20 @@ static const double TESTTIMEOFFSET = 5;
             NSUInteger dotLocation = [trackName rangeOfString:@"." options:NSBackwardsSearch].location;
             trackName = [trackName substringToIndex:dotLocation];
             
-            NSLog(@"Track %i: %@", trk, trackName);
+            // Ignore the README file
+            if([trackName isEqualToString:@"README"])
+            {
+                continue;
+            }
+            ++counter;
+            
+            NSLog(@"Track %i: %@", counter, trackName);
             
             // Load the track into the database with its URL
             [self addSongToDB:trackName :localTestTrackURLs[trk]];
         }
         sqlite3_close(trackData);
-        NSLog(@"%ld tracks loaded.", totalSongs);
+        NSLog(@"%ld track(s) loaded.", totalSongs);
     }
 #endif
     
@@ -341,7 +349,7 @@ static const double TESTTIMEOFFSET = 5;
         NSInteger random = -1;
         do
         {
-            random = arc4random() % totalPlaylistSongs;
+            random = arc4random_uniform(totalPlaylistSongs);
             if (playlistIndex)
             {
                 NSArray *splitSongs = [self getSongIndices];
@@ -376,7 +384,7 @@ static const double TESTTIMEOFFSET = 5;
             {
                 url = nil;
             }
-            musicNumber = [idField intValue];
+            musicNumber = [idField intValue] - 1;
         }
         sqlite3_finalize(statement);
         songName.text = nameField;
