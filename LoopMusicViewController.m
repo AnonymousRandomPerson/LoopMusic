@@ -133,7 +133,7 @@ static const double TESTTIMEOFFSET = 5;
     NSArray *localTestTrackURLs = [mainBundle URLsForResourcesWithExtension:nil subdirectory:localDir];
     NSUInteger nLocalTracks = localTestTracks.count;
     
-    if (nLocalTracks > 1)
+    if (nLocalTracks > 0)
     {
         NSLog(@"Simulator: Loading test tracks...");
         [self openDB];
@@ -886,31 +886,30 @@ static const double TESTTIMEOFFSET = 5;
 {
     /// The IDs of all tracks in the current playlist.
     NSArray *splitSongs = nil;
-    NSString *trackString = nil;
-    if(playlistIndex)
+    if (playlistIndex)
     {
         [self prepareQuery:[NSString stringWithFormat:@"SELECT tracks FROM Playlists WHERE id = %ld", (long)playlistIndex]];
         
         if (sqlite3_step(statement) == SQLITE_ROW)
         {
             /// The database string containing the current playlist's track IDs.
-            trackString = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
+            NSString *trackString = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
+            splitSongs = [trackString componentsSeparatedByString:@","];
         }
     }
     else
     {
         [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM Tracks"]];
-        trackString = @"";
+        /// The IDs of all tracks read from the table so far
+        NSMutableArray *songsSoFar = [[NSMutableArray alloc] init];
         while (sqlite3_step(statement) == SQLITE_ROW)
         {
             /// The database string containing the current track ID
             NSString *idString = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
-            trackString = [[trackString stringByAppendingString:idString] stringByAppendingString:@","];
+            [songsSoFar addObject:idString];
         }
-        trackString = [trackString substringToIndex:[trackString length]-1];
+        splitSongs = [NSArray arrayWithArray:songsSoFar];
     }
-    
-    splitSongs = [trackString componentsSeparatedByString:@","];
     sqlite3_finalize(statement);
     if (splitSongs.count == 1 && [[splitSongs objectAtIndex:0] isEqualToString:@""])
     {
