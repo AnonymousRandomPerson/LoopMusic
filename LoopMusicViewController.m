@@ -118,7 +118,7 @@ static const double TESTTIMEOFFSET = 5;
 // Load local test files from the testSongs/ directory if testing on the simulator
 #if TARGET_OS_SIMULATOR
     NSString *localDir = @"testSongs/";
-    if(![self isSongListEmpty])
+    if (![self isSongListEmpty])
     {
         // Wipe the table clean before proceeding
         [self wipeDB];
@@ -133,12 +133,12 @@ static const double TESTTIMEOFFSET = 5;
     NSArray *localTestTrackURLs = [mainBundle URLsForResourcesWithExtension:nil subdirectory:localDir];
     NSUInteger nLocalTracks = localTestTracks.count;
     
-    if(nLocalTracks > 1)
+    if (nLocalTracks > 1)
     {
         NSLog(@"Simulator: Loading test tracks...");
         [self openDB];
         int counter = -1;
-        for(int trk = 0; trk < nLocalTracks; ++trk)
+        for (int trk = 0; trk < nLocalTracks; ++trk)
         {
             // Get the track name and display it
             NSUInteger slashLocation = [localTestTracks[trk] rangeOfString:@"/" options:NSBackwardsSearch].location;
@@ -147,7 +147,7 @@ static const double TESTTIMEOFFSET = 5;
             trackName = [trackName substringToIndex:dotLocation];
             
             // Ignore the README file
-            if([trackName isEqualToString:@"README"])
+            if ([trackName isEqualToString:@"README"])
             {
                 continue;
             }
