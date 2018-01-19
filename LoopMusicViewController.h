@@ -255,7 +255,7 @@ extern NSInteger playlistIndex;
 - (void)updatePlaylistSongs;
 /*!
  * Gets the IDs of all tracks in the current playlist.
- * @return An array (of NSString *) containing the IDs of all tracks in the current playlist.
+ * @return An array (of NSNumber *) containing the IDs of all tracks in the current playlist.
  */
 - (NSArray*)getSongIndices;
 /*!
@@ -275,9 +275,9 @@ extern NSInteger playlistIndex;
 - (bool)isSongListEmpty;
 /*!
  * Gets the names of all playlists.
- * @return An array containing the names of all playlists.
+ * @return An array containing the names of all playlist names.
  */
-- (NSMutableArray*)getPlaylistList;
+- (NSMutableArray*)getPlaylistNameList;
 /*!
  * Gets the name of the current playlist.
  * @return The name of the current playlist.

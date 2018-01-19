@@ -16,7 +16,7 @@
 
 - (void)viewDidLoad
 {
-    items = [self getPlaylistList];
+    items = [self getPlaylistNameList];
     [super viewDidLoad];
     table.allowsMultipleSelection = true;
     self.searchDisplayController.searchResultsTableView.allowsMultipleSelection = true;
@@ -39,13 +39,14 @@
         for (NSString *item in selectedItems)
         {
             /// The ID of the playlist to be deleted.
-            NSInteger deleteIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Playlists WHERE name = \"%@\"", item]];
+            NSInteger deleteIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM PlaylistNames WHERE name = \"%@\"", item]];
+            [self updateDB:[NSString stringWithFormat:@"DELETE FROM PlaylistNames WHERE id = %ld", deleteIndex]];
+            [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE id = %ld", deleteIndex]];
             if (playlistIndex == deleteIndex)
             {
                 playlistIndex = 0;
                 [presenter updatePlaylistName:@""];
             }
-            [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE name = \"%@\"", item]];
         }
         sqlite3_close(trackData);
     }

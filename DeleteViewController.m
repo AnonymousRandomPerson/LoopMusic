@@ -42,25 +42,13 @@
             if (playlistIndex)
             {
                 deleteIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Tracks WHERE name = \"%@\"", item]];
+                [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE track = %ld", deleteIndex]];
             }
             [self updateDB:[NSString stringWithFormat:@"DELETE FROM Tracks WHERE name = \"%@\"", item]];
             [presenter decrementTotalSongs];
-            if (playlistIndex)
-            {
-                /// The IDs of the tracks in the current playlist.
-                NSArray *splitSongs = [self getSongIndices];
-                if (splitSongs)
-                {
-                    /// The ID of the track to be deleted as a string.
-                    NSString *deleteIndexString = [NSString stringWithFormat:@"%ld", (long)deleteIndex];
-                    if ([splitSongs containsObject:deleteIndexString])
-                    {
-                        [presenter decrementPlaylistSongs];
-                    }
-                }
-            }
         }
         sqlite3_close(trackData);
+        [presenter updatePlaylistSongs];
     }
 }
 

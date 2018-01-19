@@ -59,11 +59,14 @@ static const double TESTTIMEOFFSET = 5;
     [self initializeTotalSongs];
     
     // Check if the playlist table has been created.
-    [self updateDB:@"CREATE TABLE IF NOT EXISTS Playlists (id integer PRIMARY KEY, name text, tracks text)"];
-    [self prepareQuery:@"SELECT id from Playlists where name = \"All tracks\""];
+//    [self updateDB:@"DROP TABLE IF EXISTS Playlists"];    // For updating from old version
+    [self updateDB:@"CREATE TABLE IF NOT EXISTS PlaylistNames (id integer PRIMARY KEY, name text)"];
+    [self updateDB:@"CREATE TABLE IF NOT EXISTS Playlists (rowkey integer PRIMARY KEY, id integer, track integer)"];
+    
+    [self prepareQuery:@"SELECT id from PlaylistNames where name = \"All tracks\""];
     if (sqlite3_step(statement) != SQLITE_ROW)
     {
-        [self updateDB:@"INSERT INTO Playlists VALUES (0, \"All tracks\", \"\")"];
+        [self updateDB:@"INSERT INTO PlaylistNames VALUES (0, \"All tracks\")"];
     }
     sqlite3_finalize(statement);
     
@@ -120,7 +123,7 @@ static const double TESTTIMEOFFSET = 5;
     NSString *localDir = @"testSongs/";
     if (![self isSongListEmpty])
     {
-        // Wipe the table clean before proceeding
+        // Wipe the tables clean before proceeding
         [self wipeDB];
     }
     
@@ -137,7 +140,7 @@ static const double TESTTIMEOFFSET = 5;
     {
         NSLog(@"Simulator: Loading test tracks...");
         [self openDB];
-        int counter = -1;
+        int counter = 0;
         for (int trk = 0; trk < nLocalTracks; ++trk)
         {
             // Get the track name and display it
@@ -765,7 +768,8 @@ static const double TESTTIMEOFFSET = 5;
 - (void)wipeDB
 {
     [self openUpdateDB:@"DELETE FROM Tracks"];
-    [self openUpdateDB:@"DELETE FROM Playlists WHERE name != \"All tracks\""];
+    [self openUpdateDB:@"DELETE FROM Playlists"];
+    [self openUpdateDB:@"DELETE FROM PlaylistNames WHERE name != \"All tracks\""];
     
     // Reset fields
     musicNumber = -1;
@@ -776,6 +780,7 @@ static const double TESTTIMEOFFSET = 5;
     totalSongs = 0;
     totalPlaylistSongs = 0;
     playlistName.text = @"";
+    playlistIndex = 0;
 }
 
 - (NSInteger)initializeTotalSongs
@@ -855,7 +860,7 @@ static const double TESTTIMEOFFSET = 5;
     {
         [self openDB];
         /// The name of the current playlist.
-        NSString * newName = [self getStringDB:[NSString stringWithFormat:@"SELECT name FROM Playlists where id = %ld", (long)playlistIndex]];
+        NSString * newName = [self getStringDB:[NSString stringWithFormat:@"SELECT name FROM PlaylistNames where id = %ld", (long)playlistIndex]];
         [self updatePlaylistName:newName];
         sqlite3_close(trackData);
         if ([newName isEqualToString:@""])
@@ -888,33 +893,23 @@ static const double TESTTIMEOFFSET = 5;
     NSArray *splitSongs = nil;
     if (playlistIndex)
     {
-        [self prepareQuery:[NSString stringWithFormat:@"SELECT tracks FROM Playlists WHERE id = %ld", (long)playlistIndex]];
-        
-        if (sqlite3_step(statement) == SQLITE_ROW)
-        {
-            /// The database string containing the current playlist's track IDs.
-            NSString *trackString = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
-            splitSongs = [trackString componentsSeparatedByString:@","];
-        }
+        [self prepareQuery:[NSString stringWithFormat:@"SELECT track FROM Playlists WHERE id = %ld", (long)playlistIndex]];
     }
     else
     {
         [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM Tracks"]];
-        /// The IDs of all tracks read from the table so far
-        NSMutableArray *songsSoFar = [[NSMutableArray alloc] init];
-        while (sqlite3_step(statement) == SQLITE_ROW)
-        {
-            /// The database string containing the current track ID
-            NSString *idString = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
-            [songsSoFar addObject:idString];
-        }
-        splitSongs = [NSArray arrayWithArray:songsSoFar];
     }
-    sqlite3_finalize(statement);
-    if (splitSongs.count == 1 && [[splitSongs objectAtIndex:0] isEqualToString:@""])
+    /// The IDs of all tracks read from the table so far
+    NSMutableArray *songsSoFar = [[NSMutableArray alloc] init];
+    while (sqlite3_step(statement) == SQLITE_ROW)
     {
-        return nil;
+        /// The database string containing the current track ID
+        NSString *idString = [[NSString alloc] initWithUTF8String:(const char *) sqlite3_column_text(statement, 0)];
+        NSNumber *idVal = [NSNumber numberWithInteger:[idString integerValue]];
+        [songsSoFar addObject:idVal];
     }
+    splitSongs = [NSArray arrayWithArray:songsSoFar];
+    sqlite3_finalize(statement);
     return splitSongs;
 }
 
@@ -996,9 +991,9 @@ static const double TESTTIMEOFFSET = 5;
     return !totalSongs;
 }
 
-- (NSMutableArray*)getPlaylistList
+- (NSMutableArray*)getPlaylistNameList
 {
-    return [self getNameList:@"Playlists"];
+    return [self getNameList:@"PlaylistNames"];
 }
 
 - (void)showErrorMessage:(NSString *)message
