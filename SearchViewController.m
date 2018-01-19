@@ -43,9 +43,6 @@ static CGPoint lastPosition;
 {
     [self savePosition];
     
-    // THIS LINE CAUSES COMPLAINTS... NOT SURE WHY
-    // "[logging] API call with invalid database connection pointer"
-    // "[logging] misuse at line 148673 of [2b0954060f]"
     [presenter chooseSong:item];
 }
 

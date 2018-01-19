@@ -339,9 +339,9 @@ static const double TESTTIMEOFFSET = 5;
         }
         sqlite3_finalize(statement);
         songName.text = nameField;
-        sqlite3_close(trackData);
         if (!valid || url == nil)
         {
+            sqlite3_close(trackData);
             return;
         }
     }
