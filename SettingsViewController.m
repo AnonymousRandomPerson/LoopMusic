@@ -263,14 +263,14 @@
         if (playlistIndex && ![newName isEqualToString:[presenter getPlaylistName]])
         {
             [self openDB];
-            [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM Playlists WHERE name=\"%@\"", newName]];
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM PlaylistNames WHERE name=\"%@\"", newName]];
             if (sqlite3_step(statement) == SQLITE_ROW && sqlite3_column_int(statement, 0) != playlistIndex)
             {
                 [self showErrorMessage:@"Name is already used."];
             }
             else
             {
-                [self updateDB:[NSString stringWithFormat:@"UPDATE Playlists SET name = \"%@\" WHERE id = \"%ld\"", newName, (long)playlistIndex]];
+                [self updateDB:[NSString stringWithFormat:@"UPDATE PlaylistNames SET name = \"%@\" WHERE id = \"%ld\"", newName, (long)playlistIndex]];
             }
             sqlite3_finalize(statement);
             sqlite3_close(trackData);
@@ -281,7 +281,7 @@
     {
         // Add playlist.
         [self openDB];
-        [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM Playlists WHERE name=\"%@\"", newName]];
+        [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM PlaylistNames WHERE name=\"%@\"", newName]];
         if (sqlite3_step(statement) == SQLITE_ROW)
         {
             NSLog(@"%d", sqlite3_column_int(statement, 0));
@@ -289,9 +289,9 @@
         }
         else
         {
-            [self updateDB:[NSString stringWithFormat:@"INSERT INTO Playlists (name, tracks) values (\"%@\", \"\")", newName]];
+            [self updateDB:[NSString stringWithFormat:@"INSERT INTO PlaylistNames (name) VALUES (\"%@\")", newName]];
             sqlite3_finalize(statement);
-            [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM Playlists WHERE name=\"%@\"", newName]];
+            [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM PlaylistNames WHERE name=\"%@\"", newName]];
             if (sqlite3_step(statement) == SQLITE_ROW)
             {
                 playlistIndex = sqlite3_column_int(statement, 0);
@@ -358,6 +358,10 @@
                 }
             }
             sqlite3_finalize(statement);
+
+//            // This should be able to replace everything within the for loop, but hasn't been tested.
+//            [self addSongToDB:itemName :itemURL];
+//            [presenter incrementTotalSongs];
         }
     }
     else

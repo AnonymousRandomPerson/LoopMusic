@@ -210,6 +210,18 @@ extern NSInteger playlistIndex;
  * @return The result code of the query.
  */
 - (NSInteger)updateDBResult:(NSString *)query;
+/*!
+ * Executes queries to add a song to the database.
+ * @param name The song name.
+ * @param url The song URL.
+ * @return
+ */
+- (void)addSongToDB:(NSString *)name :(NSURL *)url;
+/*!
+ * Wipes the database clean.
+ * @return
+ */
+- (void)wipeDB;
 
 /*!
  * Loads the total number of tracks in the app.
@@ -243,7 +255,7 @@ extern NSInteger playlistIndex;
 - (void)updatePlaylistSongs;
 /*!
  * Gets the IDs of all tracks in the current playlist.
- * @return An array containing the IDs of all tracks in the current playlist.
+ * @return An array (of NSNumber *) containing the IDs of all tracks in the current playlist.
  */
 - (NSArray*)getSongIndices;
 /*!
@@ -263,9 +275,9 @@ extern NSInteger playlistIndex;
 - (bool)isSongListEmpty;
 /*!
  * Gets the names of all playlists.
- * @return An array containing the names of all playlists.
+ * @return An array containing the names of all playlist names.
  */
-- (NSMutableArray*)getPlaylistList;
+- (NSMutableArray*)getPlaylistNameList;
 /*!
  * Gets the name of the current playlist.
  * @return The name of the current playlist.

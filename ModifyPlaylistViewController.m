@@ -25,23 +25,16 @@
 {
     [self dismissViewControllerAnimated:true completion:nil];
     [self openDB];
-    /// The database string containing the IDs of the tracks in the playlist.
-    NSString* trackString = @"";
+    [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE id = %ld", (long)playlistIndex]];
     for (NSString *item in selectedItems)
     {
         /// The ID of the track in the current iteration.
         NSInteger trackIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Tracks WHERE name = \"%@\"", item]];
         if (trackIndex)
         {
-            trackString = [trackString stringByAppendingString:[NSString stringWithFormat:@"%ld",(long)trackIndex]];
-            trackString = [trackString stringByAppendingString:@","];
+            [self updateDB:[NSString stringWithFormat:@"INSERT INTO Playlists (id, track) VALUES (%ld, %ld)", (long)playlistIndex, trackIndex]];
         }
     }
-    if ([trackString length] > 0)
-    {
-        trackString = [trackString substringToIndex:[trackString length] - 1];
-    }
-    [self updateDB:[NSString stringWithFormat:@"UPDATE Playlists SET tracks = \"%@\" WHERE id = %ld", trackString, (long)playlistIndex]];
     sqlite3_close(trackData);
     [presenter updatePlaylistSongs];
 }

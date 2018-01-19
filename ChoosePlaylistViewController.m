@@ -22,7 +22,7 @@ static CGPoint lastPosition;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    items = [self getPlaylistList];
+    items = [self getPlaylistNameList];
     if (![[items objectAtIndex:0] isEqualToString:@"All tracks"])
     {
         [items removeObject:@"All tracks"];
@@ -48,7 +48,7 @@ static CGPoint lastPosition;
 - (void)selectItem:(NSString *)item
 {
     [self openDB];
-    playlistIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Playlists WHERE name = \"%@\"", item]];
+    playlistIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM PlaylistNames WHERE name = \"%@\"", item]];
     sqlite3_close(trackData);
     [presenter updatePlaylistSongs];
     [presenter updatePlaylistName:item];
