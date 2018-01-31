@@ -505,7 +505,7 @@ static const double TESTTIMEOFFSET = 5;
     }
     else
     {
-        [self changeScreen:@"loopFinder"];
+        [self changeScreen:@"looperParent"];
     }
 }
 
@@ -672,6 +672,11 @@ static const double TESTTIMEOFFSET = 5;
 - (void)openDB
 {
     sqlite3_open([[[NSString alloc] initWithString:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0] stringByAppendingPathComponent: @"Tracks.db"]] UTF8String], &trackData);
+}
+
+- (void)closeDB
+{
+    sqlite3_close(trackData);
 }
 
 - (void)prepareQuery:(NSString *)query

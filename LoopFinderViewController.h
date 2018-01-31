@@ -13,14 +13,15 @@
 {
     /// Text field to change the playback time of the current track.
     IBOutlet UITextField *setCurrentTime;
-    /// Label displaying the name of the current track.
-    IBOutlet UILabel *finderSongName;
     /// Text field to change the loop start time of the current track.
     IBOutlet UITextField *finderSetTime;
     /// Text field to change the loop end time of the current track.
     IBOutlet UITextField *finderSetTimeEnd;
     /// Label displaying the most recently found playback time.
     IBOutlet UILabel *findTimeText;
+    
+    /// Name of the current track being looped.
+    NSString *finderSongName;
     
     /// The main screen of the app.
     LoopMusicViewController *presenter;
@@ -35,12 +36,27 @@
 
 /// Text field to change the playback time of the current track.
 @property(nonatomic, retain) UITextField *setCurrentTime;
-/// Label displaying the name of the current track.
-@property(nonatomic, retain) UILabel *finderSongName;
 /// Text field to change the loop start time of the current track.
 @property(nonatomic, retain) UITextField *finderSetTime;
 /// Text field to change the loop end time of the current track.
 @property(nonatomic, retain) UITextField *finderSetTimeEnd;
+/// Name of the current track being looped.
+@property(strong, nonatomic) NSString *finderSongName;
+
+
+// Helpers for communication with the parent view controller.
+/*!
+ * Reads in the main screen and sets up relevant info.
+ * @param presenterPtr The pointer to the main screen.
+ * @return
+ */
+- (void)loadPresenter:(LoopMusicViewController *)presenterPtr;
+/*!
+ * Empties the borrowed pointer to the main screen.
+ * @return
+ */
+- (void)unloadPresenter;
+
 
 /*!
  * Sets the playback time of the current track.
@@ -120,11 +136,5 @@
  * @return
  */
 - (IBAction)close:(id)sender;
-/*!
- * Navigates to the previous screen.
- * @param sender The object that called this function.
- * @return
- */
-- (IBAction)back:(id)sender;
 
 @end

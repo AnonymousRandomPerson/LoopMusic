@@ -181,6 +181,11 @@ extern NSInteger playlistIndex;
  */
 - (void)openDB;
 /*!
+ * Closes the track database.
+ * @return
+ */
+- (void)closeDB;
+/*!
  * Prepares a database query.
  * @param query The query to prepare.
  * @return

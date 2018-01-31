@@ -29,15 +29,15 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
     NSSortDescriptor *descriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:true];
     pointSorter = @[descriptor];
     
-    [self openDB];
-    sqlite3_open(dbPath, &trackData);
+//    [self openDB];
+//    sqlite3_open(dbPath, &trackData);
     
     /// Timer to load the current track name and the main screen of the app.
-    [NSTimer scheduledTimerWithTimeInterval:.1
-                                     target:self
-                                   selector:@selector(loadSettings:)
-                                   userInfo:nil
-                                    repeats:NO];
+//    [NSTimer scheduledTimerWithTimeInterval:.1
+//                                     target:self
+//                                   selector:@selector(loadSettings:)
+//                                   userInfo:nil
+//                                    repeats:NO];
 }
 
 /*!
@@ -45,14 +45,29 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
  * @param loadTimer The timer that called this function.
  * @return
  */
-- (void)loadSettings:(NSTimer*)loadTimer
+//- (void)loadSettings:(NSTimer*)loadTimer
+//{
+//    presenter = (LoopMusicViewController*)(self.presentingViewController);
+//    audioPlayer = presenter->audioPlayer;
+//    [presenter setOccupied:true];
+//    finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
+//    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
+//    finderSongName.text = [presenter getSongName];
+//}
+
+- (void)loadPresenter:(LoopMusicViewController *)presenterPtr
 {
-    presenter = (LoopMusicViewController*)(self.presentingViewController);
+    self->presenter = presenterPtr;
     audioPlayer = presenter->audioPlayer;
-    [presenter setOccupied:true];
     finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
     finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
-    finderSongName.text = [presenter getSongName];
+    finderSongName = [presenter getSongName];
+}
+
+// Clears the borrowed presenter pointer.
+- (void)unloadPresenter
+{
+    presenter = nil;
 }
 
 - (IBAction)setCurrentTime:(id)sender
@@ -181,7 +196,7 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 {
     /// The result code of the database query.
     NSInteger result = 0;
-    result = [self updateDBResult:[NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, finderSongName.text]];
+    result = [self updateDBResult:[NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, finderSongName]];
     if (result != 101)
     {
         [self showErrorMessage:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]];
