@@ -414,6 +414,31 @@ static const double TESTTIMEOFFSET = 5;
     }
     audioPlayer.volume = volumeSet;
 }
+- (void)setAudioLoopStart:(NSTimeInterval)newStart
+{
+    audioPlayer.loopStart = newStart;
+}
+- (void)setAudioLoopEnd:(NSTimeInterval)newEnd
+{
+    audioPlayer.loopEnd = newEnd;
+}
+- (UInt32)getAudioLoopStartFrame
+{
+    return [audioPlayer loopStartFrame];
+}
+- (NSTimeInterval)getAudioLoopStart
+{
+    return audioPlayer.loopStart;
+}
+- (UInt32)getAudioLoopEndFrame
+{
+    return [audioPlayer loopEndFrame];
+}
+- (NSTimeInterval)getAudioLoopEnd
+{
+    return audioPlayer.loopEnd;
+}
+
 
 - (void)updateVolumeDec
 {
@@ -564,9 +589,23 @@ static const double TESTTIMEOFFSET = 5;
     songName.text = newName;
 }
 
+- (AudioData *)getAudioData
+{
+    return [audioPlayer getAudioData];
+}
+
+- (UInt32)getAudioFrameDuration
+{
+    return [audioPlayer frameDuration];
+}
 - (double)getAudioDuration
 {
     return audioPlayer.duration;
+}
+
+- (NSMutableArray *)audioFindLoopTime
+{
+    return [audioPlayer findLoopTime];
 }
 
 - (void)testTime

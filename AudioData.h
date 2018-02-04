@@ -11,6 +11,9 @@
 
 #import <TheAmazingAudioEngine.h>
 
+/// The frame rate of the audio player.
+extern const UInt32 FRAMERATE;
+
 /// Contains data for an audio track.
 typedef struct AudioData
 {

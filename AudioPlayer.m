@@ -9,8 +9,6 @@
 #import <Foundation/Foundation.h>
 #import "AudioPlayer.h"
 
-/// The frame rate of the audio player.
-static const UInt32 FRAMERATE = 44100;
 /// The number of frames that have to match for the loop finder to accept a time.
 static const UInt32 NUMMATCHINGFRAMES = 1;
 /// The range of the loop finder's search.
@@ -116,29 +114,43 @@ static const float SEARCHTOLERANCE = 300;
     return _playing;
 }
 
+- (UInt32)frameDuration
+{
+    return bufferAudioData->numFrames;
+}
 - (double)duration
 {
     return bufferAudioData->numFrames / (NSTimeInterval)FRAMERATE;
 }
 
+- (UInt32)loopStartFrame
+{
+    return _loopStart;
+}
+
 - (NSTimeInterval)loopStart
 {
-    return _loopStart / (NSTimeInterval)FRAMERATE;
+    return [AudioPlayer frameToTime:_loopStart];
 }
 
 - (void)setLoopStart:(NSTimeInterval)loopStart
 {
-    _loopStart = loopStart * FRAMERATE;
+    _loopStart = [AudioPlayer timeToFrame:loopStart];
+}
+
+- (UInt32)loopEndFrame
+{
+    return _loopEnd;
 }
 
 - (NSTimeInterval)loopEnd
 {
-    return _loopEnd / (NSTimeInterval)FRAMERATE;
+    return [AudioPlayer frameToTime:_loopEnd];
 }
 
 - (void)setLoopEnd:(NSTimeInterval)loopEnd
 {
-    _loopEnd = loopEnd * FRAMERATE;
+    _loopEnd = [AudioPlayer timeToFrame:loopEnd];
 }
 
 - (bool)loading
@@ -238,6 +250,11 @@ static const float SEARCHTOLERANCE = 300;
     }
 }
 
+- (AudioData *)getAudioData
+{
+    return audioData;
+}
+
 - (NSMutableArray *)findLoopTime
 {
     /// Acceptable start points.
@@ -317,6 +334,16 @@ static const float SEARCHTOLERANCE = 300;
     }
     
     return foundPoints;
+}
+
+
++ (UInt32)timeToFrame:(NSTimeInterval)time
+{
+    return (UInt32)lround(time * FRAMERATE);
+}
++ (NSTimeInterval)frameToTime:(UInt32)frame
+{
+    return frame / (NSTimeInterval)FRAMERATE;
 }
 
 @end

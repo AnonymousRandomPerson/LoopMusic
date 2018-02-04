@@ -1,22 +1,22 @@
 //
-//  LoopFinderViewController.m
+//  LooperManualViewController.m
 //  LoopMusic
 //
 //  Created by Cheng Hann Gan on 6/16/14.
 //  Copyright (c) 2014 Cheng Hann Gan. All rights reserved.
 //
 
-#import "LoopFinderViewController.h"
+#import "LooperManualViewController.h"
 
 static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 
-@interface LoopFinderViewController ()
+@interface LooperManualViewController ()
 
 @end
 
-@implementation LoopFinderViewController
+@implementation LooperManualViewController
 
-@synthesize setCurrentTime, finderSongName, finderSetTime, finderSetTimeEnd;
+@synthesize setCurrentTime, finderSetTime, finderSetTimeEnd;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -55,19 +55,12 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 //    finderSongName.text = [presenter getSongName];
 //}
 
+
 - (void)loadPresenter:(LoopMusicViewController *)presenterPtr
 {
-    self->presenter = presenterPtr;
-    audioPlayer = presenter->audioPlayer;
-    finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
-    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
-    finderSongName = [presenter getSongName];
-}
-
-// Clears the borrowed presenter pointer.
-- (void)unloadPresenter
-{
-    presenter = nil;
+    [super loadPresenter:presenterPtr];
+    finderSetTime.text = [NSString stringWithFormat:@"%f", [presenter getAudioLoopStart]];
+    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", [presenter getAudioLoopEnd]];
 }
 
 - (IBAction)setCurrentTime:(id)sender
@@ -80,16 +73,11 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
     [presenter setCurrentTime:[setCurrentTime.text doubleValue]];
 }
 
-- (IBAction)testTime:(id)sender
-{
-    [presenter testTime];
-}
-
 - (IBAction)finderSetTime:(id)sender
 {
-    if ([finderSetTime.text doubleValue] >= audioPlayer.loopEnd || [finderSetTime.text doubleValue] < 0 || [finderSetTime.text isEqual:@""])
+    if ([finderSetTime.text doubleValue] >= [presenter getAudioLoopEnd] || [finderSetTime.text doubleValue] < 0 || [finderSetTime.text isEqual:@""])
     {
-        finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
+        finderSetTime.text = [NSString stringWithFormat:@"%f", [presenter getAudioLoopStart]];
         return;
     }
     [self setLoopStart:[finderSetTime.text doubleValue]];
@@ -99,9 +87,9 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 {
     /// The time that the loop end will be set to.
     NSTimeInterval newTime = [finderSetTimeEnd.text doubleValue];
-    if (newTime <= audioPlayer.loopStart || [finderSetTimeEnd.text isEqual:@""])
+    if (newTime <= [presenter getAudioLoopStart] || [finderSetTimeEnd.text isEqual:@""])
     {
-        finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
+        finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", [presenter getAudioLoopEnd]];
         return;
     }
     /// The duration of the current track.
@@ -111,8 +99,8 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
         newTime = duration;
     }
     [self setLoopEnd:newTime];
-    audioPlayer.loopEnd = [finderSetTimeEnd.text doubleValue];
-    [self sqliteUpdate:@"loopend" newTime:audioPlayer.loopEnd];
+    // [presenter setAudioLoopEnd:[finderSetTimeEnd.text doubleValue]];
+    [self sqliteUpdate:@"loopend" newTime:[presenter getAudioLoopEnd]];
 }
 
 - (IBAction)finderAddTime:(id)sender
@@ -127,14 +115,14 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
         }
         else
         {
-            newTime = audioPlayer.loopStart;
+            newTime = [presenter getAudioLoopStart];
         }
     }
     else
     {
-        newTime = audioPlayer.loopStart + LOOPPOINTINCREMENT;
+        newTime = [presenter getAudioLoopStart] + LOOPPOINTINCREMENT;
     }
-    if (newTime >= audioPlayer.loopEnd)
+    if (newTime >= [presenter getAudioLoopEnd])
     {
         return;
     }
@@ -143,11 +131,11 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 
 - (IBAction)finderAddTimeEnd:(id)sender
 {
-    if (audioPlayer.loopEnd >= [presenter getAudioDuration])
+    if ([presenter getAudioLoopEnd] >= [presenter getAudioDuration])
     {
         return;
     }
-    [self setLoopEnd:audioPlayer.loopEnd + LOOPPOINTINCREMENT];
+    [self setLoopEnd:[presenter getAudioLoopEnd] + LOOPPOINTINCREMENT];
 }
 
 - (IBAction)finderSubtractTime:(id)sender
@@ -163,12 +151,12 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
         }
         else
         {
-            newTime = audioPlayer.loopStart;
+            newTime = [presenter getAudioLoopStart];
         }
     }
     else
     {
-        newTime = audioPlayer.loopStart - LOOPPOINTINCREMENT;
+        newTime = [presenter getAudioLoopStart] - LOOPPOINTINCREMENT;
     }
     if (newTime < 0)
     {
@@ -179,11 +167,11 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 
 - (IBAction)finderSubtractTimeEnd:(id)sender
 {
-    if (audioPlayer.loopEnd <= audioPlayer.loopStart + LOOPPOINTINCREMENT)
+    if ([presenter getAudioLoopEnd] <= [presenter getAudioLoopStart] + LOOPPOINTINCREMENT)
     {
         return;
     }
-    [self setLoopEnd:audioPlayer.loopEnd - LOOPPOINTINCREMENT];
+    [self setLoopEnd:[presenter getAudioLoopEnd] - LOOPPOINTINCREMENT];
 }
 
 /*!
@@ -196,10 +184,10 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 {
     /// The result code of the database query.
     NSInteger result = 0;
-    result = [self updateDBResult:[NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, finderSongName]];
+    result = [presenter updateDBResult:[NSString stringWithFormat:@"UPDATE Tracks SET %@ = %f WHERE name = \"%@\"", field1, newTime, [presenter getSongName]]];
     if (result != 101)
     {
-        [self showErrorMessage:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]];
+        [presenter showErrorMessage:[NSString stringWithFormat:@"Failed to update database (%li). Restart the app.", (long)result]];
     }
     return result;
 }
@@ -231,10 +219,10 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 
 - (IBAction)findLoopTime:(id)sender
 {
-    foundPoints = [audioPlayer findLoopTime];
+    foundPoints = [presenter audioFindLoopTime];
     if ([foundPoints count] == 0)
     {
-        [self showErrorMessage:@"No suitable loop start times were found."];
+        [presenter showErrorMessage:@"No suitable loop start times were found."];
         foundPoints = nil;
     }
     else
@@ -261,13 +249,6 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
     [setCurrentTime resignFirstResponder];
 }
 
-- (IBAction)back:(id)sender
-{
-    sqlite3_close(trackData);
-    [presenter setOccupied:false];
-    [super back:sender];
-}
-
 /*!
  * Sets the loop start point.
  * @param loopStart The new loop start point.
@@ -275,9 +256,8 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
  */
 - (void)setLoopStart:(NSTimeInterval)loopStart
 {
-    audioPlayer.loopStart = loopStart;
-    [self sqliteUpdate:@"loopstart" newTime:audioPlayer.loopStart];
-    finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
+    [super setLoopStart:loopStart];
+    finderSetTime.text = [NSString stringWithFormat:@"%f", [presenter getAudioLoopStart]];
 }
 
 /*!
@@ -287,9 +267,8 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
  */
 - (void)setLoopEnd:(NSTimeInterval)loopEnd
 {
-    audioPlayer.loopEnd = loopEnd;
-    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
-    [self sqliteUpdate:@"loopend" newTime:audioPlayer.loopEnd];
+    [super setLoopEnd:loopEnd];
+    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", [presenter getAudioLoopEnd]];
     foundPoints = nil;
 }
 

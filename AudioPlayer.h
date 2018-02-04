@@ -53,14 +53,42 @@
 @property(nonatomic) float globalVolume;
 /// Whether the audio player is currently playing.
 @property(nonatomic, readonly) bool playing;
-/// The duration of the track in the audio player.
+/// The duration of the track in the audio player in seconds.
 @property(nonatomic, readonly) double duration;
-/// The time that the current track will loop back to when looping.
+/// The time that the current track will loop back to when looping in seconds.
 @property(nonatomic) NSTimeInterval loopStart;
-/// The time that the current track will loop back from when looping.
+/// The time that the current track will loop back from when looping in seconds.
 @property(nonatomic) NSTimeInterval loopEnd;
 /// Whether a new track is being loaded.
 @property(nonatomic) bool loading;
+
+/*!
+ * Returns the loop start point in frames.
+ * @return The loop start point frame number.
+ */
+- (UInt32)loopStartFrame;
+/*!
+ * Returns the loop end point in frames.
+ * @return The loop end point frame number.
+ */
+- (UInt32)loopEndFrame;
+/*!
+ * Returns the loop duration in frames.
+ * @return The loop duration in frames.
+ */
+- (UInt32)frameDuration;
+
+/*!
+ * Converts a time in seconds to frame number.
+ * @return The input time as a frame number.
+ */
++ (UInt32)timeToFrame:(NSTimeInterval)time;
+/*!
+ * Converts a frame number to a time in seconds.
+ * @return The input frame as a time in seconds.
+ */
++ (NSTimeInterval)frameToTime:(UInt32)frame;
+
 
 /*!
  * Starts playback of the audio player.
@@ -81,6 +109,12 @@
  * @return
  */
 - (void)initAudioPlayer:(NSURL *)newURL :(NSError *)error;
+
+/*!
+ * Gets the currently loaded audio data in the audio player.
+ * @return The AudioData pointer to the current track.
+ */
+- (AudioData *)getAudioData;
 
 /*!
  * Finds suitable start times to loop to.

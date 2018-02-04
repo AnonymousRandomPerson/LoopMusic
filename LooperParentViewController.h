@@ -9,8 +9,8 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "LoopMusicViewController.h"
-#import "LoopFinderAutoViewController.h"
-#import "LoopFinderViewController.h"
+#import "LooperAutoViewController.h"
+#import "LooperManualViewController.h"
 
 /// Parent view controller for automatic and manual loop-finder GUIs.
 @interface LooperParentViewController : UIViewController
@@ -21,9 +21,9 @@
     IBOutlet UILabel *songName;
     
     /// Child for automatic loop-finding mode.
-    LoopFinderAutoViewController *childAuto;
+    LooperAutoViewController *childAuto;
     /// Child for manual loop-finding mode.
-    LoopFinderViewController *childManual;
+    LooperManualViewController *childManual;
     
     /// The main screen of the app. To be passed along to child view controllers.
     LoopMusicViewController *presenter;

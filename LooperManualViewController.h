@@ -1,5 +1,5 @@
 //
-//  LoopFinderViewController.h
+//  LooperManualViewController.h
 //  LoopMusic
 //
 //  Created by Cheng Hann Gan on 6/16/14.
@@ -8,8 +8,9 @@
 
 #import <UIKit/UIKit.h>
 #import "SettingsViewController.h"
+#import "LooperViewController.h"
 
-@interface LoopFinderViewController : LoopMusicViewController
+@interface LooperManualViewController : LooperViewController
 {
     /// Text field to change the playback time of the current track.
     IBOutlet UITextField *setCurrentTime;
@@ -19,12 +20,6 @@
     IBOutlet UITextField *finderSetTimeEnd;
     /// Label displaying the most recently found playback time.
     IBOutlet UILabel *findTimeText;
-    
-    /// Name of the current track being looped.
-    NSString *finderSongName;
-    
-    /// The main screen of the app.
-    LoopMusicViewController *presenter;
     
     /// Loop start points that have been found.
     NSMutableArray *foundPoints;
@@ -44,32 +39,12 @@
 @property(strong, nonatomic) NSString *finderSongName;
 
 
-// Helpers for communication with the parent view controller.
-/*!
- * Reads in the main screen and sets up relevant info.
- * @param presenterPtr The pointer to the main screen.
- * @return
- */
-- (void)loadPresenter:(LoopMusicViewController *)presenterPtr;
-/*!
- * Empties the borrowed pointer to the main screen.
- * @return
- */
-- (void)unloadPresenter;
-
-
 /*!
  * Sets the playback time of the current track.
  * @param sender The object that called this function.
  * @return
  */
 - (IBAction)setCurrentTime:(id)sender;
-/*!
- * Sets the playback time to five seconds before the loop time.
- * @param sender The object that called this function.
- * @return
- */
-- (IBAction)testTime:(id)sender;
 /*!
  * Sets the loop start time of the current track.
  * @param sender The object that called this function.

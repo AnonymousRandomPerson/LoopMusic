@@ -16,16 +16,8 @@
 {
     [super viewDidLoad];
     
-    // Load the main screen of the app.
-    /// Timer to load the current track name and the main screen of the app.
-    [NSTimer scheduledTimerWithTimeInterval:.1
-                                     target:self
-                                   selector:@selector(loadMainScreen:)
-                                   userInfo:nil
-                                    repeats:NO];
-    
-    childAuto = [self.storyboard instantiateViewControllerWithIdentifier:@"loopFinderAuto"];
-    childManual = [self.storyboard instantiateViewControllerWithIdentifier:@"loopFinder"];
+    childAuto = [self.storyboard instantiateViewControllerWithIdentifier:@"looperAuto"];
+    childManual = [self.storyboard instantiateViewControllerWithIdentifier:@"looperManual"];
     childAuto.view.translatesAutoresizingMaskIntoConstraints = NO;
     childManual.view.translatesAutoresizingMaskIntoConstraints = NO;
     
@@ -34,6 +26,14 @@
     self.currentViewController = childAuto;
     [self addChildViewController:self.currentViewController];
     [self addSubview:self.currentViewController.view toView:self.containerView];
+    
+    // Load the main screen of the app.
+    /// Timer to load the current track name and the main screen of the app.
+    [NSTimer scheduledTimerWithTimeInterval:.1
+                                     target:self
+                                   selector:@selector(loadMainScreen:)
+                                   userInfo:nil
+                                    repeats:NO];
 }
 
 - (void)loadMainScreen:(NSTimer*)loadTimer
@@ -42,13 +42,24 @@
     [presenter setOccupied:true];
     songName.text = [presenter getSongName];
     
-    // Load the track database for modification
-    [presenter openDB];
+    // LooperViewController already opens/closes DB with each update
+//    [presenter openDB];
+    
+    // Load the presenter into the current view controller
+    if (!loopMode)
+    {
+        [childAuto loadPresenter:presenter];
+    }
+    else
+    {
+        [childManual loadPresenter:presenter];
+    }
 }
 
 - (IBAction)back:(id)sender
 {
-    [presenter closeDB];
+    // LooperViewController already opens/closes DB with each update
+//    [presenter closeDB];
     [presenter setOccupied:false];
     [presenter back:sender];
 }
@@ -61,10 +72,12 @@
     {
         case 0:
             [childManual unloadPresenter];
+            [childAuto loadPresenter:presenter];
             [self cycleFromVC:self.currentViewController toVC:childAuto];
             self.currentViewController = childAuto;
             break;
         case 1:
+            [childAuto unloadPresenter];
             [childManual loadPresenter:presenter];
             [self cycleFromVC:self.currentViewController toVC:childManual];
             self.currentViewController = childManual;

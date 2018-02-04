@@ -1,5 +1,5 @@
 //
-//  LoopFinderAutoViewController.h
+//  LooperAutoViewController.h
 //  LoopMusic
 //
 //  Created by Johann Gan on 1/21/18.
@@ -8,9 +8,40 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import "LoopMusicViewController.h"
+#import "LooperViewController.h"
+#import "LoopFinderAuto.h"
 
-@interface LoopFinderAutoViewController : UIViewController
+enum initialEstimateViewTags
+{
+    startEstimateTextField = 1,
+    endEstimateTextField = 2,
+    startEstimateDecrementButton = 3,
+    startEstimateIncrementButton = 4,
+    endEstimateDecrementButton = 5,
+    endEstimateIncrementButton = 6,
+    startEstimateLabel = 7,
+    endEstimateLabel = 8
+};
+
+enum loopDurationViewTags
+{
+    previousDurationButton = 1,
+    nextDurationButton = 2,
+    durationRankLabel = 3,
+    durationConfidenceLabel = 4,
+    durationLabel = 5
+};
+
+enum loopEndpointsViewTags
+{
+    previousEndpointsButton = 1,
+    nextEndpointsButton = 2,
+    endpointsRankLabel = 3,
+    startEndpointLabel = 4,
+    endEndpointLabel = 5
+};
+
+@interface LooperAutoViewController : LooperViewController
 {
     /// Switch for toggling using initial estimates.
     IBOutlet UISwitch *estimateToggler;
@@ -23,22 +54,21 @@
     /// Current initial end time estimate. -1 is a flag for nothing.
     double endEst;
     
-    
     /// Subview of loop durations results.
     IBOutlet UIView *loopDurationView;
     /// Subview of loop endpoint results.
     IBOutlet UIView *loopEndpointView;
     
-    /// Results from the loop finding algorithm.
+    /// The loop finder.
+    LoopFinderAuto *finder;
+    /// Original loop point information. Contains keys "duration", "startFrame", and "endFrame". All quantities are in frames.
+    NSDictionary *originalLoopInfo;
+    /// Results from the loop finding algorithm. See LoopFinderAuto::findLoop() documentation for details on format.
     NSDictionary *loopFinderResults;
-    
-    /// Rank for the current base lag value from the results being displayed.
-    NSInteger lagRank;
-    /// Rank for the current sample pair corresponding to the current base lag value from the results being displayed.
-    NSInteger pairRank;
-    
-    // TRY CHANGING THIS TO BE A POINTER TO THE PARENT VIEW CONTROLLER, WHICH HANDLES COMMUNICATION WITH THE MAIN SCREEN.
-    LoopMusicViewController *presenter;
+    /// Ranks of the current duration value being displayed. -1 means display the original loop info.
+    NSInteger currentDurationRank;
+    /// Ranks of the current pair to display for each duration value in loopFinderResults
+    NSMutableArray *currentPairRanks;
 }
 
 @property(strong, nonatomic) IBOutlet UISwitch *estimateToggler;
@@ -53,15 +83,6 @@
  * @return
  */
 - (IBAction)findLoop:(id)sender;
-
-/*!
- * Updates the text field of a UI object in a subview.
- * @param subview The subview containing the UI object.
- * @param tag The tag of the UI object within the subview.
- * @param text The text with which to update the UI object.
- * @return
- */
-- (void)updateText:(UIView *)subview :(NSInteger)tag :(NSString *)text;
 
 /*!
  * Enables the usage of initial estimates in loop finding.
@@ -156,31 +177,29 @@
  */
 - (IBAction)revertOriginalLoop:(id)sender;
 /*!
- * Changes to the next best result for loop duration.
- * @param sender The object that called this function.
- * @return
- */
-- (IBAction)nextDuration:(id)sender;
-/*!
  * Changes to the previous best result for loop duration.
  * @param sender The object that called this function.
  * @return
  */
 - (IBAction)prevDuration:(id)sender;
 /*!
- * Changes to the next best subresult for loop endpoints under the current loop duration.
+ * Changes to the next best result for loop duration.
  * @param sender The object that called this function.
  * @return
  */
-- (IBAction)nextEndpoints:(id)sender;
+- (IBAction)nextDuration:(id)sender;
 /*!
  * Changes to the previous best subresult for loop endpoints under the current loop duration.
  * @param sender The object that called this function.
  * @return
  */
 - (IBAction)prevEndpoints:(id)sender;
-
-// Parameter setting functions
+/*!
+ * Changes to the next best subresult for loop endpoints under the current loop duration.
+ * @param sender The object that called this function.
+ * @return
+ */
+- (IBAction)nextEndpoints:(id)sender;
 
 
 /*!

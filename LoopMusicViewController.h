@@ -312,6 +312,39 @@ extern NSInteger playlistIndex;
  */
 - (void)setAudioPlayer:(NSURL*)newURL;
 /*!
+ * Sets the loop start point for the audio player.
+ * @param newStart The new start point.
+ * @return
+ */
+- (void)setAudioLoopStart:(NSTimeInterval)newStart;
+/*!
+ * Sets the loop end point for the audio player.
+ * @param newEnd The new start point.
+ * @return
+ */
+- (void)setAudioLoopEnd:(NSTimeInterval)newEnd;
+/*!
+ * Returns the loop start point for the audio player in frames.
+ * @return A UInt32 of the audio player's start frame.
+ */
+- (UInt32)getAudioLoopStartFrame;
+/*!
+ * Returns the loop start point for the audio player in seconds.
+ * @return A NSTimeInterval of the audio player's start point.
+ */
+- (NSTimeInterval)getAudioLoopStart;
+/*!
+ * Returns the loop end point for the audio player in frames.
+ * @return An NSTimeInterval of the audio player's end frame.
+ */
+- (UInt32)getAudioLoopEndFrame;
+/*!
+ * Returns the loop end point for the audio player in seconds.
+ * @return An NSTimeInterval of the audio player's end point.
+ */
+- (NSTimeInterval)getAudioLoopEnd;
+
+/*!
  * Updates the fade-out volume decrement according to the fade-out setting and the current track.
  * @return
  */
@@ -340,10 +373,25 @@ extern NSInteger playlistIndex;
  */
 - (void)setNewSongName:(NSString *)newName;
 /*!
- * Gets the duration of the current track.
- * @return The duration of the current track.
+ * Gets the currently loaded audio data in the audio player.
+ * @return The AudioData pointer to the current track.
+ */
+- (AudioData *)getAudioData;
+/*!
+ * Gets the duration of the current track in frames.
+ * @return The duration of the current track in frames.
+ */
+- (UInt32)getAudioFrameDuration;
+/*!
+ * Gets the duration of the current track in seconds.
+ * @return The duration of the current track in seconds.
  */
 - (double)getAudioDuration;
+/*!
+ * Calls the audioPlayer's method to find a loop time.
+ * @return An array of suitable start times.
+ */
+- (NSMutableArray *)audioFindLoopTime;
 /*!
  * Sets the playback time to five seconds before the loop time.
  * @return
