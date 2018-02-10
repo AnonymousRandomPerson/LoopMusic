@@ -33,8 +33,8 @@
 }
 
 // PARAMETERS
-/// The number of lag value candidates to return from loop finding.
-@property(nonatomic) NSInteger nBestLags;
+/// The number of duration value candidates to return from loop finding.
+@property(nonatomic) NSInteger nBestDurations;
 /// The number of start-end frame pairs to return per lag value from loop finding.
 @property(nonatomic) NSInteger nBestPairs;
 
@@ -61,7 +61,7 @@
 /// Optional estimation of the ending time. -1 is a flag for nothing.
 @property(nonatomic) float t2Estimate;
 
-/// Deviation from estimated lag value to allow.
+/// Deviation from estimated duration value to allow.
 @property(nonatomic) float tauRadius;
 /// Deviation from estimated starting time to allow.
 @property(nonatomic) float t1Radius;
@@ -69,7 +69,7 @@
 @property(nonatomic) float t2Radius;
 
 // Penalty magnitudes must be from 0 to 1 inclusive. 0 represents a rectangular weighting, where every value within the acceptable range is weighted equally for ranking. 1 represents absolute certainty in estimate, and deviation from the estimate will not be allowed. For values in between, deviation from estimate is penalized by a multiple that increases linearly with deviation. For higher penalty values, the line has a higher slope.
-/// Penalty magnitude for deviation from estimated lag value.
+/// Penalty magnitude for deviation from estimated duration value.
 @property(nonatomic) float tauPenalty;
 /// Penalty magnitude for deviation from estimated start time.
 @property(nonatomic) float t1Penalty;

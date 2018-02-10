@@ -10,7 +10,7 @@
 
 @implementation LooperAutoViewController
 
-@synthesize estimateToggler, initialEstimateView, loopDurationView, loopEndpointView;
+@synthesize estimateToggler, initialEstimateView, loopDurationView, loopEndpointView, finder;
 
 - (void)viewDidLoad
 {
@@ -104,8 +104,6 @@
         
         [self updateAllResults];
     }
-//    NSLog(@"%@", loopFinderResults);
-//    NSLog(@"Loop button pressed!");
 }
 
 - (IBAction)toggleEstimates:(id)sender
@@ -130,14 +128,12 @@
 {
     initialEstimateView.alpha = 0.25;
     [initialEstimateView setUserInteractionEnabled:NO];
-//    [(UITextField *)[initialEstimateView viewWithTag:1] resignFirstResponder];  // Start Time text
-//    [(UITextField *)[initialEstimateView viewWithTag:2] resignFirstResponder];  // End Time text
+
     [self closeEstimates:nil];    // Call closeEstimates outside of an action by just passing nil as the sender.
 }
 - (IBAction)closeEstimates:(id)sender
 {
-    [(UITextField *)[initialEstimateView viewWithTag:startEstimateTextField] resignFirstResponder];  // Start Time text
-    [(UITextField *)[initialEstimateView viewWithTag:endEstimateTextField] resignFirstResponder];  // End Time text
+    [sender resignFirstResponder];
 }
 - (void)setStartEstimate:(double)est
 {
@@ -156,7 +152,6 @@
     
     startEst = est;
     [self updateText:initialEstimateView :startEstimateTextField :[NSString stringWithFormat:@"%.6f", startEst]];
-//    NSLog(@"startEst = %f", startEst);
 }
 - (void)resetStartEstimate
 {
@@ -180,7 +175,6 @@
     
     endEst = est;
     [self updateText:initialEstimateView :endEstimateTextField :[NSString stringWithFormat:@"%.6f", endEst]];
-//    NSLog(@"endEst = %f", endEst);
 }
 - (void)resetEndEstimate
 {
@@ -189,20 +183,16 @@
 }
 - (void)incStartEst:(id)sender
 {
-//    NSLog(@"Increment start estimate!");
     [self setStartEstimate:(startEst + 0.001)];
 }
 - (void)decStartEst:(id)sender
 {
-//    NSLog(@"Decrement start estimate!");
     [self setStartEstimate:(startEst - 0.001)];
 }
 - (void)incEndEst:(id)sender
 {
-//    NSLog(@"Increment end estimate!");
     if (endEst == -1)
     {
-//        NSLog(@"Initializing...");
         [self setEndEstimate:[presenter getAudioDuration]];
     }
     else
@@ -212,10 +202,8 @@
 }
 - (void)decEndEst:(id)sender
 {
-//    NSLog(@"Decrement end estimate!");
     if (endEst == -1)
     {
-//        NSLog(@"Initializing...");
         [self setEndEstimate:[presenter getAudioDuration]];
     }
     else
@@ -230,7 +218,6 @@
     double doubleVal;
     if ([scan scanDouble:&doubleVal] && [scan isAtEnd])
     {
-//        NSLog(@"Setting start estimate to %f.", doubleVal);
         [self setStartEstimate:doubleVal];
     }
     else
@@ -238,7 +225,6 @@
         // If invalid and not empty, try to fall back on the previous estimate.
         if([text isEqualToString:@""] || startEst == -1)
         {
-//            NSLog(@"Resetting start estimate.");
             [self resetStartEstimate];
         }
         else
@@ -254,7 +240,6 @@
     double doubleVal;
     if ([scan scanDouble:&doubleVal] && [scan isAtEnd])
     {
-//        NSLog(@"Setting end estimate to %f.", doubleVal);
         [self setEndEstimate:doubleVal];
     }
     else
@@ -262,7 +247,6 @@
         // If invalid and not empty, try to fall back on the previous estimate.
         if([text isEqualToString:@""] || endEst == -1)
         {
-//            NSLog(@"Resetting end estimate.");
             [self resetEndEstimate];
         }
         else
@@ -274,10 +258,11 @@
 
 
 
-- (IBAction)openAdvancedOptions:(id)sender
-{
-    NSLog(@"Open advanced options!");
-}
+//- (IBAction)openAdvancedOptions:(id)sender
+//{
+//    // 
+//}
+
 
 
 
@@ -291,25 +276,21 @@
 {
     currentDurationRank--;
     [self updateAllResults];
-//    NSLog(@"Previous duration!");
 }
 - (IBAction)nextDuration:(id)sender
 {
     currentDurationRank++;
     [self updateAllResults];
-//    NSLog(@"Next duration!");
 }
 - (IBAction)prevEndpoints:(id)sender
 {
     currentPairRanks[currentDurationRank] = [NSNumber numberWithLong:[currentPairRanks[currentDurationRank] integerValue] - 1];
     [self updateAllEndpointResults];
-//    NSLog(@"Previous endpoints!");
 }
 - (IBAction)nextEndpoints:(id)sender
 {
     currentPairRanks[currentDurationRank] = [NSNumber numberWithLong:[currentPairRanks[currentDurationRank] integerValue] + 1];
     [self updateAllEndpointResults];
-//    NSLog(@"Next endpoints!");
 }
 
 // Helper function to update all results-related display and storage for a for a given duration rank.
@@ -469,5 +450,17 @@
     [self updateText:loopEndpointView:endEndpointLabel:[NSString stringWithFormat:@"End: %.6fs", [AudioPlayer frameToTime:frameEnd]]];
 }
 
+
+
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([segue.identifier isEqualToString:@"OpenAdvancedLoopingSettings"])
+    {
+        // Pass the loop finder object to the settings controller for settings modification.
+        UINavigationController *navigationController = segue.destinationViewController;
+        LooperSettingsMenuTableViewController *menuVC = navigationController.viewControllers[0];
+        menuVC.finder = finder;
+    }
+}
 
 @end

@@ -28,32 +28,7 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 {
     NSSortDescriptor *descriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:true];
     pointSorter = @[descriptor];
-    
-//    [self openDB];
-//    sqlite3_open(dbPath, &trackData);
-    
-    /// Timer to load the current track name and the main screen of the app.
-//    [NSTimer scheduledTimerWithTimeInterval:.1
-//                                     target:self
-//                                   selector:@selector(loadSettings:)
-//                                   userInfo:nil
-//                                    repeats:NO];
 }
-
-/*!
- * Loads the current track name and the main screen of the app.
- * @param loadTimer The timer that called this function.
- * @return
- */
-//- (void)loadSettings:(NSTimer*)loadTimer
-//{
-//    presenter = (LoopMusicViewController*)(self.presentingViewController);
-//    audioPlayer = presenter->audioPlayer;
-//    [presenter setOccupied:true];
-//    finderSetTime.text = [NSString stringWithFormat:@"%f", audioPlayer.loopStart];
-//    finderSetTimeEnd.text = [NSString stringWithFormat:@"%f", audioPlayer.loopEnd];
-//    finderSongName.text = [presenter getSongName];
-//}
 
 
 - (void)loadPresenter:(LoopMusicViewController *)presenterPtr
@@ -99,7 +74,6 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
         newTime = duration;
     }
     [self setLoopEnd:newTime];
-    // [presenter setAudioLoopEnd:[finderSetTimeEnd.text doubleValue]];
     [self sqliteUpdate:@"loopend" newTime:[presenter getAudioLoopEnd]];
 }
 

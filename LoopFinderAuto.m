@@ -10,7 +10,7 @@
 
 @implementation LoopFinderAuto
 
-@synthesize nBestLags, nBestPairs, leftIgnore, rightIgnore, sampleDiffTol, minLoopLength, minTimeDiff, fftLength, overlapPercent, t1Estimate, t2Estimate, tauRadius, t1Radius, t2Radius, tauPenalty, t1Penalty, t2Penalty, useFadeDetection;
+@synthesize nBestDurations, nBestPairs, leftIgnore, rightIgnore, sampleDiffTol, minLoopLength, minTimeDiff, fftLength, overlapPercent, t1Estimate, t2Estimate, tauRadius, t1Radius, t2Radius, tauPenalty, t1Penalty, t2Penalty, useFadeDetection;
 
 - (id)init
 {
@@ -31,7 +31,8 @@
 
     confidenceRegularization = 2.5;
     
-    nBestLags = 10;
+    // PARAMETERS
+    nBestDurations = 10;
     nBestPairs = 5;
     
     leftIgnore = 5;
@@ -56,25 +57,59 @@
     useFadeDetection = false;
 }
 
-// Custom setters
-- (void)setFftLength:(UInt32)newFftLength
+// Helpers for input validation of numbers floored at a minimum value or kept within a range.
+- (float)sanitizeFloat: (float)inputValue :(float)minValue
+{
+    return MAX(inputValue, minValue);
+}
+- (float)sanitizeFloat: (float)inputValue :(float)minValue :(float)maxValue
+{
+    return MIN(MAX(inputValue, minValue), maxValue);
+}
+- (NSInteger)sanitizeInt: (NSInteger)inputValue :(NSInteger)minValue
+{
+    return MAX(inputValue, minValue);
+}
+
+
+// Custom setters with validation
+- (void)setNBestDurations:(NSInteger)nBestDurations
+{
+    self->nBestDurations = [self sanitizeInt:nBestDurations:1];
+}
+- (void)setNBestPairs:(NSInteger)nBestPairs
+{
+    self->nBestPairs = [self sanitizeInt:nBestPairs:1];
+}
+- (void)setLeftIgnore:(float)leftIgnore
+{
+    self->leftIgnore = [self sanitizeFloat:leftIgnore :0];
+}
+- (void)setRightIgnore:(float)rightIgnore
+{
+    self->rightIgnore = [self sanitizeFloat:rightIgnore :0];
+}
+- (void)setMinLoopLength:(float)minLoopLength
+{
+    self->minLoopLength = [self sanitizeFloat:minLoopLength :0];
+}
+- (void)setMinTimeDiff:(float)minTimeDiff
+{
+    self->minTimeDiff = [self sanitizeFloat:minTimeDiff :0];
+}
+
+- (void)setFftLength:(UInt32)fftLength
 {
     // 0 doesn't work
-    if (!newFftLength)
+    if (!fftLength)
     {
-        fftLength = 1;
+        self->fftLength = 1;
+        return;
     }
     
     // Rounds to the nearest power of 2, picking the higher one if tied.
-    UInt32 next2 = [self nextPow2:newFftLength];
-    if (next2 - newFftLength > newFftLength - (next2 >> 1))
-    {
-        fftLength = next2 >> 1;
-    }
-    else
-    {
-        fftLength = next2;
-    }
+    UInt32 next2 = [self nextPow2:fftLength];
+    self->fftLength = (next2 - fftLength > fftLength - (next2 >> 1)) ? next2 >> 1 : next2;
 }
 // Helper for setFftLength to calculate the next highest power of 2
 - (UInt32)nextPow2:(UInt32)num
@@ -87,27 +122,36 @@
     num |= num >> 16;
     return ++num;
 }
-- (void)setOverlapPercent:(float)newOverlapPercent
+- (void)setOverlapPercent:(float)overlapPercent
 {
-    if(newOverlapPercent >= 0 && newOverlapPercent < 100)
-    {
-        overlapPercent = newOverlapPercent;
-    }
+    self->overlapPercent = [self sanitizeFloat:overlapPercent :0 :100];
 }
-- (void)setT1Penalty:(float)newT1Penalty
+- (void)setT1Radius:(float)t1Radius
 {
-    if (newT1Penalty >= 0 && newT1Penalty <= 1)
-    {
-        t1Penalty = newT1Penalty;
-    }
+    self->t1Radius = [self sanitizeFloat:t1Radius :0];
 }
-- (void)setT2Penalty:(float)newT2Penalty
+- (void)setT2Radius:(float)t2Radius
 {
-    if (newT2Penalty >= 0 && newT2Penalty <= 1)
-    {
-        t2Penalty = newT2Penalty;
-    }
+    self->t2Radius = [self sanitizeFloat:t2Radius :0];
 }
+- (void)setTauRadius:(float)tauRadius
+{
+    self->tauRadius = [self sanitizeFloat:tauRadius :0];
+}
+- (void)setT1Penalty:(float)t1Penalty
+{
+    self->t1Penalty = [self sanitizeFloat:t1Penalty :0 : 1];
+}
+- (void)setT2Penalty:(float)t2Penalty
+{
+    self->t2Penalty = [self sanitizeFloat:t2Penalty :0 : 1];
+}
+- (void)setTauPenalty:(float)tauPenalty
+{
+    self->tauPenalty = [self sanitizeFloat:tauPenalty :0 : 1];
+}
+
+
 
 - (NSDictionary *)findLoop:(const AudioData *)audio
 {

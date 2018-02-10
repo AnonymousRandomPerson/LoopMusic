@@ -10,6 +10,7 @@
 #import <UIKit/UIKit.h>
 #import "LooperViewController.h"
 #import "LoopFinderAuto.h"
+#import "LooperSettingsMenuTableViewController.h"
 
 enum initialEstimateViewTags
 {
@@ -59,8 +60,6 @@ enum loopEndpointsViewTags
     /// Subview of loop endpoint results.
     IBOutlet UIView *loopEndpointView;
     
-    /// The loop finder.
-    LoopFinderAuto *finder;
     /// Original loop point information. Contains keys "duration", "startFrame", and "endFrame". All quantities are in frames.
     NSDictionary *originalLoopInfo;
     /// Results from the loop finding algorithm. See LoopFinderAuto::findLoop() documentation for details on format.
@@ -75,6 +74,8 @@ enum loopEndpointsViewTags
 @property(strong, nonatomic) IBOutlet UIView *initialEstimateView;
 @property(strong, nonatomic) IBOutlet UIView *loopDurationView;
 @property(strong, nonatomic) IBOutlet UIView *loopEndpointView;
+/// The loop finder.
+@property(strong, nonatomic) LoopFinderAuto *finder;
 
 
 /*!
@@ -168,7 +169,7 @@ enum loopEndpointsViewTags
  * @param sender The object that called this function.
  * @return
  */
-- (IBAction)openAdvancedOptions:(id)sender;
+//- (IBAction)openAdvancedOptions:(id)sender;
 
 /*!
  * Resets the results display back to the initial loop point.
