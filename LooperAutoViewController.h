@@ -211,4 +211,19 @@ enum loopEndpointsViewTags
 - (IBAction)closeEstimates:(id)sender;
 
 
+/*!
+ * Loads in a premade FFT setup to the loop finder. Assumes the current setup object is empty.
+ * @param setup The FFT setup object to load in.
+ * @param n The size of the FFT used for the setup.
+ * @return
+ */
+- (void)loadFFTSetup:(FFTSetup)setup :(unsigned long)n;
+
+/*!
+ * Saves loop finder's FFT setup to the main screen.
+ * @param mainScreen A pointer to the main screen.
+ * @return
+ */
+- (void)saveFFTSetup:(LoopMusicViewController *)mainScreen;
+
 @end

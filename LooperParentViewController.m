@@ -54,12 +54,15 @@
     {
         [childManual loadPresenter:presenter];
     }
+    
+    [childAuto loadFFTSetup:presenter.fftSetup :presenter.nSetup];
 }
 
 - (IBAction)back:(id)sender
 {
     // LooperViewController already opens/closes DB with each update
 //    [presenter closeDB];
+    [childAuto saveFFTSetup:presenter];
     [presenter setOccupied:false];
     [presenter back:sender];
 }

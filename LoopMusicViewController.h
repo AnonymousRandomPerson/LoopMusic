@@ -11,6 +11,7 @@
 #import <sys/time.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import "AudioPlayer.h"
+#import <Accelerate/Accelerate.h>
 
 /// The name of the current track.
 extern NSString *settingsSongString;
@@ -113,6 +114,11 @@ extern NSInteger playlistIndex;
 @property(nonatomic, retain) UILabel *songName;
 /// Button to go to playback settings.
 @property(nonatomic, retain) UIButton *settings;
+
+/// FFT setup object for vDSP.
+@property(nonatomic) FFTSetup fftSetup;
+/// N used for the current FFT setup object.
+@property(nonatomic) unsigned long nSetup;
 
 /*!
  * Chooses a random track to be played.

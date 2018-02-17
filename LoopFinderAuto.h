@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 #import "AudioData.h"
+#import "AudioDataFloat.h"
+#import <Accelerate/Accelerate.h>
 
 
 /// Automatic loop finder for audio files.
@@ -17,7 +19,7 @@
     /// The "first" frame of the audio file, for the purposes of loop finding.
     UInt32 firstFrame;
     /// The length of the entire analysis window, in frames, for the purposes of loop finding.
-    UInt32 nFrames;   // Could be smaller than the actual audio length due to things like fade truncation.
+//    UInt32 nFrames;   // Could be smaller than the actual audio length due to things like fade truncation.
     
     /// Average volume of the entire audio file, in dB.
     float avgVol;
@@ -26,6 +28,8 @@
     /// Reference power level used in decibel calculation.
     float powRef;
     
+    /// Regularization for noise level in noise-normalized cross-correlation calculation.
+    float noiseRegularization;
     /// Regularization for confidence value calculation.
     float confidenceRegularization;
     
@@ -80,7 +84,46 @@
 /// Flag for whether or not to automatically detect and remove a possible ending fade in the input audio data.
 @property(nonatomic) bool useFadeDetection;
 
+/// FFT setup object for vDSP.
+@property(nonatomic) FFTSetup fftSetup;
+/// N used for the current FFT setup object.
+@property(nonatomic) unsigned long nSetup;
+
 // END PARAMETERS
+
+
+///*!
+// * Performs an inexpensive preliminary FFT setup for vDSP.
+// * @param audio The AudioDataFloat to be analyzed.
+// * @return
+// */
+//- (void)performFFTSetup;
+/*!
+ * Performs preliminary FFT setup for vDSP.
+ * @param audio The AudioDataFloat to be analyzed.
+ * @return
+ */
+- (void)performFFTSetup:(AudioDataFloat *)audio;
+///*!
+// * Destroys the FFT setup for vDSP.
+// * @return
+// */
+//- (void)performFFTDestroy;
+
+
+/*!
+ * Calculates the next highest power of 2 greater than or equal to num.
+ * @param num The reference number.
+ * @return The next highest power of 2 greater than or equal to the reference number.
+ */
+- (UInt32)nextPow2:(UInt32)num;
+
+/*!
+ * Converts a power value to a decibel level.
+ * @param power The input power for which to calculate a decibel level.
+ * @return The power level in decibels.
+ */
+- (float)powToDB:(float)power;
 
 /*!
  * Finds and ranks possible loop points given some audio data.

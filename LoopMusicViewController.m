@@ -34,7 +34,7 @@ static const double TESTTIMEOFFSET = 5;
 
 @implementation LoopMusicViewController
 
-@synthesize searchSong, playSong, randomSong, stopSong, songName, settings;
+@synthesize searchSong, playSong, randomSong, stopSong, songName, settings, fftSetup, nSetup;
 
 - (void)viewDidAppear:(BOOL)animated
 {
@@ -166,7 +166,9 @@ static const double TESTTIMEOFFSET = 5;
     }
 #endif
     
-    
+    // Setup a preliminary FFT for vDSP.
+    fftSetup = vDSP_create_fftsetup(0, kFFTRadix2);
+    nSetup = 1;
     
     [self playMusic];
 }

@@ -18,6 +18,7 @@
     [self setupAllUIObjects];
     
     finder = [[LoopFinderAuto alloc] init];
+//    [finder performFFTSetup]; // TOO SLOW
     
     // Default estimate flags/values, display settings
     [self disableEstimates];
@@ -76,6 +77,7 @@
         [self revertOriginalLoop:nil];  // Call outside of a button press
     }
 }
+
 // Helper function to return the current loop information from the audio player.
 - (NSDictionary *)loadCurrentLoopInfo
 {
@@ -460,6 +462,23 @@
         UINavigationController *navigationController = segue.destinationViewController;
         LooperSettingsMenuTableViewController *menuVC = navigationController.viewControllers[0];
         menuVC.finder = finder;
+    }
+}
+
+
+- (void)loadFFTSetup:(FFTSetup)setup :(unsigned long)n
+{
+    finder.fftSetup = setup;
+    finder.nSetup = n;
+}
+- (void)saveFFTSetup:(LoopMusicViewController *)mainScreen
+{
+    // If a larger setup was made
+    if (finder.nSetup > mainScreen.nSetup)
+    {
+        // This seems to act like a pointer. If you destroy the FFT setup with one and try to access the other, a bad access occurs.
+        mainScreen.fftSetup = finder.fftSetup;
+        mainScreen.nSetup = finder.nSetup;
     }
 }
 
