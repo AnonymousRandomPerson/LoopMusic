@@ -21,12 +21,10 @@
 /*!
  * Reads in the main screen and sets up relevant info.
  * @param presenterPtr The pointer to the main screen.
- * @return
  */
 - (void)loadPresenter:(LoopMusicViewController *)presenterPtr;
 /*!
  * Empties the borrowed pointer to the main screen.
- * @return
  */
 - (void)unloadPresenter;
 
@@ -35,13 +33,11 @@
 /*!
  * Sets the loop start point.
  * @param loopStart The new loop start point.
- * @return
  */
 - (void)setLoopStart:(NSTimeInterval)loopStart;
 /*!
  * Sets the loop end point.
  * @param loopEnd The new loop end point.
- * @return
  */
 - (void)setLoopEnd:(NSTimeInterval)loopEnd;
 
@@ -51,7 +47,6 @@
 /*!
  * Sets the playback time to five seconds before the loop time.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)testTime:(id)sender;
 

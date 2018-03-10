@@ -92,13 +92,11 @@
 
 /*!
  * Starts playback of the audio player.
- * @return
  */
 - (void)play;
 
 /*!
  * Stops playback of the audio player.
- * @return
  */
 - (void)stop;
 
@@ -106,7 +104,6 @@
  * Initializes the audio player.
  * @param newURL The audio file to initialize the audio player with.
  * @param error Will be set if any errors occur during initialization.
- * @return
  */
 - (void)initAudioPlayer:(NSURL *)newURL :(NSError *)error;
 

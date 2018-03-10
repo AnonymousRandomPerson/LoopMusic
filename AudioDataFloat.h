@@ -19,9 +19,6 @@ typedef struct AudioDataFloat
     float *channel0;
     /// The second channel data for the track.
     float *channel1;
-    
-    /// Stride for vDSP functions
-    long stride;
 } AudioDataFloat;
 
 #endif /* AudioDataFloat_h */

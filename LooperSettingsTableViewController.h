@@ -22,7 +22,6 @@
 
 /*!
  * Updates all of the parameter displays.
- * @return
  */
 - (void)refreshParameterDisplays;
 

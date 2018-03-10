@@ -95,18 +95,15 @@
 ///*!
 // * Performs an inexpensive preliminary FFT setup for vDSP.
 // * @param audio The AudioDataFloat to be analyzed.
-// * @return
 // */
 //- (void)performFFTSetup;
 /*!
  * Performs preliminary FFT setup for vDSP.
  * @param audio The AudioDataFloat to be analyzed.
- * @return
  */
 - (void)performFFTSetup:(AudioDataFloat *)audio;
 ///*!
 // * Destroys the FFT setup for vDSP.
-// * @return
 // */
 //- (void)performFFTDestroy;
 
@@ -136,12 +133,5 @@
  * Sets all parameters to default values.
  */
 - (void)useDefaultParams;
-
-/*!
- * Detects fade in an audio signal.
- * @param audio The audio data structure containing the audio samples.
- * @return The sample number of the beginning of the fade.
- */
-- (UInt32)detectFade:(const AudioData *)audio;
 
 @end

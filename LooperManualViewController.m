@@ -226,7 +226,6 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 /*!
  * Sets the loop start point.
  * @param loopStart The new loop start point.
- * @return
  */
 - (void)setLoopStart:(NSTimeInterval)loopStart
 {
@@ -237,7 +236,6 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
 /*!
  * Sets the loop end point.
  * @param loopEnd The new loop end point.
- * @return
  */
 - (void)setLoopEnd:(NSTimeInterval)loopEnd
 {

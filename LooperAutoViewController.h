@@ -81,84 +81,70 @@ enum loopEndpointsViewTags
 /*!
  * Finds loops for the current song.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)findLoop:(id)sender;
 
 /*!
  * Enables the usage of initial estimates in loop finding.
- * @return
  */
 - (void)enableEstimates;
 /*!
  * Disables the usage of initial estimates in loop finding.
- * @return
  */
 - (void)disableEstimates;
 
 /*!
  * Toggles the usage of initial estimates in loop finding.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)toggleEstimates:(id)sender;
 /*!
  * Sets the initial start estimate if possible.
  * @param est The initial estimate to attempt to set.
- * @return
  */
 - (void)setStartEstimate:(double)est;
 /*!
  * Resets the initial start estimate to empty (-1).
- * @return
  */
 - (void)resetStartEstimate;
 /*!
  * Sets the initial end estimate if possible.
  * @param est The initial estimate to attempt to set.
- * @return
  */
 - (void)setEndEstimate:(double)est;
 /*!
  * Resets the initial end estimate to empty (-1).
- * @return
  */
 - (void)resetEndEstimate;
 /*!
  * Increments the initial start time estimate by 1 ms if possible.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)incStartEst:(id)sender;
 /*!
  * Decrements the initial start time estimate by 1 ms if possible.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)decStartEst:(id)sender;
 /*!
  * Increments the initial end time estimate by 1 ms of possible.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)incEndEst:(id)sender;
 /*!
  * Decrements the initial end time estimate by 1 ms of possible.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)decEndEst:(id)sender;
 
 /*!
  * Updates the initial start time estimate using user input.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)updateStartEstValueChanged:(id)sender;
 /*!
  * Updates the initial end time estimate using user input.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)updateEndEstValueChanged:(id)sender;
 
@@ -167,38 +153,32 @@ enum loopEndpointsViewTags
 /*!
  * Opens the advanced options menu
  * @param sender The object that called this function.
- * @return
  */
 //- (IBAction)openAdvancedOptions:(id)sender;
 
 /*!
  * Resets the results display back to the initial loop point.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)revertOriginalLoop:(id)sender;
 /*!
  * Changes to the previous best result for loop duration.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)prevDuration:(id)sender;
 /*!
  * Changes to the next best result for loop duration.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)nextDuration:(id)sender;
 /*!
  * Changes to the previous best subresult for loop endpoints under the current loop duration.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)prevEndpoints:(id)sender;
 /*!
  * Changes to the next best subresult for loop endpoints under the current loop duration.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)nextEndpoints:(id)sender;
 
@@ -206,7 +186,6 @@ enum loopEndpointsViewTags
 /*!
  * Cleans up UI elements for initial estimates when the screen is closing.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)closeEstimates:(id)sender;
 
@@ -215,14 +194,12 @@ enum loopEndpointsViewTags
  * Loads in a premade FFT setup to the loop finder. Assumes the current setup object is empty.
  * @param setup The FFT setup object to load in.
  * @param n The size of the FFT used for the setup.
- * @return
  */
 - (void)loadFFTSetup:(FFTSetup)setup :(unsigned long)n;
 
 /*!
  * Saves loop finder's FFT setup to the main screen.
  * @param mainScreen A pointer to the main screen.
- * @return
  */
 - (void)saveFFTSetup:(LoopMusicViewController *)mainScreen;
 

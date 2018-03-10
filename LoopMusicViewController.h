@@ -123,84 +123,70 @@ extern NSInteger playlistIndex;
 /*!
  * Chooses a random track to be played.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)randomSong:(id)sender;
 /*!
  * Plays the current track.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)playSong:(id)sender;
 /*!
  * Stops playback of the current track.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)stopSong:(id)sender;
 /*!
  * Navigates to the search screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)searchSong:(id)sender;
 /*!
  * Navigates to the settings screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)settings:(id)sender;
 /*!
  * Navigates to the loop finder screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)loopFinder:(id)sender;
 /*!
  * Navigates to a certain screen.
- * @param sender The name of the screen to navigate to.
- * @return
+ * @param screen The name of the screen to navigate to.
  */
 - (IBAction)changeScreen:(NSString *)screen;
 /*!
  * Navigates to the previous screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)back:(id)sender;
 /*!
  * Sets the global volume of the app.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)setGlobalVolume:(id)sender;
 /*!
  * Saves the global volume of the app to the settings file.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)saveGlobalVolume:(id)sender;
 
 /*!
  * Opens the track database.
- * @return
  */
 - (void)openDB;
 /*!
  * Closes the track database.
- * @return
  */
 - (void)closeDB;
 /*!
  * Prepares a database query.
  * @param query The query to prepare.
- * @return
  */
 - (void)prepareQuery:(NSString *)query;
 /*!
  * Executes a query to update the database.
  * @param query The query to update the database with.
- * @return
  */
 - (void)updateDB:(NSString *)query;
 /*!
@@ -212,7 +198,6 @@ extern NSInteger playlistIndex;
 /*!
  * Opens the database and updates it.
  * @param query The query to update the database with.
- * @return
  */
 - (void)openUpdateDB:(NSString *)query;
 /*!
@@ -225,12 +210,10 @@ extern NSInteger playlistIndex;
  * Executes queries to add a song to the database.
  * @param name The song name.
  * @param url The song URL.
- * @return
  */
 - (void)addSongToDB:(NSString *)name :(NSURL *)url;
 /*!
  * Wipes the database clean.
- * @return
  */
 - (void)wipeDB;
 
@@ -241,27 +224,22 @@ extern NSInteger playlistIndex;
 - (NSInteger)initializeTotalSongs;
 /*!
  * Increments the total number of tracks in the app.
- * @return
  */
 - (void)incrementTotalSongs;
 /*!
  * Decrements the total number of tracks in the app.
- * @return
  */
 - (void)decrementTotalSongs;
 /*!
  * Increments the total number of tracks in the current playlist.
- * @return
  */
 - (void)incrementPlaylistSongs;
 /*!
  * Decrements the total number of tracks in the current playlist.
- * @return
  */
 - (void)decrementPlaylistSongs;
 /*!
  * Updates the database with changes to the current playlist.
- * @return
  */
 - (void)updatePlaylistSongs;
 /*!
@@ -296,37 +274,31 @@ extern NSInteger playlistIndex;
 - (NSString *)getPlaylistName;
 /*!
  * Updates the name of the current playlist according to the playlist index.
- * @return
  */
 - (void)updatePlaylistName;
 /*!
  * Updates the name of the current playlist.
  * @param name The new name of the current playlist.
- * @return
  */
 - (void)updatePlaylistName:(NSString *)name;
 
 /*!
  * Plays a track.
- * @return
  */
 - (void)playMusic;
 /*!
  * Sets audio players to the URL of the current track.
  * @param newURL The URL of the current track.
- * @return
  */
 - (void)setAudioPlayer:(NSURL*)newURL;
 /*!
  * Sets the loop start point for the audio player.
  * @param newStart The new start point.
- * @return
  */
 - (void)setAudioLoopStart:(NSTimeInterval)newStart;
 /*!
  * Sets the loop end point for the audio player.
  * @param newEnd The new start point.
- * @return
  */
 - (void)setAudioLoopEnd:(NSTimeInterval)newEnd;
 /*!
@@ -352,19 +324,16 @@ extern NSInteger playlistIndex;
 
 /*!
  * Updates the fade-out volume decrement according to the fade-out setting and the current track.
- * @return
  */
 - (void)updateVolumeDec;
 /*!
  * Plays a specific track.
  * @param newSong The name of the track to play.
- * @return
  */
 - (void)chooseSong:(NSString *)newSong;
 /*!
  * Sets whether a screen other than the main screen is showing.
  * @param newOccupied Whether a screen other than the main screen is showing.
- * @return
  */
 - (void)setOccupied:(bool)newOccupied;
 /*!
@@ -374,8 +343,7 @@ extern NSInteger playlistIndex;
 - (NSString *)getSongName;
 /*!
  * Sets the name of the current track.
- * @param The name to set the current track to.
- * @return
+ * @param newName The name to set the current track to.
  */
 - (void)setNewSongName:(NSString *)newName;
 /*!
@@ -400,7 +368,6 @@ extern NSInteger playlistIndex;
 - (NSMutableArray *)audioFindLoopTime;
 /*!
  * Sets the playback time to five seconds before the loop time.
- * @return
  */
 - (void)testTime;
 /*!
@@ -411,7 +378,6 @@ extern NSInteger playlistIndex;
 /*!
  * Sets the relative volume of the current track.
  * @param newVolume The volume to set the relative volume to.
- * @return
  */
 - (void)setVolume:(double)newVolume;
 /*!
@@ -428,7 +394,6 @@ extern NSInteger playlistIndex;
 /*!
  * Sets the playback time of the current track.
  * @param newCurrentTime The time to set the playback time to.
- * @return
  */
 - (void)setCurrentTime:(double)newCurrentTime;
 /*!
@@ -440,12 +405,10 @@ extern NSInteger playlistIndex;
 /*!
  * Displays an error message on the screen.
  * @param message The error message to display.
- * @return
  */
 - (void)showErrorMessage:(NSString *)message;
 /*!
  * Displays an error message stating that a track needs to be added to the app.
- * @return
  */
 - (void)showNoSongMessage;
 /*!
@@ -453,7 +416,6 @@ extern NSInteger playlistIndex;
  * @param title The title of the message dialogue box.
  * @param message The message to display.
  * @param okay The text to display in the confirmation button.
- * @return
  */
 - (void)showTwoButtonMessage:(NSString *)title :(NSString *)message :(NSString *)okay;
 /*!
@@ -462,7 +424,6 @@ extern NSInteger playlistIndex;
  * @param message The message to display.
  * @param okay The text to display in the confirmation button.
  * @param initText The initial text to display in the text input box.
- * @return
  */
 - (void)showTwoButtonMessageInput:(NSString *)title :(NSString *)message :(NSString *)okay :(NSString *)initText;
 /*!

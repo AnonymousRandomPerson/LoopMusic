@@ -42,55 +42,46 @@
 /*!
  * Sets the playback time of the current track.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)setCurrentTime:(id)sender;
 /*!
  * Sets the loop start time of the current track.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)finderSetTime:(id)sender;
 /*!
  * Sets the loop end time of the current track.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)finderSetTimeEnd:(id)sender;
 /*!
  * Moves the loop start time of the current track ahead by 0.001 if possible.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)finderAddTime:(id)sender;
 /*!
  * Moves the loop end time of the current track ahead by 0.001 if possible.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)finderAddTimeEnd:(id)sender;
 /*!
  * Moves the loop start time of the current track back by 0.001 if possible.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)finderSubtractTime:(id)sender;
 /*!
  * Moves the loop end time of the current track back by 0.001 if possible.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)finderSubtractTimeEnd:(id)sender;
 /*!
  * Sets the loop start time of the current track to the most recently found playback time.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)setTimeButton:(id)sender;
 /*!
  * Sets the loop end time of the current track to the most recently found playback time.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)setEndButton:(id)sender;
 /*!
@@ -102,13 +93,11 @@
 /*!
  * Finds a suitable start time to loop to.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)findLoopTime:(id)sender;
 /*!
  * Cleans up UI elements when the screen is closing.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)close:(id)sender;
 

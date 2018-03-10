@@ -45,7 +45,6 @@
 /*!
  * Sets the current loop-finding mode.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)setMode:(id)sender;
 
@@ -54,7 +53,6 @@
 /*!
  * Navigates to the main screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)back:(id)sender;
 
@@ -62,14 +60,12 @@
  * Adds a child view as a subview to a parent view.
  * @param subView The subview to be added.
  * @param parentView The parent view to be added to.
- * @return
  */
 - (void)addSubview:(UIView *)subView toView:(UIView *)parentView;
 /*!
  * Switches from one child view controller to another.
  * @param oldVC The old view controller.
  * @param newVC The new view controller.
- * @return
  */
 - (void)cycleFromVC:(UIViewController *)oldVC toVC:(UIViewController *)newVC;
 

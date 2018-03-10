@@ -21,7 +21,6 @@
 /*!
  * Navigates back to the looping screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)back:(id)sender;
 
@@ -29,7 +28,6 @@
 /*!
  * Resets all looping parameters back to their defaults.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)resetToDefaults:(id)sender;
 
