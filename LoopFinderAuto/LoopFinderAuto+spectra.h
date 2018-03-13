@@ -73,7 +73,7 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info);
 - (void)spectrumMSE:(float *)a :(float *)b :(vDSP_Length)n :(float *)mse;
 
 /*!
- * Calculates window-wise MSEs between spectrograms of a signal with a lagged version of itself. STILL NEEDS TO BE TESTED
+ * Calculates window-wise MSEs between spectrograms of a signal with a lagged version of itself.
  * @param signal The audio signal in 32-bit floating point format.
  * @param lag The lag in frames between the primary and lagged signals.
  * @param results Pointer to the results of the spectrogram comparison, contained in a DiffSpectrogramInfo structure. Contents will be allocated within the function. Free the contents (not including the structure itself) by passing the pointer to freeDiffSpectrogramInfo().

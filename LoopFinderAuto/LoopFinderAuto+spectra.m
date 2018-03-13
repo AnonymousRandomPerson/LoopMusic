@@ -216,7 +216,7 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
 - (void)diffSpectrogram:(AudioDataFloat *)signal :(UInt32)lag :(DiffSpectrogramInfo *)results
 {
     // FOR TESTING ONLY
-    self.fftLength = 8;
+    self.fftLength = 4;
     
     UInt32 windowStride = MAX(1, roundf((1-self.overlapPercent/100)*self.fftLength));
     

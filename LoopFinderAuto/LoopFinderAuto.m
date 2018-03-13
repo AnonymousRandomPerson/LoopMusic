@@ -42,7 +42,7 @@
     
     leftIgnore = 5;
     rightIgnore = 5;
-    sampleDiffTol = 300;    // DETERMINE A GOOD VALUE FOR THIS.
+    sampleDiffTol = 0.05;    // DETERMINE A GOOD VALUE FOR THIS.
     minLoopLength = 5;
     minTimeDiff = 0.1;
     fftLength = (1 << 17);
@@ -51,9 +51,9 @@
     t1Estimate = -1;
     t2Estimate = -1;
     
-    tauRadius = 5;
-    t1Radius = 5;
-    t2Radius = 5;
+    tauRadius = 1;
+    t1Radius = 1;
+    t2Radius = 1;
     
     tauPenalty = 0;
     t1Penalty = 0;
@@ -158,6 +158,97 @@
     self->tauPenalty = [self sanitizeFloat:tauPenalty :0 : 1];
 }
 
+- (bool)hasT1Estimate
+{
+    return self.t1Estimate != -1;
+}
+- (bool)hasT2Estimate
+{
+    return self.t2Estimate != -1;
+}
+
+- (loopModeValue)loopMode
+{
+    if ([self hasT1Estimate] && [self hasT2Estimate])
+        return loopModeT1T2;
+    else if ([self hasT1Estimate])
+        return loopModeT1Only;
+    else if ([self hasT2Estimate])
+        return loopModeT2Only;
+    else
+        return loopModeAuto;
+}
+
+- (UInt32)s1Estimate
+{
+    return roundf(self.t1Estimate * FRAMERATE);
+}
+
+- (UInt32)s2Estimate
+{
+    return roundf(self.t2Estimate * FRAMERATE);
+}
+
+
+float lastTime(UInt32 numFrames)
+{
+    return (float)(MAX(numFrames, 1) - 1) / FRAMERATE;  // Floor at 0.
+}
+// Helper for the three limit functions below.
+- (NSArray *)estimateLimits:(UInt32)numFrames :(float)estimate :(float)penalty :(float)radius
+{
+    float lastFrameTime = lastTime(numFrames);
+    if (penalty == 1)
+        return @[[NSNumber numberWithFloat:estimate], [NSNumber numberWithFloat:estimate]];
+    else if(penalty == 0)
+        return @[[NSNumber numberWithFloat:[self sanitizeFloat:estimate-radius :0 :lastFrameTime]], [NSNumber numberWithFloat:[self sanitizeFloat:estimate+radius :0 :lastFrameTime]]];
+    else
+    {
+        float minVal = [self sanitizeFloat:MAX(estimate - 1.0/[self slopeFromPenalty:penalty] + 1.0/FRAMERATE, estimate-radius) :0 :lastFrameTime];
+        float maxVal = [self sanitizeFloat:MIN(estimate + 1.0/[self slopeFromPenalty:penalty] - 1.0/FRAMERATE, estimate+radius) :0 :lastFrameTime];
+        return @[[NSNumber numberWithFloat:minVal], [NSNumber numberWithFloat:maxVal]];
+    }
+}
+- (NSArray *)tauLimits:(UInt32)numFrames
+{
+    if ([self loopMode] != loopModeT1T2)
+        return @[[NSNumber numberWithFloat:self.minLoopLength], [NSNumber numberWithFloat:lastTime(numFrames)]];
+    
+    return [self estimateLimits:numFrames :self.t2Estimate - self.t1Estimate :self.tauPenalty :self.tauRadius];
+}
+- (NSArray *)t1Limits:(UInt32)numFrames
+{
+    if (![self hasT1Estimate])
+    {
+        if (![self hasT2Estimate])  // Ensures that when t2Limits calls t1Limits, infinite loops don't occur.
+            return @[@0, [NSNumber numberWithFloat:lastTime(numFrames)-self.minLoopLength]];
+        else
+            return @[@0, [NSNumber numberWithFloat:[self sanitizeFloat:[[self t2Limits:numFrames][1] floatValue] - self.minLoopLength :0]]];
+    }
+    
+    return [self estimateLimits:numFrames :self.t1Estimate :self.t1Penalty :self.t1Radius];
+}
+- (NSArray *)t2Limits:(UInt32)numFrames
+{
+    if (![self hasT2Estimate])
+    {
+        float lastFrameTime = lastTime(numFrames);
+        if (![self hasT1Estimate])  // Ensures that when t1Limits calls t2Limits, infinite loops don't occur.
+            return @[[NSNumber numberWithFloat:self.minLoopLength], [NSNumber numberWithFloat:lastFrameTime]];
+        else
+        {
+            return @[[NSNumber numberWithFloat:[self sanitizeFloat:[[self t1Limits:numFrames][0] floatValue] + self.minLoopLength :0 :lastFrameTime]], [NSNumber numberWithFloat:lastFrameTime]];
+        }
+    }
+    
+    return [self estimateLimits:numFrames :self.t2Estimate :self.t2Penalty :self.t2Radius];
+}
+
+
+- (float)slopeFromPenalty:(float)penalty
+{
+    return tanf(penalty * M_PI/2);
+}
 
 //- (void)performFFTSetup
 //{
@@ -219,15 +310,25 @@
     
     [self performFFTSetup:floatAudio];  // THIS IS THE EXPENSIVE PART
     
-//    // Test copying
+//    // Test copying - All of them take almost no time
 //    NSLog(@"Copying...");
 //    float *cpy = malloc(floatAudio->numFrames * sizeof(float));
 ////    memcpy(cpy, floatAudio->channel0, floatAudio->numFrames * sizeof(float));
 //
-//    float zero=0;
-//    vDSP_vsadd(floatAudio->channel0, 1, &zero, cpy, 1, floatAudio->numFrames);
+////    float zero=0;
+////    vDSP_vsadd(floatAudio->channel0, 1, &zero, cpy, 1, floatAudio->numFrames);
+//
+//    for (int i = 0; i < floatAudio->numFrames; i++)
+//        *(cpy + i) = *(floatAudio->channel0 + i);
+//
 //    free(cpy);
 //    NSLog(@"Done copying.");
+    
+//    // Dictionary with mutable arrays test
+//    NSDictionary *dict = @{@"array": [[NSMutableArray alloc] init]};
+//    NSLog(@"%@", dict);
+//    [dict[@"array"] addObject:@50];
+//    NSLog(@"%@", dict);
 
     float *fft0Memory = malloc(floatAudio->numFrames * sizeof(float));
     float *observedMemory = malloc(floatAudio->numFrames * sizeof(float));
@@ -328,6 +429,14 @@
 //    [self slidingWeightedMSE:a :nA :b :nB :sliding];
 //    for (int i = 0; i < nA+nB-1; i++)
 //        NSLog(@"%f", *(sliding + i));
+//
+//    // Test for spacedMinima
+//    self.minTimeDiff = 1.0/FRAMERATE;
+//    vDSP_Length nBest = 5;
+//    NSDictionary *minima = [self spacedMinima:sliding :nA+nB-1 :nBest];
+//    NSLog(@"# best: %li", nBest);
+//    NSLog(@"%@", minima);
+//
 //    free(a);
 //    free(b);
 //    free(sliding);
@@ -343,6 +452,14 @@
 //    [self autoSlidingWeightedMSE:a :nA :automse];
 //    for (int i = 0; i < nA; i++)
 //        NSLog(@"%f", *(automse + i));
+//
+//    // Test for selectInitialCandidatesAuto
+//    self.nBestDurations = 3;
+//    self.minTimeDiff = 3.0/FRAMERATE;
+//    NSDictionary *minima = [self spacedMinima:automse :nA :self.nBestDurations];
+//    NSLog(@"# best: %li", self.nBestDurations);
+//    NSLog(@"%@", minima);
+//
 //    free(a);
 //    free(automse);
     
@@ -454,19 +571,84 @@
 //    }
 //
 //    DiffSpectrogramInfo *output = malloc(sizeof(DiffSpectrogramInfo));
-//    UInt32 lag = 2;
+//    UInt32 lag = 9;
 //    [self diffSpectrogram:testAudio :lag :output];
 //    for (int i = 0; i < output->nWindows; i++)
 //    {
 //        NSLog(@"MSE: %f", *(output->mses + i));
-//        NSLog(@"start: %li", *(output->startSamples + i));
-//        NSLog(@"window size: %li", *(output->windowSizes + i));
-//        NSLog(@"window duration: %f", *(output->effectiveWindowDurations + i));
+////        NSLog(@"start: %li", *(output->startSamples + i));
+////        NSLog(@"window size: %li", *(output->windowSizes + i));
+////        NSLog(@"window duration: %f", *(output->effectiveWindowDurations + i));
 //    }
 //
+//    // Tests for inferLoopRegion
+//    NSDictionary *region = [self inferLoopRegion:output->mses :output->nWindows :output->effectiveWindowDurations];
+//    NSLog(@"%@", region);
+//    UInt32 regionStartIndex = [region[@"start"] unsignedIntegerValue];
+//    UInt32 regionEndIndex = [region[@"end"] unsignedIntegerValue];
 //
+//    // Tests for calcMatchLength and calcMismatchLength
+//    float match = [self calcMatchLength:output->mses :output->nWindows :output->effectiveWindowDurations :[region[@"cutoff"] floatValue]];
+//    float mismatch = [self calcMismatchLength:output->mses :output->nWindows :regionStartIndex :regionEndIndex :output->effectiveWindowDurations :[region[@"cutoff"] floatValue]];
+//
+//    NSLog(@"Match length = %f", match);
+//    NSLog(@"Mismatch length = %f", mismatch);
+//
+//    // Tests for refineLag
+//    self.minTimeDiff = 4.0/FRAMERATE;
+//    UInt32 regionStartSample = *(output->startSamples + regionStartIndex);
+//    UInt32 regionEndSample = *(output->startSamples + regionEndIndex) + *(output->windowSizes + regionEndIndex) - 1;
+//    UInt32 newLag = [self refineLag:testAudio :lag :regionStartSample :regionEndSample];
+//    NSLog(@"base lag = %u", lag);
+//    NSLog(@"refined lag = %u", newLag);
+//
+//    // Tests for biasedMeanSpectrumMSE
+//    float loss = [self biasedMeanSpectrumMSE:output->mses :regionStartIndex :regionEndIndex];
+//    NSLog(@"loss = %f", loss);
+//
+//    // Tests for findEndpointPairsSpectra/findEndpointPairs
+//    self.sampleDiffTol = 1.005;
+//    self.minLoopLength = 0;
+//    NSLog(@"minTimeDiff: %f", self.minTimeDiff);
+//    NSLog(@"minLoopLength: %f", self.minLoopLength);
+//    NSLog(@"sDiffTol: %f", self.sampleDiffTol);
+//    NSDictionary *pairs = [self findEndpointPairsSpectra:testAudio :lag :output->mses :output->nWindows :output->startSamples :output->windowSizes :regionStartIndex :regionEndIndex];
+//    NSLog(@"pairs: %@", pairs);
+//
+//    // With estimates and some variance
+//    self.t1Estimate = 9.0/FRAMERATE;
+//    self.t2Estimate = 16.0/FRAMERATE;
+//    self.t1Penalty = 0.9;
+//    self.t2Penalty = 0.9;
+//    NSDictionary *pairsEstimate = [self findEndpointPairsSpectra:testAudio :lag :output->mses :output->nWindows :output->startSamples :output->windowSizes :regionStartIndex :regionEndIndex];
+//    NSLog(@"pairsEstimate: %@", pairsEstimate);
+//
+//    // Tests for findEndpointPairsNoVariance
+//    self.t1Estimate = 3.0/FRAMERATE;
+//    self.t2Estimate = 5.0/FRAMERATE;
+//    self.t1Penalty = 1;
+//    self.t2Penalty = 1;
+//    NSDictionary *pairsNoVar = [self findEndpointPairsSpectra:testAudio :lag :output->mses :output->nWindows :output->startSamples :output->windowSizes :regionStartIndex :regionEndIndex];
+//    NSLog(@"pairsNoVar: %@", pairsNoVar);
+    
+
+//    // Tests for estimate methods
+//    self.minLoopLength = 0.1;
+//    self.t1Estimate = 1.5;
+//    self.t1Penalty = .9;
+//    self.t1Radius = .5;
+//    self.t2Estimate = 9.5;
+//    self.t2Penalty = 0.9;
+//    NSLog(@"t1: %u, t2: %u, loopMode: %i, s1: %i, s2: %i", [self hasT1Estimate], [self hasT2Estimate], [self loopMode], [self s1Estimate], [self s2Estimate]);
+//    UInt32 testNumFrames = 441001;
+//    NSLog(@"tau: %@, t1: %@, t2: %@", [self tauLimits:testNumFrames], [self t1Limits:testNumFrames], [self t2Limits:testNumFrames]);
+
 //    freeDiffSpectrogramInfo(output);
 //    free(output);
+//
+//    free(testAudio->channel0);
+//    free(testAudio->channel1);
+//    free(testAudio);
     
     
     free(fft0Memory);

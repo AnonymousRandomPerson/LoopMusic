@@ -11,6 +11,7 @@
 #import "AudioDataFloat.h"
 #import <Accelerate/Accelerate.h>
 
+typedef enum loopModeValue { loopModeAuto, loopModeT1T2, loopModeT1Only, loopModeT2Only } loopModeValue;
 
 /// Automatic loop finder for audio files.
 @interface LoopFinderAuto : NSObject
@@ -48,7 +49,7 @@
 @property(nonatomic) float rightIgnore;
 
 /// Tolerance for sample difference between starting frame and ending frame for an acceptable loop point pair.
-@property(nonatomic) SInt16 sampleDiffTol;
+@property(nonatomic) float sampleDiffTol;
 /// Minimum number of seconds of harmonic similarity needed for a pair to count as a loop.
 @property(nonatomic) float minLoopLength;
 /// Minimum time difference in seconds to be used for non-maximum suppression when selecting top lag values and top start-end pairs.
@@ -91,6 +92,60 @@
 
 // END PARAMETERS
 
+/*!
+ * Checks to see if there is an estimate for t1.
+ * @return true if there is an estimate, false otherwise.
+ */
+- (bool)hasT1Estimate;
+
+/*!
+ * Checks to see if there is an estimate for t2.
+ * @return true if there is an estimate, false otherwise.
+ */
+- (bool)hasT2Estimate;
+
+/*!
+ * Returns the current loop mode for the looper: auto (no endpoint estimates), both endpoint estimates, just T1, or just T2.
+ * @return The current loop mode.
+ */
+- (loopModeValue)loopMode;
+
+/*!
+ * Returns the sample number for the t1 estimate.
+ * @return Sample number for t1.
+ */
+- (UInt32)s1Estimate;
+
+/*!
+ * Returns the sample number for the t2 estimate.
+ * @return Sample number for t2.
+ */
+- (UInt32)s2Estimate;
+
+/*!
+ * Computes lower and upper bounds for tau based on all the estimation information.
+ * @return 2-element array containing the lower and upper bounds for tau.
+ */
+- (NSArray *)tauLimits:(UInt32)numFrames;
+/*!
+ * Computes lower and upper bounds for t1 based on all the estimation information and the current track length.
+ * @param numFrames The number of frames in the current audio track.
+ * @return 2-element array containing the lower and upper bounds for t1.
+ */
+- (NSArray *)t1Limits:(UInt32)numFrames;
+/*!
+ * Computes lower and upper bounds for t2 based on all the estimation information and the current track length.
+ * @param numFrames The number of frames in the current audio track.
+ * @return 2-element array containing the lower and upper bounds for t2.
+ */
+- (NSArray *)t2Limits:(UInt32)numFrames;
+
+/*!
+ * Calculates the slope value for a deviation given its penalty value (for tau, t1, and t2 estimates).
+ * @param penalty Penalty value for the variable in question.
+ * @return Slope value per second deviation from estimate.
+ */
+- (float)slopeFromPenalty:(float)penalty;
 
 ///*!
 // * Performs an inexpensive preliminary FFT setup for vDSP.
