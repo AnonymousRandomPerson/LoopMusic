@@ -10,6 +10,7 @@
 #import "LoopFinderAuto+differencing.h"
 #import "LoopFinderAuto+spectra.h"
 #import "LoopFinderAuto+analysis.h"
+#import "LoopFinderAuto+synthesis.h"
 #import "LoopFinderAuto+fadeDetection.h"
 
 @implementation LoopFinderAuto
@@ -553,25 +554,39 @@ float lastTime(UInt32 numFrames)
 //    free(testAudio);
 
     
-//    // Tests for diffSpectrogram
-//    const int arraysize = 20;
-//    float array1[arraysize] = {.4, .1, -.5, .3, .1, .6, -.1, .2, .4, .02, .05, .123, .52, -.12, .9, .8, -.2, -.243, -.5, 0.01};
-//    float array2[arraysize] = {-.2, .24, .1, -.5, .2, .3, -.4, .1, 1, -.4, .03, .34, .1, -.2, .5, .3, -.04, -.03, -1, 1e-5};
-////    float array1[10] = {1, 0, 2, -2, 3};
-////    float array2[10] = {1, -1, 1, -2, 1};
-//
-//    AudioDataFloat *testAudio = malloc(sizeof(AudioDataFloat));
-//    testAudio->numFrames = arraysize;
-//    testAudio->channel0 = malloc(testAudio->numFrames * sizeof(float));
-//    testAudio->channel1 = malloc(testAudio->numFrames * sizeof(float));
-//    for (int i = 0; i < testAudio->numFrames; i++)
-//    {
-//        *(testAudio->channel0 + i) = array1[i];
-//        *(testAudio->channel1 + i) = array2[i];
-//    }
+    // Tests for diffSpectrogram
+    const int arraysize = 20;
+    float array1[arraysize] = {.4, .1, -.5, .3, .1, .6, -.1, .2, .4, .02, .05, .123, .52, -.12, .9, .8, -.2, -.243, -.5, 0.01};
+    float array2[arraysize] = {-.2, .24, .1, -.5, .2, .3, -.4, .1, 1, -.4, .03, .34, .1, -.2, .5, .3, -.04, -.03, -1, 1e-5};
+//    float array1[10] = {1, 0, 2, -2, 3};
+//    float array2[10] = {1, -1, 1, -2, 1};
+
+    AudioDataFloat *testAudio = malloc(sizeof(AudioDataFloat));
+    testAudio->numFrames = arraysize;
+    testAudio->channel0 = malloc(testAudio->numFrames * sizeof(float));
+    testAudio->channel1 = malloc(testAudio->numFrames * sizeof(float));
+    for (int i = 0; i < testAudio->numFrames; i++)
+    {
+        *(testAudio->channel0 + i) = array1[i];
+        *(testAudio->channel1 + i) = array2[i];
+    }
+    // Tests for analyzeLagValue
+    UInt32 lag = 4;
+    self.fftLength = 4;
+    self.minTimeDiff = 4.0/FRAMERATE;
+    self.minLoopLength = 1.0/FRAMERATE;
+    self.sampleDiffTol = 1.01;
+//    self.t1Estimate = 1.0/FRAMERATE;
+//    self.t1Penalty = 0.999999;
+    NSDictionary *lagAnalysis = [self analyzeLagValue:testAudio :lag];
+    NSLog(@"fftLength = %i", self.fftLength);
+    NSLog(@"minTimeDiff = %f", self.minTimeDiff);
+    NSLog(@"minLoopLength = %f", self.minLoopLength);
+    NSLog(@"sampleDiffTol = %f", self.sampleDiffTol);
+    NSLog(@"results: %@", lagAnalysis);
+    
 //
 //    DiffSpectrogramInfo *output = malloc(sizeof(DiffSpectrogramInfo));
-//    UInt32 lag = 9;
 //    [self diffSpectrogram:testAudio :lag :output];
 //    for (int i = 0; i < output->nWindows; i++)
 //    {
@@ -646,9 +661,14 @@ float lastTime(UInt32 numFrames)
 //    freeDiffSpectrogramInfo(output);
 //    free(output);
 //
-//    free(testAudio->channel0);
-//    free(testAudio->channel1);
-//    free(testAudio);
+    free(testAudio->channel0);
+    free(testAudio->channel1);
+    free(testAudio);
+    
+    
+//    // Tests for calcConfidence
+//    NSArray *confs = [self calcConfidence:@[@0, @0]];
+//    NSLog(@"confs: %@", confs);
     
     
     free(fft0Memory);

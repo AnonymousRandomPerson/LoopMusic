@@ -8,7 +8,6 @@
 
 #import "LoopFinderAuto.h"
 
-// TO IMPLEMENT
 /// Methods for using signal differencing results and signal spectra to find loop point candidates and relevant metrics for ranking.
 @interface LoopFinderAuto (analysis)
 
@@ -69,7 +68,7 @@
  * @param lag The desired base lag value.
  * @param starts Vector of sample numbers of starting point candidates.
  * @param nStarts Number of starting point candidates.
- * @return An NSDictionary with the loop starting samples ("startSamples"), the lag values ("lags"), and the amplitude difference between the start and endpoints ("sampleDiffs").
+ * @return An NSDictionary with the loop starting samples ("starts"), the lag values ("lags"), and the amplitude difference between the start and endpoints ("sampleDiffs").
  */
 - (NSDictionary *)findEndpointPairs:(AudioDataFloat *)audio :(UInt32)lag :(vDSP_Length *)starts :(vDSP_Length)nStarts;
 
@@ -83,7 +82,7 @@
  * @param windowSizes The window sizes in specMSEs.
  * @param regionStart The index in specMSEs where the region starts.
  * @param regionEnd The index in specMSEs where the region ends.
- * @return An NSDictionary with the loop starting samples ("startSamples"), the lag values ("lags"), and the amplitude difference between the start and endpoints ("sampleDiffs").
+ * @return An NSDictionary with the loop starting samples ("starts"), the lag values ("lags"), and the amplitude difference between the start and endpoints ("sampleDiffs").
  */
 - (NSDictionary *)findEndpointPairsSpectra: (AudioDataFloat *)audio :(UInt32)lag :(float *)specMSEs :(UInt32)nWindows :(UInt32 *)startSamples :(UInt32 *)windowSizes :(vDSP_Length)regionStart :(vDSP_Length)regionEnd;
 

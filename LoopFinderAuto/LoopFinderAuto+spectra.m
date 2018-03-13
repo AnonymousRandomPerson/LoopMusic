@@ -106,7 +106,7 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
     
     if (n < paddedN)
     {
-        NSLog(@"Zero-padding...");
+//        NSLog(@"Zero-padding...");
         
         float zero = 0;
         paddedSignal = (float *)malloc(paddedN * sizeof(float));
@@ -145,7 +145,7 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
     // If a new padded array had to be allocated at the beginning of the function
     if (n < paddedN)
     {
-        NSLog(@"Releasing...");
+//        NSLog(@"Releasing...");
         
         free(paddedSignal);
     }
@@ -215,9 +215,6 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
 
 - (void)diffSpectrogram:(AudioDataFloat *)signal :(UInt32)lag :(DiffSpectrogramInfo *)results
 {
-    // FOR TESTING ONLY
-    self.fftLength = 4;
-    
     UInt32 windowStride = MAX(1, roundf((1-self.overlapPercent/100)*self.fftLength));
     
     results->nWindows = ceilf((float)(signal->numFrames - lag) / windowStride);

@@ -12,7 +12,7 @@
 @implementation LoopFinderAuto (analysis)
 
 
-// HELPER FUNCTION (for multiple) //
+// HELPER FUNCTIONS (for multiple) //
 void fillRange(vDSP_Length *array, vDSP_Length start, vDSP_Length end)
 {
     // Fills from start, up to but not including end.
@@ -181,10 +181,6 @@ float nextAboveCutoff(float *array, vDSP_Length n, float cutoff)
 
 - (NSDictionary *)inferLoopRegion:(float *)specMSEs :(vDSP_Length)nWindows :(float *)effectiveWindowDurations
 {
-    // FOR TESTING ONLY
-    self.minLoopLength = 4 * *(effectiveWindowDurations);
-    
-    
     // If the desired loop length is too large to be attainable, just return the entire region.
     if (sum(effectiveWindowDurations, nWindows) < self.minLoopLength)
     {
@@ -330,6 +326,19 @@ float nextAboveCutoff(float *array, vDSP_Length n, float cutoff)
 
 
 // HELPER FUNCTIONS //
+void constrainStarts(vDSP_Length *starts, float *startsFloat, vDSP_Length nStarts, float lowerBound, float upperBound, NSInteger fillOffset, vDSP_Length *startsWorkArray, vDSP_Length *nNewStarts)
+{
+    // starts and startsFloat contain the same values, but of different types.
+    // Returns starting values that are constrained to fit upper and lower limits in the array startsWorkArray (must be preallocated). nNewStarts has the number of entries that fit the constraints. fillOffset will be added to values of starts when filling startsWorkArray.
+    
+    NSInteger first = findFirstToMeetCutoff(startsFloat, nStarts, lowerBound, true, false);
+    NSInteger last = findFirstToMeetCutoff(startsFloat, nStarts, upperBound, false, true);
+    *nNewStarts = (first == -1 || last == -1 || last < first) ? 0 : last-first+1;
+    
+    for (NSInteger i = 0; i < *nNewStarts; i++)
+        *(startsWorkArray + i) = *(starts+first + i) + fillOffset;
+}
+
 void calcSampleDiffs(AudioDataFloat *audio, UInt32 lag, vDSP_Length *starts, vDSP_Length nStarts, NSInteger windowRadius, float *sampleDiffs)
 {
     vDSP_Stride stride = 1;
@@ -466,7 +475,7 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
             return;
         
         // Possibly add results1 stuff
-        if (results1[@"sampleDiffs"][i1] <= results2[@"sampleDiffs"][i2])
+        if ([results1[@"sampleDiffs"][i1] floatValue] <= [results2[@"sampleDiffs"][i2] floatValue])
             [self appendSingleResult:store :results1 :i1++];
 
         if ([store[@"starts"] count] >= self.nBestPairs)    // Maximum capacity
@@ -478,7 +487,7 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
             break;
         
         // Possibly add results2 stuff
-        if (results1[@"sampleDiffs"][i1] >= results2[@"sampleDiffs"][i2])
+        if ([results1[@"sampleDiffs"][i1] floatValue] >= [results2[@"sampleDiffs"][i2] floatValue])
             [self appendSingleResult:store :results2 :i2++];
         
         cont2 = i2 < results2Size && [results2[@"sampleDiffs"][i2] floatValue] <= self.sampleDiffTol;
@@ -532,7 +541,7 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
     free(startsWorkArray);
     free(sampleDiffs);
 
-    return @{@"startSamples": @[[NSNumber numberWithUnsignedInteger:[self s1Estimate]]], @"lags": @[[NSNumber numberWithUnsignedInteger:lag]], @"sampleDiffs": @[[NSNumber numberWithFloat:sDiff]]};
+    return @{@"starts": @[[NSNumber numberWithUnsignedInteger:[self s1Estimate]]], @"lags": @[[NSNumber numberWithUnsignedInteger:lag]], @"sampleDiffs": @[[NSNumber numberWithFloat:sDiff]]};
 }
 - (NSDictionary *)findEndpointPairs:(AudioDataFloat *)audio :(UInt32)lag :(vDSP_Length *)starts :(vDSP_Length)nStarts
 {
@@ -544,27 +553,32 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
 
     // Typical case.
     vDSP_Length *startsWorkArray = (vDSP_Length *)malloc(nStarts * sizeof(vDSP_Length));
-    memcpy(startsWorkArray, starts, nStarts * sizeof(vDSP_Length));
+    vDSP_Length nNewStarts;
+    
+    // Convert to floats for comparisons
+    float *startsFloat = (float *)malloc(nStarts * sizeof(float));
+    for (NSUInteger i = 0; i < nStarts; i++)
+        *(startsFloat + i) = (float)(*(starts + i));
+    
+    // Make sure neither the t1 constraints nor the t2 constraints are violated.
+    NSArray *t1Lims = [self t1Limits:audio->numFrames];
+    NSArray *t2Lims = [self t2Limits:audio->numFrames];
+    constrainStarts(starts, startsFloat, nStarts, MAX([t1Lims[0] floatValue]*FRAMERATE, [t2Lims[0] floatValue]*FRAMERATE - lag), MIN([t1Lims[1] floatValue]*FRAMERATE, [t2Lims[1] floatValue]*FRAMERATE - lag), 0, startsWorkArray, &nNewStarts);
+
     float *sampleDiffs = (float *)malloc(nStarts * sizeof(float));
 
     NSDictionary *endpointPairs = @{@"starts": [[NSMutableArray alloc] init], @"sampleDiffs": [[NSMutableArray alloc] init], @"lags": [[NSMutableArray alloc] init]};
     
-    calcSampleDiffs(audio, lag, startsWorkArray, nStarts, sDiffRadius, sampleDiffs);
-    NSDictionary *initialResults = [self getMinSampleDiffs:sampleDiffs :startsWorkArray :nStarts :lag];
+    calcSampleDiffs(audio, lag, startsWorkArray, nNewStarts, sDiffRadius, sampleDiffs);
+    NSDictionary *initialResults = [self getMinSampleDiffs:sampleDiffs :startsWorkArray :nNewStarts :lag];
 
     [self appendEndpointResults:endpointPairs :initialResults];
     
     // If not enough pairs have been found, change things up a little.
     if ([endpointPairs[@"starts"] count] < self.nBestPairs)
     {
-        // Convert to floats for comparisons
-        float *startsFloat = (float *)malloc(nStarts * sizeof(float));
-        for (NSUInteger i = 0; i < nStarts; i++)
-            *(startsFloat + i) = (float)(*(starts + i));
         
-        NSArray *t1Lims = [self t1Limits:audio->numFrames];
-        NSArray *t2Lims = [self t2Limits:audio->numFrames];
-        NSArray *tauLims = [self tauLimits:audio->numFrames];
+        NSArray *tauLims = [self tauLimits:audio->numFrames];   // To constrain the lag perturbations.
         
         bool incLagOnly = false;
         bool decLagOnly = false;
@@ -574,26 +588,14 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
             UInt32 newLag = (UInt32)MAX(0, (NSInteger)lag + dlag);
             vDSP_Length nNewStarts;
             
-            // Shift start samples
-            NSInteger first = findFirstToMeetCutoff(startsFloat, nStarts, [t1Lims[0] floatValue]*FRAMERATE + dlag, true, false);
-            NSInteger last = findFirstToMeetCutoff(startsFloat, nStarts, [t1Lims[1] floatValue]*FRAMERATE + dlag, false, true);
-            nNewStarts = (first == -1 || last == -1 || last < first) ? 0 : last-first+1;
-            
-            for (NSInteger i = 0; i < nNewStarts; i++)
-                *(startsWorkArray + i) = *(starts+first + i) - dlag;
-            
+            // Shift start samples. Make sure neither the t1 constraints nor the t2 constraints are violated.
+            constrainStarts(starts, startsFloat, nStarts, MAX([t1Lims[0] floatValue]*FRAMERATE + dlag, [t2Lims[0] floatValue]*FRAMERATE - lag), MIN([t1Lims[1] floatValue]*FRAMERATE + dlag, [t2Lims[1] floatValue]*FRAMERATE - lag), -dlag, startsWorkArray, &nNewStarts);
             calcSampleDiffs(audio, newLag, startsWorkArray, nNewStarts, sDiffRadius, sampleDiffs);
             NSDictionary *results1 = [self getMinSampleDiffs:sampleDiffs :startsWorkArray :nNewStarts :newLag];
             
             
             // Shift end samples
-            first = findFirstToMeetCutoff(startsFloat, nStarts, [t2Lims[0] floatValue]*FRAMERATE - newLag, true, false);
-            last = findFirstToMeetCutoff(startsFloat, nStarts, [t2Lims[1] floatValue]*FRAMERATE - newLag, false, true);
-            nNewStarts = (first == -1 || last == -1 || last < first) ? 0 : last-first+1;
-            
-            for (NSInteger i = 0; i < nNewStarts; i++)
-                *(startsWorkArray + i) = *(starts+first + i);
-            
+            constrainStarts(starts, startsFloat, nStarts, MAX([t1Lims[0] floatValue]*FRAMERATE, [t2Lims[0] floatValue]*FRAMERATE - newLag), MIN([t1Lims[1] floatValue]*FRAMERATE, [t2Lims[1] floatValue]*FRAMERATE - newLag), 0, startsWorkArray, &nNewStarts);
             calcSampleDiffs(audio, newLag, startsWorkArray, nNewStarts, sDiffRadius, sampleDiffs);
             NSDictionary *results2 = [self getMinSampleDiffs:sampleDiffs :startsWorkArray :nNewStarts :newLag];
             
@@ -614,13 +616,13 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
             else
                 dlag = -dlag;
             
-            if (newLag < [tauLims[0] floatValue] * FRAMERATE)    // Lag is too small.
+            if ((NSInteger)lag + dlag < [tauLims[0] floatValue] * FRAMERATE)    // Lag is too small.
             {
                 incLagOnly = true;
                 dlag = labs(dlag) + 1;
             }
             
-            if (newLag > [tauLims[1] floatValue] * FRAMERATE)   // Lag is too large.
+            if ((NSInteger)lag + dlag > [tauLims[1] floatValue] * FRAMERATE)   // Lag is too large.
             {
                 decLagOnly = true;
                 dlag = -labs(dlag) - 1;
@@ -630,16 +632,19 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
             if (incLagOnly && decLagOnly)
                 break;
         }
-        free(startsFloat);
     }
 
     free(startsWorkArray);
+    free(startsFloat);
     free(sampleDiffs);
     
     // If the search failed, and still nothing was found, just use the best result from the initial batch.
     if ([endpointPairs[@"starts"] count] == 0)
     {
-        return @{@"starts": @[initialResults[@"starts"][0]], @"sampleDiffs": @[initialResults[@"sampleDiffs"][0]], @"lags": @[initialResults[@"lag"]]};
+        if ([initialResults[@"starts"] count] > 0)
+            return @{@"starts": @[initialResults[@"starts"][0]], @"sampleDiffs": @[initialResults[@"sampleDiffs"][0]], @"lags": @[initialResults[@"lag"]]};
+        else
+            return @{@"starts": @[], @"sampleDiffs": @[], @"lags": @[]};
     }
     
     // Make the guts immutable before returning.
