@@ -91,4 +91,13 @@
     return @{@"startSamples": pairs[@"starts"], @"refinedLags": pairs[@"lags"], @"sampleDiffs": pairs[@"sampleDiffs"], @"spectrumMSE": [NSNumber numberWithFloat:specMSE], @"matchLength": [NSNumber numberWithFloat:matchLength], @"mismatchLength": [NSNumber numberWithFloat:mismatchLength]};
 }
 
+
+
+
+- (NSDictionary *)findLoopNoEst:(AudioDataFloat *)audio
+{
+    return @{};
+}
+
+
 @end

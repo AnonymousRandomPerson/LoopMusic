@@ -41,7 +41,7 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
     
     
     // Work array
-    float *smoothedSignal = (float *)malloc(n * sizeof(float));
+    float *smoothedSignal = malloc(n * sizeof(float));
     float one = 1;
     
     // Front
@@ -55,7 +55,7 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
     // } This whole thing is a cumulative sum, with the first value being the sum of the radius+1 first elements.
     
     // Normalize front
-    float *lengths = (float *)malloc(frontSize * sizeof(float));
+    float *lengths = malloc(frontSize * sizeof(float));
     float radiusPlusOne = radius + 1;
     vDSP_vramp(&radiusPlusOne, &one, lengths, stride, frontSize);
     vDSP_vdiv(lengths, stride, smoothedSignal, stride, smoothedSignal, stride, frontSize);
@@ -109,13 +109,13 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
 //        NSLog(@"Zero-padding...");
         
         float zero = 0;
-        paddedSignal = (float *)malloc(paddedN * sizeof(float));
+        paddedSignal = malloc(paddedN * sizeof(float));
         memcpy(paddedSignal, signal, n * sizeof(float));
         vDSP_vfill(&zero, paddedSignal + n, stride, paddedN - n);
     }
     
     *nBins = MIN(1 + floorf(paddedN*fmax/FRAMERATE), 1 + paddedN/2);
-    *spectrum = (float *)malloc(*nBins * sizeof(float));
+    *spectrum = malloc(*nBins * sizeof(float));
     
     
     float *signalSplitComplexMemory = malloc(paddedN * sizeof(float));
@@ -161,9 +161,9 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
     
     vDSP_Stride stride = 1;
     
-    float *sqErrs = (float *)malloc(n * sizeof(float));
-    float *aDB = (float *)malloc(n * sizeof(float));
-    float *bDB = (float *)malloc(n * sizeof(float));
+    float *sqErrs = malloc(n * sizeof(float));
+    float *aDB = malloc(n * sizeof(float));
+    float *bDB = malloc(n * sizeof(float));
     
     vDSP_vdbcon(a, stride, &self->powRef, aDB, stride, n, 0);    // 0 flag for power.
     vDSP_vdbcon(b, stride, &self->powRef, bDB, stride, n, 0);
@@ -175,9 +175,9 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
     vDSP_vsq(sqErrs, stride, sqErrs, stride, n);
     
     // This part makes the square difference zero if both signals are at or below the decibel level floor. Then it gets the MSE, normalized by the number of entries that weren't set to zero.
-    float *loudEnough = (float *)malloc(n * sizeof(float));
-    float *zeros = (float *)malloc(n * sizeof(float));
-    float *ones = (float *)malloc(n * sizeof(float));
+    float *loudEnough = malloc(n * sizeof(float));
+    float *zeros = malloc(n * sizeof(float));
+    float *ones = malloc(n * sizeof(float));
     float zero = 0;
     float one = 1;
     vDSP_vfill(&zero, zeros, stride, n);
@@ -218,10 +218,10 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
     UInt32 windowStride = MAX(1, roundf((1-self.overlapPercent/100)*self.fftLength));
     
     results->nWindows = ceilf((float)(signal->numFrames - lag) / windowStride);
-    results->mses = (float *)malloc(results->nWindows * sizeof(float));
-    results->startSamples = (UInt32 *)malloc(results->nWindows * sizeof(UInt32));
-    results->windowSizes = (UInt32 *)malloc(results->nWindows * sizeof(UInt32));
-    results->effectiveWindowDurations = (float *)malloc(results->nWindows * sizeof(float));
+    results->mses = malloc(results->nWindows * sizeof(float));
+    results->startSamples = malloc(results->nWindows * sizeof(UInt32));
+    results->windowSizes = malloc(results->nWindows * sizeof(UInt32));
+    results->effectiveWindowDurations = malloc(results->nWindows * sizeof(float));
     
     float *spectrumPrimary = 0;
     float *spectrumLagged = 0;

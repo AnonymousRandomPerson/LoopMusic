@@ -148,7 +148,7 @@ float medianSorted(float *array, vDSP_Length n)
 
 float median(float *array, vDSP_Length n)
 {
-    float *sorted = (float *)malloc(n * sizeof(float));
+    float *sorted = malloc(n * sizeof(float));
     memcpy(sorted, array, n*sizeof(float));
     
     qsort(sorted, n, sizeof(float), cmp);
@@ -192,7 +192,7 @@ float nextAboveCutoff(float *array, vDSP_Length n, float cutoff)
     
     float windowStride = *effectiveWindowDurations;
     
-    float *sortedSpecMSEs = (float *)malloc(nWindows * sizeof(float));
+    float *sortedSpecMSEs = malloc(nWindows * sizeof(float));
     memcpy(sortedSpecMSEs, specMSEs, nWindows * sizeof(float));
     qsort(sortedSpecMSEs, nWindows, sizeof(float), cmp);
     
@@ -282,7 +282,7 @@ float nextAboveCutoff(float *array, vDSP_Length n, float cutoff)
     float mismatchLength = 0;
     
     vDSP_Length nOutOfLoop = regionStart + nWindows-regionEnd-1;
-    vDSP_Length *outOfLoop = (vDSP_Length *)malloc(nOutOfLoop * sizeof(vDSP_Length));
+    vDSP_Length *outOfLoop = malloc(nOutOfLoop * sizeof(vDSP_Length));
     fillRange(outOfLoop, 0, regionStart);
     fillRange(outOfLoop+regionStart, regionEnd+1, nWindows);
     
@@ -307,7 +307,7 @@ float nextAboveCutoff(float *array, vDSP_Length n, float cutoff)
     UInt32 startLagged = regionStartSample + lag;
     UInt32 endLagged =  regionEndSample + lag;
     
-    float *mse = (float *)malloc((2*(regionEndSample - regionStartSample) + 1) * sizeof(float));
+    float *mse = malloc((2*(regionEndSample - regionStartSample) + 1) * sizeof(float));
     [self audioMSE:audio :startLagged :endLagged :regionStartSample :regionEndSample :mse];
     
     UInt32 zeroLagIndex = regionEndSample - regionStartSample;
@@ -343,8 +343,8 @@ void calcSampleDiffs(AudioDataFloat *audio, UInt32 lag, vDSP_Length *starts, vDS
 {
     vDSP_Stride stride = 1;
     
-    float *diffs0 = (float *)malloc(nStarts * sizeof(float));
-    float *diffs1 = (float *)malloc(nStarts * sizeof(float));
+    float *diffs0 = malloc(nStarts * sizeof(float));
+    float *diffs1 = malloc(nStarts * sizeof(float));
     
     vDSP_vsub(audio->channel0 + *starts, stride, audio->channel0 + lag + *starts, stride, diffs0, stride, nStarts);
     vDSP_vsub(audio->channel1 + *starts, stride, audio->channel1 + lag + *starts, stride, diffs1, stride, nStarts);
@@ -419,7 +419,7 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
     }
     else    // Normal cases with variance
     {
-        float *toMinimize = (float *)malloc(nStarts * sizeof(float));
+        float *toMinimize = malloc(nStarts * sizeof(float));
         memcpy(toMinimize, sampleDiffs, nStarts * sizeof(float));
         
         // Do deviation penalties if necessary
@@ -528,8 +528,8 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
 
 - (NSDictionary *)findEndpointPairsNoVariance:(AudioDataFloat *)audio :(UInt32)lag :(NSInteger)sDiffRadius
 {
-    vDSP_Length *startsWorkArray = (vDSP_Length *)malloc((2*sDiffRadius + 1) * sizeof(vDSP_Length));
-    float *sampleDiffs = (float *)malloc((2*sDiffRadius + 1) * sizeof(float));
+    vDSP_Length *startsWorkArray = malloc((2*sDiffRadius + 1) * sizeof(vDSP_Length));
+    float *sampleDiffs = malloc((2*sDiffRadius + 1) * sizeof(float));
 
     lag = [self s2Estimate] - [self s1Estimate];
     vDSP_Length left = MAX(0, (NSInteger)[self s1Estimate] - sDiffRadius);   // Floor at 0.
@@ -552,11 +552,11 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
         return [self findEndpointPairsNoVariance:audio :lag :sDiffRadius];
 
     // Typical case.
-    vDSP_Length *startsWorkArray = (vDSP_Length *)malloc(nStarts * sizeof(vDSP_Length));
+    vDSP_Length *startsWorkArray = malloc(nStarts * sizeof(vDSP_Length));
     vDSP_Length nNewStarts;
     
     // Convert to floats for comparisons
-    float *startsFloat = (float *)malloc(nStarts * sizeof(float));
+    float *startsFloat = malloc(nStarts * sizeof(float));
     for (NSUInteger i = 0; i < nStarts; i++)
         *(startsFloat + i) = (float)(*(starts + i));
     
@@ -565,7 +565,7 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
     NSArray *t2Lims = [self t2Limits:audio->numFrames];
     constrainStarts(starts, startsFloat, nStarts, MAX([t1Lims[0] floatValue]*FRAMERATE, [t2Lims[0] floatValue]*FRAMERATE - lag), MIN([t1Lims[1] floatValue]*FRAMERATE, [t2Lims[1] floatValue]*FRAMERATE - lag), 0, startsWorkArray, &nNewStarts);
 
-    float *sampleDiffs = (float *)malloc(nStarts * sizeof(float));
+    float *sampleDiffs = malloc(nStarts * sizeof(float));
 
     NSDictionary *endpointPairs = @{@"starts": [[NSMutableArray alloc] init], @"sampleDiffs": [[NSMutableArray alloc] init], @"lags": [[NSMutableArray alloc] init]};
     
@@ -661,7 +661,7 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
     vDSP_Length lastStart = MIN(firstStart + *(windowSizes + regionStart+minI)-1, audio->numFrames - 1);    // Make sure it doesn't go out of bounds.
 
     vDSP_Length nStarts = lastStart - firstStart + 1;
-    vDSP_Length *starts = (vDSP_Length *)malloc(nStarts * sizeof(vDSP_Length));
+    vDSP_Length *starts = malloc(nStarts * sizeof(vDSP_Length));
     fillRange(starts, firstStart, lastStart+1);
 
     NSDictionary *pairs = [self findEndpointPairs:audio :lag :starts :nStarts];
@@ -682,7 +682,7 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
     alpha = MAX(0, MIN(alpha, 1));  // Enforce the [0, 1] proportion.
     
     vDSP_Length nInterval = regionEnd - regionStart + 1;
-    float *intervalSpecMSEs = (float *)malloc(nInterval * sizeof(float));
+    float *intervalSpecMSEs = malloc(nInterval * sizeof(float));
     memcpy(intervalSpecMSEs, specMSEs+regionStart, nInterval * sizeof(float));
     qsort(intervalSpecMSEs, nInterval, sizeof(float), cmp);    // ascending order
     

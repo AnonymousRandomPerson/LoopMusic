@@ -302,8 +302,8 @@ float lastTime(UInt32 numFrames)
     floatAudio->numFrames = [self nextPow2:floatAudio->numFrames] >> 1;
     
     // Convert 16-bit audio to 32-bit floating point audio, and calculate the average decibel level.
-    floatAudio->channel0 = (float *)malloc(floatAudio->numFrames * sizeof(float));
-    floatAudio->channel1 = (float *)malloc(floatAudio->numFrames * sizeof(float));
+    floatAudio->channel0 = malloc(floatAudio->numFrames * sizeof(float));
+    floatAudio->channel1 = malloc(floatAudio->numFrames * sizeof(float));
     audio16bitFormatToFloatFormat(audio, floatAudio);
     avgVol = [self powToDB:calcAvgPow(floatAudio)];
     
@@ -577,7 +577,9 @@ float lastTime(UInt32 numFrames)
     self.minLoopLength = 1.0/FRAMERATE;
     self.sampleDiffTol = 1.01;
 //    self.t1Estimate = 1.0/FRAMERATE;
-//    self.t1Penalty = 0.999999;
+//    self.t2Estimate = 15.0/FRAMERATE;
+//    self.t1Penalty = 1;
+//    self.t2Penalty = 1;
     NSDictionary *lagAnalysis = [self analyzeLagValue:testAudio :lag];
     NSLog(@"fftLength = %i", self.fftLength);
     NSLog(@"minTimeDiff = %f", self.minTimeDiff);

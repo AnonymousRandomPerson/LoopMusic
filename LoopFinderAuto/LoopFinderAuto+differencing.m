@@ -17,7 +17,7 @@
     vDSP_Stride stride = 1;
     
     [self autoSlidingWeightedMSE:audio->channel0 :audio->numFrames :result];
-    float *resultChannel1 = (float *)malloc(audio->numFrames * sizeof(float));
+    float *resultChannel1 = malloc(audio->numFrames * sizeof(float));
     [self autoSlidingWeightedMSE:audio->channel1 :audio->numFrames :resultChannel1];
     vDSP_vadd(result, stride, resultChannel1, stride, result, stride, audio->numFrames);
     
@@ -34,7 +34,7 @@
     vDSP_Length lengthResult = lengthFirst + lengthSecond - 1;
     
     [self slidingWeightedMSE:audio->channel0 + startFirst :lengthFirst :audio->channel0 + startSecond :lengthSecond :result];
-    float *resultChannel1 = (float *)malloc(lengthResult * sizeof(float));
+    float *resultChannel1 = malloc(lengthResult * sizeof(float));
     [self slidingWeightedMSE:audio->channel1 + startFirst :lengthFirst :audio->channel1 + startSecond :lengthSecond :resultChannel1];
     vDSP_vadd(result, stride, resultChannel1, stride, result, stride, lengthResult);
     
@@ -45,7 +45,7 @@
 // Performs slidingWeightedMSE of a vector x with itself, and returns only the right half, due to symmetry. The size of result is n, the same size as x, representing MSE at all non-negative lag values, starting from zero.
 - (void)autoSlidingWeightedMSE:(float *)x :(vDSP_Length)n :(float *)result
 {
-    float *fullSlidingMSE = (float *)malloc([self calcOutputLength:n :n] * sizeof(float));
+    float *fullSlidingMSE = malloc([self calcOutputLength:n :n] * sizeof(float));
     [self slidingWeightedMSE:x :n :x :n :fullSlidingMSE];
     memcpy(result, fullSlidingMSE + n-1, n * sizeof(float));
     free(fullSlidingMSE);
@@ -57,7 +57,7 @@
     vDSP_Length outputLength = [self calcOutputLength:nA :nB];
     
     [self slidingSSE:a :nA :b :nB :result];
-    float *normFactors = (float *)malloc(outputLength * sizeof(float));
+    float *normFactors = malloc(outputLength * sizeof(float));
     
     [self calcNoiseAndOverlapLengthNormalizationFactors:a :nA :b :nB :normFactors];
     vDSP_vdiv(normFactors, stride, result, stride, result, stride, outputLength);
@@ -72,7 +72,7 @@
     vDSP_Length outputLength = [self calcOutputLength:nA :nB];
     [self xcorr:a :nA :b :nB :result];
     
-    float *combinedPowers = (float *)malloc(outputLength * sizeof(float));
+    float *combinedPowers = malloc(outputLength * sizeof(float));
     [self calcSlidingCombinedPowerOutput:a :nA :b :nB :combinedPowers];
     float negative2 = -2;
     vDSP_vsma(result, stride, &negative2, combinedPowers, stride, result, stride, outputLength);
@@ -90,8 +90,8 @@
     float zero = 0;
     
     // zero-pad so that the cross-correlation ends up being the left-most part of the inverse fft, with only trailing zeros and no leading zeros.
-    float *aPadded = (float *)malloc(nFFT * sizeof(float));
-    float *bPadded = (float *)malloc(nFFT * sizeof(float));
+    float *aPadded = malloc(nFFT * sizeof(float));
+    float *bPadded = malloc(nFFT * sizeof(float));
     vDSP_vfill(&zero, aPadded, stride, nB-1);
     vDSP_vfill(&zero, aPadded+outputLength, stride, nFFT-outputLength);
     vDSP_vfill(&zero, bPadded+nB, stride, nFFT-nB);
@@ -168,8 +168,8 @@
     const vDSP_Stride stride = 1;
     vDSP_Length outputLength = [self calcOutputLength:nA :nB];
     float powerFactor = .5;
-    float *combinedPowers = (float *)malloc(outputLength * sizeof(float));
-    float *overlapLengths = (float *)malloc(outputLength * sizeof(float));
+    float *combinedPowers = malloc(outputLength * sizeof(float));
+    float *overlapLengths = malloc(outputLength * sizeof(float));
     
     [self calcSlidingCombinedPowerOutput:a :nA :b :nB :combinedPowers];
     [self calcSlidingOverlapLength:a :nA :b :nB :overlapLengths];
@@ -188,8 +188,8 @@
     float weight = 1;
     
     // Pad each side with a 0 because of how vDSP_vrsum works (it ignores the first element when it takes a running sum).
-    float *aPowers = (float *)malloc((nA+2) * sizeof(float));
-    float *bPowers = (float *)malloc((nB+2) * sizeof(float));
+    float *aPowers = malloc((nA+2) * sizeof(float));
+    float *bPowers = malloc((nB+2) * sizeof(float));
     *(aPowers) = 0;
     *(bPowers) = 0;
     *(aPowers + nA+1) = 0;
@@ -199,8 +199,8 @@
     
     // Left part of combinedPowerOutput
     // +1 length for the guaranteed zero in front due to vDSP_vrsum
-    float *aPowerForwardRunSum = (float *)malloc((minLength+1) * sizeof(float));
-    float *bPowerBackwardRunSum = (float *)malloc((minLength+1) * sizeof(float));
+    float *aPowerForwardRunSum = malloc((minLength+1) * sizeof(float));
+    float *bPowerBackwardRunSum = malloc((minLength+1) * sizeof(float));
     vDSP_vrsum(aPowers, stride, &weight, aPowerForwardRunSum, stride, minLength+1);
     vDSP_vrsum(bPowers+nB+1, -stride, &weight, bPowerBackwardRunSum, stride, minLength+1);
     
@@ -209,7 +209,7 @@
     // Middle part of combinedPowerOutput
     float smallPower = 0;
     vDSP_Length nSliding = outputLength - (2*minLength-1);
-    float *slidingLargePower = (float *)malloc(nSliding * sizeof(float));
+    float *slidingLargePower = malloc(nSliding * sizeof(float));
     if (nB < nA)
     {
         smallPower = *(bPowerBackwardRunSum+minLength); // Last element
@@ -229,8 +229,8 @@
     
     // Right part of combinedPowerOutput (for minLength - 1, not minLength)
     // +1 length for the guaranteed zero in front.
-    float *aPowerBackwardRunSum = (float *)malloc(minLength * sizeof(float));
-    float *bPowerForwardRunSum = (float *)malloc(minLength * sizeof(float));
+    float *aPowerBackwardRunSum = malloc(minLength * sizeof(float));
+    float *bPowerForwardRunSum = malloc(minLength * sizeof(float));
     vDSP_vrsum(aPowers+nA+1, -stride, &weight, aPowerBackwardRunSum, stride, minLength);
     vDSP_vrsum(bPowers, stride, &weight, bPowerForwardRunSum, stride, minLength);
     

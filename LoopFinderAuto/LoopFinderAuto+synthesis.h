@@ -34,4 +34,20 @@
  */
 - (NSDictionary *)analyzeLagValue:(AudioDataFloat *)audio :(UInt32)lag;
 
+
+
+/*!
+ * Finds loop points of an audio track, given no prior manual estimation.
+ * @param audio 32-bit floating point stereo audio data.
+ * @return Dictionary with keys "startSamples", "endSamples", and "confidences".
+ */
+- (NSDictionary *)findLoopNoEst:(AudioDataFloat *)audio;
+
+/*!
+ * Finds loop points of an audio track, using prior estimation information (contained within class properties).
+ * @param audio 32-bit floating point stereo audio data.
+ * @return Dictionary with keys "startSamples", "endSamples", and "confidences".
+ */
+- (NSDictionary *)findLoopWithEst:(AudioDataFloat *)audio;
+
 @end
