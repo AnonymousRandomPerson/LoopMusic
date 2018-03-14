@@ -156,9 +156,6 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
 
 - (void)spectrumMSE:(float *)a :(float *)b :(vDSP_Length)n :(float *)mse
 {
-    // FOR TESTING ONLY
-    self->avgVol = self->dBLevel;
-    
     vDSP_Stride stride = 1;
     
     float *sqErrs = malloc(n * sizeof(float));

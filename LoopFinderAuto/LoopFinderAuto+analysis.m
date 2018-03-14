@@ -92,7 +92,7 @@ int compareValue(const void* a, const void* b)
         (sortedArray + i)->value = *(array + i);
     }
     
-    qsort(sortedArray, arraySize, sizeof(float_enumeration), compareValue);
+    qsort(sortedArray, arraySize, sizeof(float_enumeration), compareValue); // TAKES QUITE A BIT OF TIME
     
     NSMutableArray *indices = [[NSMutableArray alloc] init];
     NSMutableArray *values = [[NSMutableArray alloc] init];
@@ -308,7 +308,7 @@ float nextAboveCutoff(float *array, vDSP_Length n, float cutoff)
     UInt32 endLagged =  regionEndSample + lag;
     
     float *mse = malloc((2*(regionEndSample - regionStartSample) + 1) * sizeof(float));
-    [self audioMSE:audio :startLagged :endLagged :regionStartSample :regionEndSample :mse];
+    [self audioMSE:audio :startLagged :endLagged :regionStartSample :regionEndSample :mse]; // TAKES TIME FOR LARGE REGIONS (SMALL LAGS)
     
     UInt32 zeroLagIndex = regionEndSample - regionStartSample;
     UInt32 radius = MIN(zeroLagIndex, (UInt32)lroundf(self.minTimeDiff/2.0 * FRAMERATE));   // Search radius, in frames.
@@ -447,9 +447,31 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
 
 - (void)appendSingleResult:(NSDictionary *)store :(NSDictionary *)results :(NSUInteger)index
 {
-    [store[@"starts"] addObject:results[@"starts"][index]];
-    [store[@"sampleDiffs"] addObject:results[@"sampleDiffs"][index]];
-    [store[@"lags"] addObject:results[@"lag"]];
+    // Check if repeat, and avoid adding if so.
+    bool isRepeat = false;
+    if ([store[@"starts"] containsObject:results[@"starts"][index]] &&
+        [store[@"sampleDiffs"] containsObject:results[@"sampleDiffs"][index]] &&
+        [store[@"lags"] containsObject:results[@"lag"]])
+    {
+        for (NSUInteger i = [store[@"starts"] indexOfObject:results[@"starts"][index]]; i < [store[@"starts"] count]; i++)
+        {
+            if ([store[@"starts"][i] unsignedIntegerValue] == [results[@"starts"][index] unsignedIntegerValue] &&
+                [store[@"sampleDiffs"][i] floatValue] == [results[@"sampleDiffs"][index] floatValue] &&
+                [store[@"lags"][i] integerValue] == [results[@"lag"] integerValue])
+            {
+                isRepeat = true;
+                break;
+            }
+        }
+    }
+        
+    
+    if (!isRepeat)
+    {
+        [store[@"starts"] addObject:results[@"starts"][index]];
+        [store[@"sampleDiffs"] addObject:results[@"sampleDiffs"][index]];
+        [store[@"lags"] addObject:results[@"lag"]];
+    }
 }
 - (void)appendEndpointResults:(NSDictionary *)store :(NSDictionary *)results
 {

@@ -78,7 +78,7 @@
     vDSP_vsma(result, stride, &negative2, combinedPowers, stride, result, stride, outputLength);
     free(combinedPowers);
 }
-// Performs a cross-correlation between signals a and b of lengths nA and nB, respectively. Result will be nA + nB - 1 elements long.
+// Performs a cross-correlation between signals a and b of lengths nA and nB, respectively. Result will be nA + nB - 1 elements long. THIS FUNCTION IS THE PRIMARY BOTTLENECK.
 - (void)xcorr:(float *)a :(vDSP_Length)nA :(float *)b :(vDSP_Length)nB :(float *)result
 {
     const vDSP_Stride stride = 1;

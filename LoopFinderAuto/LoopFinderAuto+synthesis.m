@@ -7,6 +7,7 @@
 //
 
 #import "LoopFinderAuto+synthesis.h"
+#import "LoopFinderAuto+differencing.h"
 #import "LoopFinderAuto+spectra.h"
 #import "LoopFinderAuto+analysis.h"
 
@@ -67,7 +68,7 @@
 - (NSDictionary *)analyzeLagValue:(AudioDataFloat *)audio :(UInt32)lag
 {
     DiffSpectrogramInfo *specDiff = malloc(sizeof(DiffSpectrogramInfo));
-    [self diffSpectrogram:audio :lag :specDiff];
+    [self diffSpectrogram:audio :lag :specDiff];    // TAKES A FAIR AMOUNT OF TIME FOR SMALL LAGS
     
     NSDictionary *loopRegion = [self inferLoopRegion:specDiff->mses :specDiff->nWindows :specDiff->effectiveWindowDurations];
     
@@ -79,7 +80,7 @@
     
     UInt32 regionStartSample = *(specDiff->startSamples + regionStartWindow);
     UInt32 regionEndSample = *(specDiff->startSamples + regionEndWindow) + *(specDiff->windowSizes + regionEndWindow) - 1;
-    lag = [self refineLag:audio :lag :regionStartSample :regionEndSample];
+    lag = [self refineLag:audio :lag :regionStartSample :regionEndSample]; // TAKES QUITE A BIT OF TIME FOR SMALL LAGS
     
     NSDictionary *pairs = [self findEndpointPairsSpectra:audio :lag :specDiff->mses :specDiff->nWindows :specDiff->startSamples :specDiff->windowSizes :regionStartWindow :regionEndWindow];
     
@@ -88,15 +89,321 @@
     freeDiffSpectrogramInfo(specDiff);
     free(specDiff);
     
-    return @{@"startSamples": pairs[@"starts"], @"refinedLags": pairs[@"lags"], @"sampleDiffs": pairs[@"sampleDiffs"], @"spectrumMSE": [NSNumber numberWithFloat:specMSE], @"matchLength": [NSNumber numberWithFloat:matchLength], @"mismatchLength": [NSNumber numberWithFloat:mismatchLength]};
+    return @{@"startSamples": pairs[@"starts"],
+             @"refinedLags": pairs[@"lags"],
+             @"sampleDiffs": pairs[@"sampleDiffs"],
+             @"spectrumMSE": [NSNumber numberWithFloat:specMSE],
+             @"matchLength": [NSNumber numberWithFloat:matchLength],
+             @"mismatchLength": [NSNumber numberWithFloat:mismatchLength]
+             };
 }
 
 
+// HELPER HELPER FUNCTIONS //
+// Generates an array from 0 to n-1
+- (NSArray *)range:(NSUInteger)n
+{
+    NSMutableArray *array = [[NSMutableArray alloc] initWithCapacity:n];
+    for (NSUInteger i = 0; i < n; i++)
+        [array addObject:[NSNumber numberWithUnsignedInteger:i]];
+    
+    return [array copy];
+}
+/*!
+ * Permutes the order of some elements within a mutable array.
+ * @param array The array to be modified.
+ * @param initial The initial indices to be replaced.
+ * @param final The indices to replace initial.
+ */
+- (void)permute:(NSMutableArray *)array :(NSArray *)initial :(NSArray *)final
+{
+    NSArray *arrayCopy = [array copy];
+    for (NSUInteger i = 0; i < [initial count]; i++)
+        array[[initial[i] unsignedIntegerValue]] = arrayCopy[[final[i] unsignedIntegerValue]];
+}
 
+/*!
+ * Permutes the order of some entries in the results dictionary for evaluateResults from an initial to final state.
+ * @param results The results dictionary. Each value must be a mutable array of equal length.
+ * @param initial Array of indices to reorder in the initial state.
+ * @param final Array of the indices to replace those in initial with.
+ */
+- (void)permuteOrders:(NSDictionary *)results :(NSArray *)initial :(NSArray *)final
+{
+    for (id key in results)
+        [self permute:results[key] :initial :final];
+}
+
+/*!
+ * Permutes the order of all entries in the results dictionary for evaluateResults into a final state.
+ * @param results The results dictionary. Each value must be a mutable array of equal length.
+ * @param final Array of the final permutation of indices. Must be of the same length as each array in results.
+ */
+- (void)permuteOrders:(NSDictionary *)results :(NSArray *)final
+{
+    [self permuteOrders:results :[self range:[final count]] :final];
+}
+
+// Sorts the elements at indices in array, and returns those indices in sorted order.
+- (NSArray *)indexSortedOrder:(NSArray *)array :(bool)ascending :(NSArray *)indices
+{
+    NSMutableArray *enumeration = [[NSMutableArray alloc] initWithCapacity:[indices count]];
+    for (id idx in indices)
+        [enumeration addObject:@{@"index": idx, @"value": array[[idx unsignedIntegerValue]]}];
+    
+//    NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"value" ascending:ascending];
+//    NSArray *sorted = [enumeration sortedArrayUsingDescriptors:@[sortDescriptor]];
+    
+    NSArray *sorted = [enumeration sortedArrayWithOptions:NSSortStable usingComparator:
+     ^NSComparisonResult(id obj1, id obj2)
+     {
+         if (ascending)
+             return [obj1[@"value"] compare:obj2[@"value"]];
+         else
+             return [obj2[@"value"] compare:obj1[@"value"]];
+     }];
+    
+    NSMutableArray *sortedIndices = [[NSMutableArray alloc] initWithCapacity:[indices count]];
+    for (id pair in sorted)
+        [sortedIndices addObject:pair[@"index"]];
+    
+    return [sortedIndices copy];
+}
+// Sorts an array and returns the sorting indices
+- (NSArray *)indexSortedOrder:(NSArray *)array :(bool)ascending
+{
+    return [self indexSortedOrder:array :ascending :[self range:[array count]]];
+}
+
+// Returns an array of indices of elements in array (NSNumbers) where the condition block returns true
+- (NSArray *)findIndices:(NSArray *)array :(bool (^)(NSNumber *))condition
+{
+    NSMutableArray *indices = [[NSMutableArray alloc] init];
+    for (id idx in [self range:[array count]])
+    {
+        if (condition(array[[idx unsignedIntegerValue]]))
+            [indices addObject:idx];
+    }
+
+    return [indices copy];
+}
+
+- (void)reorderBySpecMSE:(NSDictionary *)results
+{
+    NSLog(@"Reorder by MSE:");
+    NSLog(@"%@\n%@", [self range:[results[@"specMSEs"] count]], [self indexSortedOrder:results[@"specMSEs"] :true]);
+    
+    [self permuteOrders:results :[self indexSortedOrder:results[@"specMSEs"] :true]];
+}
+- (void)reorderByMatchMismatchTau:(NSDictionary *)results :(float)mseThreshold :(float)strideThreshold :(float)matchWeight :(float)mismatchWeight :(float)tauWeight
+{
+    // 1. Of those that meet the MSE threshold, shuffle based on mismatch length
+    bool (^withinMSEThreshold)(NSNumber *) = ^(NSNumber *num) {
+        return (bool)([num floatValue] <= mseThreshold*[results[@"specMSEs"][0] floatValue]);
+    };
+    NSArray *initial0 = [self findIndices:results[@"specMSEs"] :withinMSEThreshold];    // These will be an ascending range from 0 to some number, since specMSEs have already been sorted in ascending order by a previous function
+    
+    // If empty, nothing more will happen, so just return
+    if ([initial0 count] == 0)
+        return;
+    
+    NSUInteger highestIndex0 = [[initial0 lastObject] unsignedIntegerValue];
+    NSArray *final0 = [self indexSortedOrder:results[@"mismatchLengths"] :true :initial0];
+    [self permuteOrders:results :initial0 :final0];
+    
+    
+    // 2. Of those that were permuted in (1), and that also meet the stride threshold, reshuffle based on match length, mismatch length, and base lag value
+    float stride = (float)self.fftLength / FRAMERATE * (1 - self.overlapPercent/100);
+    bool (^withinStrideThreshold)(NSNumber *) = ^(NSNumber *num) {
+        return (bool)([num floatValue] <= strideThreshold * stride + [results[@"mismatchLengths"][0] floatValue]);
+    };
+    NSArray *rawInitial1 = [self findIndices:results[@"mismatchLengths"] :withinStrideThreshold];
+    NSMutableArray *initial1 = [[NSMutableArray alloc] initWithCapacity:[rawInitial1 count]];    // These are the ones to be reshuffled
+    for (id num in rawInitial1)
+    {
+        if ([num unsignedIntegerValue] <= highestIndex0)
+            [initial1 addObject:num];
+    }
+    
+    // Get the array of matchWeight * matchLength - mismatchWeight * mismatchLength + tauWeight * baseTau
+    NSMutableArray *matchMismatchTau = [[NSMutableArray alloc] initWithCapacity:[results[@"matchLengths"] count]];
+    for (NSUInteger i = 0; i < [results[@"matchLengths"] count]; i++)
+    {
+        float combo = matchWeight*[results[@"matchLengths"][i] floatValue] - mismatchWeight*[results[@"mismatchLengths"][i] floatValue] + tauWeight*[results[@"baseLags"][i] floatValue]/FRAMERATE;
+        [matchMismatchTau addObject:[NSNumber numberWithFloat:combo]];
+    }
+    
+    // Reshuffle
+    NSArray *final1 = [self indexSortedOrder:matchMismatchTau :false :initial1];
+    [self permuteOrders:results :initial1 :final1];
+    
+    NSLog(@"Reorder by mismatch:");
+    NSLog(@"%@\n%@", initial0, final0);
+    NSLog(@"Reorder by match/mismatch/tau:");
+    NSLog(@"%@\n%@", initial1, final1);
+}
+- (void)reorderBySlidingMSE:(NSDictionary *)results :(float)mseThreshold :(float)tauThreshold
+{
+    // Of those that meet the MSE threshold, shuffle based on both MSE values
+    bool (^withinMSEThreshold)(NSNumber *) = ^(NSNumber *num) {
+        return (bool)([num floatValue] <= mseThreshold*[results[@"specMSEs"][0] floatValue]);
+    };
+    
+    // Get the array of slidingMSE * spectrumMSE
+    NSMutableArray *mseProduct = [[NSMutableArray alloc] initWithCapacity:[results[@"specMSEs"] count]];
+    for (NSUInteger i = 0; i < [results[@"specMSEs"] count]; i++)
+    {
+        float prod = [results[@"slidingMSEs"][i] floatValue] * [results[@"specMSEs"][i] floatValue];
+        [mseProduct addObject:[NSNumber numberWithFloat:prod]];
+    }
+    
+    // Shuffle only amongst groups of elements that are close together in lag value
+    NSMutableArray *farElements = [[self findIndices:results[@"specMSEs"] :withinMSEThreshold] mutableCopy];    // These will no longer necessarily be an ascending range from 0 to some number, since things have been scrambled again.
+    
+    NSLog(@"Reorder by MSE product:");
+    
+    while ([farElements count] > 1)
+    {
+        bool (^withinTauThreshold)(NSNumber *) = ^(NSNumber *num) {
+            return (bool)(fabsf([num floatValue] - [results[@"baseLags"][[farElements[0] unsignedIntegerValue]] floatValue]) <=  + tauThreshold*FRAMERATE);
+        };
+        
+        NSArray *close = [[self findIndices:results[@"baseLags"] :withinTauThreshold] mutableCopy];
+        NSMutableArray *closeElements = [[NSMutableArray alloc] initWithCapacity:[close count]];
+        // Use only elements originally in farElements. Also remove those elements from farElements itself afterwards.
+        for (id idx in close)
+        {
+            if ([farElements containsObject:idx])
+            {
+                [closeElements addObject:idx];
+                [farElements removeObject:idx];
+            }
+        }
+        
+        NSArray *reorderCloseElements = [self indexSortedOrder:mseProduct :true :closeElements];
+        [self permuteOrders:results :closeElements :reorderCloseElements];
+        NSLog(@"%@\n%@", closeElements, reorderCloseElements);
+    }
+}
+// END HELPER HELPER FUNCTIONS //
+
+// HELPER FUNCTIONS //
+
+// Gets initial lag candidate values by running and minimizing the auto-sliding MSE, and inserts them into the results dictionary.
+- (void)getInitialCandidates:(AudioDataFloat *)audio :(NSDictionary *)results
+{
+    // Frames in the sliding MSE to ignore from the left and right
+    UInt32 sLeftIgnore = MAX(0, MIN(audio->numFrames, roundf(self.leftIgnore * FRAMERATE)));
+    UInt32 sRightIgnore = MAX(0, MIN(audio->numFrames - sLeftIgnore, roundf(self.rightIgnore * FRAMERATE)));
+    
+    float *autoMSE = malloc(audio->numFrames * sizeof(float));
+    [self audioAutoMSE:audio :autoMSE]; // TAKES LOTS OF TIME
+    NSArray *minIdx = [self spacedMinima:autoMSE+sLeftIgnore :audio->numFrames - sLeftIgnore - sRightIgnore :self.nBestDurations][@"indices"];  // TAKES A FAIR AMOUNT OF TIME
+    
+    for (id i in minIdx)
+    {
+        NSUInteger idx = sLeftIgnore + [i unsignedIntegerValue];
+        [results[@"baseLags"] addObject:[NSNumber numberWithUnsignedInteger:idx]];
+        [results[@"slidingMSEs"] addObject:[NSNumber numberWithFloat:*(autoMSE + idx)]];
+    }
+    free(autoMSE);
+}
+
+// Analyzes the initial lag candidates, fills out the rest (except confidence) of the results dictionary, and adjust the base lag values as necessary.
+- (void)analyzeInitialCandidates:(AudioDataFloat *)audio :(NSDictionary *)results
+{
+    // Analyze each of the initial candidates
+    for (id baseLag in results[@"baseLags"])
+    {
+        NSDictionary *analysisResults = [self analyzeLagValue:audio :[baseLag unsignedIntegerValue]];   // TAKES THE MOST TIME
+        
+        // Arrays
+        [results[@"lags"] addObject:analysisResults[@"refinedLags"]];
+        [results[@"startSamples"] addObject:analysisResults[@"startSamples"]];
+        [results[@"sampleDiffs"] addObject:analysisResults[@"sampleDiffs"]];
+        
+        // Numbers
+        [results[@"specMSEs"] addObject:analysisResults[@"spectrumMSE"]];
+        [results[@"matchLengths"] addObject:analysisResults[@"matchLength"]];
+        [results[@"mismatchLengths"] addObject:analysisResults[@"mismatchLength"]];
+    }
+    
+    // Replace the base lags if possible with a more appropriate one
+    for (NSUInteger i = 0; i < [results[@"lags"] count]; i++)
+    {
+        if ([results[@"lags"][i] count] > 0)
+            results[@"baseLags"][i] = results[@"lags"][i][0];
+    }
+}
+
+// Ranks the results dictionary for findLoopNoEst, and adds the confidence values
+- (void)evaluateResults:(NSDictionary *)results
+{
+    // Internal parameters
+    float mseThreshold = 2;
+    float strideThreshold = 3;
+    float matchWeight = 1;
+    float mismatchWeight = 1;
+    float tauWeight = 0.9;  // Tau is lag in seconds
+    float tauThreshold = (float)self.fftLength / (2*FRAMERATE);
+    
+    // Calculate confidence levels
+    [results[@"confidences"] addObjectsFromArray:[self calcConfidence:results[@"specMSEs"]]];
+    
+    // Do each reordering step
+    [self reorderBySpecMSE:results];
+    [self reorderByMatchMismatchTau:results :mseThreshold :strideThreshold :matchWeight :mismatchWeight :tauWeight];
+    [self reorderBySlidingMSE:results :mseThreshold :tauThreshold];
+    
+    // Restore descending confidence order
+    NSSortDescriptor *sortDescending = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:NO];
+    [results[@"confidences"] sortUsingDescriptors:@[sortDescending]];
+}
+
+// Generates the actual dictionary to return from findLoopNoEst, given its completed internal results dictionary
+- (NSDictionary *)generateReturnDictionary:(NSDictionary *)results
+{
+    // Construct the end samples array of arrays
+    NSMutableArray *endSamples = [[NSMutableArray alloc] init];
+    for (NSUInteger i = 0; i < [results[@"startSamples"] count]; i++)
+    {
+        NSMutableArray *ends = [[NSMutableArray alloc] init];   // For a single base lag value
+        for (NSUInteger j = 0; j < [results[@"startSamples"][i] count]; j++)
+        {
+            NSUInteger end = [results[@"startSamples"][i][j] unsignedIntegerValue] + [results[@"lags"][i][j] unsignedIntegerValue];
+            [ends addObject:[NSNumber numberWithUnsignedInteger:end]];
+        }
+        
+        [endSamples addObject:[ends copy]];
+    }
+    
+    return @{@"baseDurations": [results[@"baseLags"] copy],
+             @"startFrames": [results[@"startSamples"] copy],
+             @"endFrames": [endSamples copy],
+             @"confidences": [results[@"confidences"] copy],
+             @"sampleDifferences": [results[@"sampleDiffs"] copy]
+             };
+}
+
+// END HELPER FUNCTIONS //
 
 - (NSDictionary *)findLoopNoEst:(AudioDataFloat *)audio
 {
-    return @{};
+    NSDictionary *results = @{@"baseLags": [[NSMutableArray alloc] init],
+                              @"slidingMSEs": [[NSMutableArray alloc] init],
+                              @"specMSEs": [[NSMutableArray alloc] init],
+                              @"startSamples": [[NSMutableArray alloc] init],
+                              @"sampleDiffs": [[NSMutableArray alloc] init],
+                              @"lags": [[NSMutableArray alloc] init],
+                              @"matchLengths": [[NSMutableArray alloc] init],
+                              @"mismatchLengths": [[NSMutableArray alloc] init],
+                              @"confidences": [[NSMutableArray alloc] init]
+                              };   // To hold all the results as they come
+    
+    [self getInitialCandidates:audio :results]; // Lots of time
+    [self analyzeInitialCandidates:audio :results]; // Most time
+    [self evaluateResults:results];
+    return [self generateReturnDictionary:results];
 }
 
 

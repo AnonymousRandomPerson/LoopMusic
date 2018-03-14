@@ -299,7 +299,7 @@ float lastTime(UInt32 numFrames)
             floatAudio->numFrames = fadeStart;
         }
     }
-    floatAudio->numFrames = [self nextPow2:floatAudio->numFrames] >> 1;
+//    floatAudio->numFrames = [self nextPow2:floatAudio->numFrames] >> 1;
     
     // Convert 16-bit audio to 32-bit floating point audio, and calculate the average decibel level.
     floatAudio->channel0 = malloc(floatAudio->numFrames * sizeof(float));
@@ -331,18 +331,18 @@ float lastTime(UInt32 numFrames)
 //    [dict[@"array"] addObject:@50];
 //    NSLog(@"%@", dict);
 
-    float *fft0Memory = malloc(floatAudio->numFrames * sizeof(float));
-    float *observedMemory = malloc(floatAudio->numFrames * sizeof(float));
-    float *bufferMemory = malloc(floatAudio->numFrames * sizeof(float));
-    DSPSplitComplex observed = {observedMemory, observedMemory + floatAudio->numFrames / 2};
-    DSPSplitComplex fft0 = {fft0Memory, fft0Memory + floatAudio->numFrames / 2};
-    DSPSplitComplex buffer = {bufferMemory, bufferMemory + floatAudio->numFrames / 2};
-
-    
-    vDSP_ctoz((DSPComplex *)floatAudio->channel0, 2*stride, &observed, 1, floatAudio->numFrames/2);
-    vDSP_fft_zropt(fftSetup, &observed, 1, &fft0, 1, &buffer, log2(floatAudio->numFrames), kFFTDirection_Forward);
-    
-    NSLog(@"Finished FFT of length %i.", floatAudio->numFrames);
+//    float *fft0Memory = malloc(floatAudio->numFrames * sizeof(float));
+//    float *observedMemory = malloc(floatAudio->numFrames * sizeof(float));
+//    float *bufferMemory = malloc(floatAudio->numFrames * sizeof(float));
+//    DSPSplitComplex observed = {observedMemory, observedMemory + floatAudio->numFrames / 2};
+//    DSPSplitComplex fft0 = {fft0Memory, fft0Memory + floatAudio->numFrames / 2};
+//    DSPSplitComplex buffer = {bufferMemory, bufferMemory + floatAudio->numFrames / 2};
+//
+//
+//    vDSP_ctoz((DSPComplex *)floatAudio->channel0, 2*stride, &observed, 1, floatAudio->numFrames/2);
+//    vDSP_fft_zropt(fftSetup, &observed, 1, &fft0, 1, &buffer, log2(floatAudio->numFrames), kFFTDirection_Forward);
+//
+//    NSLog(@"Finished FFT of length %i.", floatAudio->numFrames);
     
 //    // Test for overlapLengths
 //    vDSP_Length nA = 1;
@@ -554,38 +554,44 @@ float lastTime(UInt32 numFrames)
 //    free(testAudio);
 
     
-    // Tests for diffSpectrogram
-    const int arraysize = 20;
-    float array1[arraysize] = {.4, .1, -.5, .3, .1, .6, -.1, .2, .4, .02, .05, .123, .52, -.12, .9, .8, -.2, -.243, -.5, 0.01};
-    float array2[arraysize] = {-.2, .24, .1, -.5, .2, .3, -.4, .1, 1, -.4, .03, .34, .1, -.2, .5, .3, -.04, -.03, -1, 1e-5};
-//    float array1[10] = {1, 0, 2, -2, 3};
-//    float array2[10] = {1, -1, 1, -2, 1};
-
-    AudioDataFloat *testAudio = malloc(sizeof(AudioDataFloat));
-    testAudio->numFrames = arraysize;
-    testAudio->channel0 = malloc(testAudio->numFrames * sizeof(float));
-    testAudio->channel1 = malloc(testAudio->numFrames * sizeof(float));
-    for (int i = 0; i < testAudio->numFrames; i++)
-    {
-        *(testAudio->channel0 + i) = array1[i];
-        *(testAudio->channel1 + i) = array2[i];
-    }
-    // Tests for analyzeLagValue
-    UInt32 lag = 4;
-    self.fftLength = 4;
-    self.minTimeDiff = 4.0/FRAMERATE;
-    self.minLoopLength = 1.0/FRAMERATE;
-    self.sampleDiffTol = 1.01;
-//    self.t1Estimate = 1.0/FRAMERATE;
-//    self.t2Estimate = 15.0/FRAMERATE;
-//    self.t1Penalty = 1;
-//    self.t2Penalty = 1;
-    NSDictionary *lagAnalysis = [self analyzeLagValue:testAudio :lag];
-    NSLog(@"fftLength = %i", self.fftLength);
-    NSLog(@"minTimeDiff = %f", self.minTimeDiff);
-    NSLog(@"minLoopLength = %f", self.minLoopLength);
-    NSLog(@"sampleDiffTol = %f", self.sampleDiffTol);
-    NSLog(@"results: %@", lagAnalysis);
+//    // Tests for diffSpectrogram
+//    const int arraysize = 20;
+//    float array1[arraysize] = {.4, .1, -.5, .3, .1, .6, -.1, .2, .4, .02, .05, .123, .52, -.12, .9, .8, -.2, -.243, -.5, 0.01};
+//    float array2[arraysize] = {-.2, .24, .1, -.5, .2, .3, -.4, .1, 1, -.4, .03, .34, .1, -.2, .5, .3, -.04, -.03, -1, 1e-5};
+////    float array1[10] = {1, 0, 2, -2, 3};
+////    float array2[10] = {1, -1, 1, -2, 1};
+//
+//    AudioDataFloat *testAudio = malloc(sizeof(AudioDataFloat));
+//    testAudio->numFrames = arraysize;
+//    testAudio->channel0 = malloc(testAudio->numFrames * sizeof(float));
+//    testAudio->channel1 = malloc(testAudio->numFrames * sizeof(float));
+//    for (int i = 0; i < testAudio->numFrames; i++)
+//    {
+//        *(testAudio->channel0 + i) = array1[i];
+//        *(testAudio->channel1 + i) = array2[i];
+//    }
+//    // Tests for analyzeLagValue
+//    UInt32 lag = 4;
+//    self.fftLength = 4;
+//    self.minTimeDiff = 4.0/FRAMERATE;
+//    self.minLoopLength = 1.0/FRAMERATE;
+//    self.sampleDiffTol = 1.01;
+////    self.t1Estimate = 1.0/FRAMERATE;
+////    self.t2Estimate = 15.0/FRAMERATE;
+////    self.t1Penalty = 1;
+////    self.t2Penalty = 1;
+//    NSDictionary *lagAnalysis = [self analyzeLagValue:testAudio :lag];
+//    NSLog(@"fftLength = %i", self.fftLength);
+//    NSLog(@"minTimeDiff = %f", self.minTimeDiff);
+//    NSLog(@"minLoopLength = %f", self.minLoopLength);
+//    NSLog(@"sampleDiffTol = %f", self.sampleDiffTol);
+//    NSLog(@"results: %@", lagAnalysis);
+//
+//    // Tests for findLoopNoEst
+//    self.leftIgnore = 0;
+//    self.rightIgnore = 0;
+//    NSDictionary *algorithmResults = [self findLoopNoEst:testAudio];
+//    NSLog(@"RESULTS: %@", algorithmResults);
     
 //
 //    DiffSpectrogramInfo *output = malloc(sizeof(DiffSpectrogramInfo));
@@ -647,7 +653,6 @@ float lastTime(UInt32 numFrames)
 //    self.t2Penalty = 1;
 //    NSDictionary *pairsNoVar = [self findEndpointPairsSpectra:testAudio :lag :output->mses :output->nWindows :output->startSamples :output->windowSizes :regionStartIndex :regionEndIndex];
 //    NSLog(@"pairsNoVar: %@", pairsNoVar);
-    
 
 //    // Tests for estimate methods
 //    self.minLoopLength = 0.1;
@@ -663,19 +668,22 @@ float lastTime(UInt32 numFrames)
 //    freeDiffSpectrogramInfo(output);
 //    free(output);
 //
-    free(testAudio->channel0);
-    free(testAudio->channel1);
-    free(testAudio);
+//    free(testAudio->channel0);
+//    free(testAudio->channel1);
+//    free(testAudio);
     
     
 //    // Tests for calcConfidence
 //    NSArray *confs = [self calcConfidence:@[@0, @0]];
 //    NSLog(@"confs: %@", confs);
     
+//    [self useDefaultParams];
+    NSDictionary *realResults = [self findLoopNoEst:floatAudio];
+    NSLog(@"RESULTS: %@", realResults);
     
-    free(fft0Memory);
-    free(observedMemory);
-    free(bufferMemory);
+//    free(fft0Memory);
+//    free(observedMemory);
+//    free(bufferMemory);
     free(floatAudio->channel0);
     free(floatAudio->channel1);
     free(floatAudio);
@@ -703,8 +711,7 @@ float lastTime(UInt32 numFrames)
                                               @[@7951755, @7885950, @7944462, @7959425, @7918504],
                                               @[@2505601, @2529342, @2522410, @2534504, @2491029],
                                               @[@4706896, @4786513, @4695875, @4689213, @4805749]],
-                              @"confidences": @[@0.2729, @0.2475, @0.18, @0.1132, @0.0693,
-                                                @0.0464, @0.0259, @0.0212, @0.0125, @0.0112],
+                              @"confidences": @[@0.2729, @0.2475, @0.18, @0.1132, @0.0693, @0.0464, @0.0259, @0.0212, @0.0125, @0.0112],
                               @"sampleDifferences": @[@[@0.0006714, @0.0006714, @0.0007629, @0.0008545, @0.0008545],
                                                       @[@0.0037, @0.0038, @0.0042, @0.0063, @0.0065],
                                                       @[@0.0032, @0.0042, @0.0051, @0.0057, @0.0075],
@@ -717,7 +724,9 @@ float lastTime(UInt32 numFrames)
                                                       @[@0.0048, @0.006, @0.006, @0.0063, @0.0068]]
                               }
                              copy];
-    return results;
+    
+//    return results;
+    return realResults;
 }
 
 - (float)powToDB:(float)power
@@ -736,6 +745,10 @@ void audio16bitToAudioFloat(SInt16 *data16bit, vDSP_Stride stride, float *dataFl
 void audio16bitFormatToFloatFormat(const AudioData *audio16bit, AudioDataFloat *audioFloat)
 {
     vDSP_Stride stride = 1;
+    
+    // POSSIBLE SPEEDUP: REDUCE EFFECTIVE FRAMERATE
+//    vDSP_Stride stride = 4;
+//    audioFloat->numFrames = ceilf((float)audioFloat->numFrames / stride);
     
     audio16bitToAudioFloat((SInt16 *)audio16bit->playingList->mBuffers[0].mData, stride, audioFloat->channel0, audioFloat->numFrames);
     audio16bitToAudioFloat((SInt16 *)audio16bit->playingList->mBuffers[1].mData, stride, audioFloat->channel1, audioFloat->numFrames);
