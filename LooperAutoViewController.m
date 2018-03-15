@@ -22,8 +22,8 @@
     
     // Default estimate flags/values, display settings
     [self disableEstimates];
-    startEst = -1;
-    endEst = -1;
+    startEst = finder.t1Estimate;
+    endEst = finder.t2Estimate;
     currentDurationRank = -1;
     currentPairRanks = [NSMutableArray new];
     originalLoopInfo = @{@"duration":@0U,
@@ -99,6 +99,7 @@
     if (numResults > 0)
     {
         currentDurationRank = 0;
+        [currentPairRanks removeAllObjects];
         for (int i = 0; i < numResults; ++i)
         {
             [currentPairRanks addObject:@0];
@@ -125,11 +126,19 @@
 {
     initialEstimateView.alpha = 1;
     [initialEstimateView setUserInteractionEnabled:YES];
+    
+    // Restore estimates to the finder
+    finder.t1Estimate = startEst;
+    finder.t2Estimate = endEst;
 }
 - (void)disableEstimates
 {
     initialEstimateView.alpha = 0.25;
     [initialEstimateView setUserInteractionEnabled:NO];
+    
+    // So the no-estimate algorithm will run
+    finder.t1Estimate = -1;
+    finder.t2Estimate = -1;
 
     [self closeEstimates:nil];    // Call closeEstimates outside of an action by just passing nil as the sender.
 }
@@ -153,11 +162,13 @@
     }
     
     startEst = est;
+    finder.t1Estimate = startEst;
     [self updateText:initialEstimateView :startEstimateTextField :[NSString stringWithFormat:@"%.6f", startEst]];
 }
 - (void)resetStartEstimate
 {
     startEst = -1;
+    finder.t1Estimate = startEst;
     [self updateText:initialEstimateView :startEstimateTextField :@""];
 }
 - (void)setEndEstimate:(double)est
@@ -176,11 +187,13 @@
     }
     
     endEst = est;
+    finder.t2Estimate = endEst;
     [self updateText:initialEstimateView :endEstimateTextField :[NSString stringWithFormat:@"%.6f", endEst]];
 }
 - (void)resetEndEstimate
 {
     endEst = -1;
+    finder.t2Estimate = endEst;
     [self updateText:initialEstimateView :endEstimateTextField :@""];
 }
 - (void)incStartEst:(id)sender
@@ -257,15 +270,6 @@
         }
     }
 }
-
-
-
-//- (IBAction)openAdvancedOptions:(id)sender
-//{
-//    // 
-//}
-
-
 
 
 
@@ -434,8 +438,17 @@
     {
         NSInteger endpointsRank = [currentPairRanks[durationRank] integerValue];
         [self updateText:loopEndpointView:endpointsRankLabel:[NSString stringWithFormat:@"Rank: %li", 1+endpointsRank]];
-        [self setStartEndpointLabel:(UInt32)[[loopFinderResults objectForKey:@"startFrames"][durationRank][endpointsRank] unsignedIntegerValue]];
-        [self setEndEndpointLabel:(UInt32)[[loopFinderResults objectForKey:@"endFrames"][durationRank][endpointsRank] unsignedIntegerValue]];
+        
+        if ([loopFinderResults[@"startFrames"][durationRank] count] > 0)
+        {
+            [self setStartEndpointLabel:(UInt32)[[loopFinderResults objectForKey:@"startFrames"][durationRank][endpointsRank] unsignedIntegerValue]];
+            [self setEndEndpointLabel:(UInt32)[[loopFinderResults objectForKey:@"endFrames"][durationRank][endpointsRank] unsignedIntegerValue]];
+        }
+        else
+        {
+            [self updateText:loopEndpointView:startEndpointLabel:@"Start: None found."];
+            [self updateText:loopEndpointView:endEndpointLabel:@"End: None found."];
+        }
     }
 }
 // Helper functions to change the time quantity labels from frame values.

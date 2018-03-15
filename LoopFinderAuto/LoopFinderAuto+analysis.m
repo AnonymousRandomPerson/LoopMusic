@@ -666,7 +666,9 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
         if ([initialResults[@"starts"] count] > 0)
             return @{@"starts": @[initialResults[@"starts"][0]], @"sampleDiffs": @[initialResults[@"sampleDiffs"][0]], @"lags": @[initialResults[@"lag"]]};
         else
-            return @{@"starts": @[], @"sampleDiffs": @[], @"lags": @[]};
+            // If there was literally nothing found, just default to starting from the beginning, and ending at the base lag value, and a negative sample difference as a flag for failure.
+            // WOULD IT BE BETTER TO RETURN EMPTY?
+            return @{@"starts": @[@0], @"sampleDiffs": @[@-1], @"lags": @[[NSNumber numberWithUnsignedInteger:lag]]};
     }
     
     // Make the guts immutable before returning.

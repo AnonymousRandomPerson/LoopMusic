@@ -407,4 +407,147 @@
 }
 
 
+// HELPER FUNCTIONS //
+- (NSDictionary *)getInitialCandidatesWithEst:(AudioDataFloat *)audio :(float)forwardProportion
+{
+    // Returns a dictionary with the candidate "baseLags" and "confidences"
+    
+    UInt32 forwardSamples = roundf(self.minLoopLength * FRAMERATE * forwardProportion);
+    UInt32 backSamples = roundf(self.minLoopLength * FRAMERATE * (1 - forwardProportion));
+    
+    UInt32 sampleStart1 = 0;
+    UInt32 sampleEnd1 = 0;
+    UInt32 sampleStart2 = 0;
+    UInt32 sampleEnd2 = 0;
+    
+    if ([self hasT1Estimate])
+    {
+        sampleStart1 = (UInt32)[self sanitizeInt:(NSInteger)[self s1Estimate]-backSamples :0 :audio->numFrames-1];
+        sampleEnd1 = (UInt32)[self sanitizeInt:[self s1Estimate]+forwardSamples :0 :audio->numFrames-1];
+    }
+    if ([self hasT2Estimate])
+    {
+        sampleStart2 = (UInt32)[self sanitizeInt:(NSInteger)[self s2Estimate]-backSamples :0 :audio->numFrames-1];
+        sampleEnd2 = (UInt32)[self sanitizeInt:[self s2Estimate]+forwardSamples :0 :audio->numFrames-1];
+    }
+    
+    if ([self loopMode] == loopModeT1Only)
+    {
+        sampleStart2 = (UInt32)[self sanitizeInt:sampleEnd1+1 :0 :audio->numFrames-1];
+        sampleEnd2 = audio->numFrames - 1;
+    }
+    else if([self loopMode] == loopModeT2Only)
+    {
+        sampleStart1 = 0;
+        sampleEnd1 = (UInt32)[self sanitizeInt:sampleStart2 :1 :audio->numFrames] - 1;
+    }
+    
+    UInt32 nMSE = sampleEnd1-sampleStart1 + sampleEnd2-sampleStart2 + 1;
+    float *slidingMSEs = malloc(nMSE * sizeof(float));
+    [self audioMSE:audio :sampleStart2 :sampleEnd2 :sampleStart1 :sampleEnd1 :slidingMSEs];
+    
+    UInt32 sLeftIgnore = roundf(self.leftIgnore * FRAMERATE);
+    UInt32 sRightIgnore = roundf(self.rightIgnore * FRAMERATE);
+    
+    NSArray *tauLims = [self tauLimits:audio->numFrames];
+    UInt32 minLag = MAX(ceilf([tauLims[0] floatValue]*FRAMERATE), sLeftIgnore);
+    UInt32 maxLag = (UInt32)[self sanitizeInt:floorf([tauLims[1] floatValue]*FRAMERATE) :0 :(NSInteger)audio->numFrames-1-sRightIgnore];
+    
+    
+    // Indices of valid lags must be >= minLagIdx and <= maxLagIdx
+    NSInteger minLagIdx = MAX(0, (NSInteger)minLag - ((NSInteger)sampleStart2 - sampleEnd1));
+    NSInteger maxLagIdx = MIN((NSInteger)nMSE - 1, (NSInteger)maxLag - ((NSInteger)sampleStart2 - sampleEnd1));
+    UInt32 nValidLags = (UInt32)[self sanitizeInt:maxLagIdx-minLagIdx+1 :0 :nMSE];
+    
+    // Weighting by distance from estimated lag
+    if ([self loopMode] == loopModeT1T2 && self.tauPenalty != 1 && self.tauPenalty != 0)
+    {
+        float tauEstimate = [self t2Estimate] - [self t1Estimate];
+        
+        for (NSInteger i = 0; i < nValidLags; i++)
+        {
+            *(slidingMSEs+minLagIdx + i) *= 1.0 + [self slopeFromPenalty:self.tauPenalty]*fabsf((float)(minLag + i) / FRAMERATE - tauEstimate);
+        }
+    }
+    
+    NSDictionary *minMSEs = [self spacedMinima:slidingMSEs+minLagIdx :nValidLags :self.nBestDurations];
+    free(slidingMSEs);
+    
+    // Calculate the confidence levels
+    float regularization = 0.1; // MESS WITH THIS?
+    NSArray *confidences = [self calcConfidence:minMSEs[@"values"] :regularization];
+    
+    // Turn the indices into the lag values they represent
+    NSMutableArray *baseLags = [minMSEs[@"indices"] mutableCopy];
+    for (NSUInteger i = 0; i < [baseLags count]; i++)
+        baseLags[i] = [NSNumber numberWithUnsignedInteger:[baseLags[i] unsignedIntegerValue] + minLag + i];
+    
+    return @{@"baseLags": [baseLags copy], @"confidences": confidences};
+}
+- (NSDictionary *)analyzeInitialCandidatesWithEst:(AudioDataFloat *)audio :(NSArray *)baseLags
+{
+    // Returns a dictionary with the arrays of arrays for initial candidate analysis results: "lags", "starts", "ends", and "sampleDiffs"
+    
+    NSArray *t1Lims = [self t1Limits:audio->numFrames];
+    NSArray *t2Lims = [self t2Limits:audio->numFrames];
+    
+    NSMutableArray *lags = [[NSMutableArray alloc] initWithCapacity:[baseLags count]];
+    NSMutableArray *startSamples = [[NSMutableArray alloc] initWithCapacity:[baseLags count]];
+    NSMutableArray *sampleDiffs = [[NSMutableArray alloc] initWithCapacity:[baseLags count]];
+    for (id baseLag in baseLags)
+    {
+        NSInteger firstStart = [self sanitizeInt:ceilf([t1Lims[0] floatValue]*FRAMERATE) :ceilf([t2Lims[0] floatValue]*FRAMERATE) - [baseLag integerValue] :ceilf([t1Lims[1] floatValue]*FRAMERATE)];
+        NSInteger lastStart = [self sanitizeInt:floorf([t1Lims[1] floatValue]*FRAMERATE) :0 :floorf([t2Lims[1] floatValue]*FRAMERATE) - [baseLag integerValue]];
+        NSUInteger nStarts = MAX(0, lastStart - firstStart + 1);
+        NSUInteger *starts = 0;
+        
+        if (nStarts > 0)
+        {
+            starts = malloc(nStarts * sizeof(NSUInteger));
+            for (NSUInteger i = 0; i < nStarts; i++)
+                *(starts + i) = firstStart + i;
+        }
+        
+        NSDictionary *pairs = [self findEndpointPairs:audio :[baseLag unsignedIntegerValue] :starts :nStarts];
+        [lags addObject:pairs[@"lags"]];
+        [startSamples addObject:pairs[@"starts"]];
+        [sampleDiffs addObject:pairs[@"sampleDiffs"]];
+        
+        if (nStarts > 0)
+            free(starts);
+    }
+    
+    // Calculate end samples
+    NSMutableArray *endSamples = [[NSMutableArray alloc] initWithCapacity:[startSamples count]];
+    for (NSUInteger i = 0; i < [startSamples count]; i++)
+    {
+        NSMutableArray *ends = [[NSMutableArray alloc] initWithCapacity:[startSamples[i] count]];
+        for (NSUInteger j = 0; j < [startSamples[i] count]; j++)
+            [ends addObject:[NSNumber numberWithUnsignedInteger:[startSamples[i][j] unsignedIntegerValue] + [lags[i][j] unsignedIntegerValue]]];
+        
+        [endSamples addObject:ends];
+    }
+    
+    return @{@"lags": [lags copy],
+             @"starts": [startSamples copy],
+             @"ends": [endSamples copy],
+             @"sampleDiffs": [sampleDiffs copy]
+             };
+}
+// END HELPER FUNCTIONS //
+- (NSDictionary *)findLoopWithEst:(AudioDataFloat *)audio
+{
+    float forwardProportion = 0.9;  // Internal value for the amount of the minLoopLength window to spend looking forward in time
+    NSDictionary *candidates = [self getInitialCandidatesWithEst:audio :forwardProportion];
+    NSDictionary *analysis = [self analyzeInitialCandidatesWithEst:audio :candidates[@"baseLags"]];
+    
+    
+    return @{@"baseDurations": candidates[@"baseLags"],
+             @"startFrames": analysis[@"starts"],
+             @"endFrames": analysis[@"ends"],
+             @"confidences": candidates[@"confidences"],
+             @"sampleDifferences": analysis[@"sampleDiffs"]
+             };
+}
+
 @end

@@ -92,6 +92,13 @@ typedef enum loopModeValue { loopModeAuto, loopModeT1T2, loopModeT1Only, loopMod
 
 // END PARAMETERS
 
+
+- (float)sanitizeFloat: (float)inputValue :(float)minValue;
+- (float)sanitizeFloat: (float)inputValue :(float)minValue :(float)maxValue;
+- (NSInteger)sanitizeInt: (NSInteger)inputValue :(NSInteger)minValue;
+- (NSInteger)sanitizeInt: (NSInteger)inputValue :(NSInteger)minValue :(NSInteger)maxValue;
+
+
 /*!
  * Checks to see if there is an estimate for t1.
  * @return true if there is an estimate, false otherwise.

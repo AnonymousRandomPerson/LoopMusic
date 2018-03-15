@@ -39,14 +39,14 @@
 /*!
  * Finds loop points of an audio track, given no prior manual estimation.
  * @param audio 32-bit floating point stereo audio data.
- * @return Dictionary with keys "startSamples", "endSamples", and "confidences".
+ * @return Dictionary with keys "baseDurations", "startFrames", "endFrames", "confidences", "sampleDifferences".
  */
 - (NSDictionary *)findLoopNoEst:(AudioDataFloat *)audio;
 
 /*!
  * Finds loop points of an audio track, using prior estimation information (contained within class properties).
  * @param audio 32-bit floating point stereo audio data.
- * @return Dictionary with keys "startSamples", "endSamples", and "confidences".
+ * @return Dictionary with keys "baseDurations", "startFrames", "endFrames", "confidences", "sampleDifferences".
  */
 - (NSDictionary *)findLoopWithEst:(AudioDataFloat *)audio;
 
