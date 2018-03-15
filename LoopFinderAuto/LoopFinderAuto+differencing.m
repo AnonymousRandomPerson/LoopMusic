@@ -10,35 +10,55 @@
 
 @implementation LoopFinderAuto (differencing)
 
-// Floating point error is non-negligible here with real input...
 // Does autoSlidingWeightedMSE on both channels and adds the MSEs.
 - (void)audioAutoMSE:(AudioDataFloat *)audio :(float *)result
 {
+    [self audioAutoMSE:audio :false :result];
+}
+- (void)audioAutoMSE:(AudioDataFloat *)audio :(bool)useMono :(float *)result
+{
     vDSP_Stride stride = 1;
     
-    [self autoSlidingWeightedMSE:audio->channel0 :audio->numFrames :result];
-    float *resultChannel1 = malloc(audio->numFrames * sizeof(float));
-    [self autoSlidingWeightedMSE:audio->channel1 :audio->numFrames :resultChannel1];
-    vDSP_vadd(result, stride, resultChannel1, stride, result, stride, audio->numFrames);
-    
-    free(resultChannel1);
+    if (useMono)
+    {
+        [self autoSlidingWeightedMSE:audio->mono :audio->numFrames :result];
+    }
+    else
+    {
+        [self autoSlidingWeightedMSE:audio->channel0 :audio->numFrames :result];
+        float *resultChannel1 = malloc(audio->numFrames * sizeof(float));
+        [self autoSlidingWeightedMSE:audio->channel1 :audio->numFrames :resultChannel1];
+        vDSP_vadd(result, stride, resultChannel1, stride, result, stride, audio->numFrames);
+        
+        free(resultChannel1);
+    }
 }
 
-// Floating point error is non-negligible here with real input...
 // Does slidingWeightedMSE between [startFirst, endFirst] and [startSecond, endSecond] on both channels and adds the MSEs.
 - (void)audioMSE:(AudioDataFloat *)audio :(UInt32)startFirst :(UInt32)endFirst :(UInt32)startSecond :(UInt32)endSecond :(float *)result
+{
+    [self audioMSE:audio :false :startFirst :endFirst :startSecond :endSecond :result];
+}
+- (void)audioMSE:(AudioDataFloat *)audio :(bool)useMono :(UInt32)startFirst :(UInt32)endFirst :(UInt32)startSecond :(UInt32)endSecond :(float *)result
 {
     vDSP_Stride stride = 1;
     vDSP_Length lengthFirst = endFirst - startFirst + 1;
     vDSP_Length lengthSecond = endSecond - startSecond + 1;
     vDSP_Length lengthResult = lengthFirst + lengthSecond - 1;
     
-    [self slidingWeightedMSE:audio->channel0 + startFirst :lengthFirst :audio->channel0 + startSecond :lengthSecond :result];
-    float *resultChannel1 = malloc(lengthResult * sizeof(float));
-    [self slidingWeightedMSE:audio->channel1 + startFirst :lengthFirst :audio->channel1 + startSecond :lengthSecond :resultChannel1];
-    vDSP_vadd(result, stride, resultChannel1, stride, result, stride, lengthResult);
-    
-    free(resultChannel1);
+    if (useMono)
+    {
+        [self slidingWeightedMSE:audio->mono + startFirst :lengthFirst :audio->mono + startSecond :lengthSecond :result];
+    }
+    else
+    {
+        [self slidingWeightedMSE:audio->channel0 + startFirst :lengthFirst :audio->channel0 + startSecond :lengthSecond :result];
+        float *resultChannel1 = malloc(lengthResult * sizeof(float));
+        [self slidingWeightedMSE:audio->channel1 + startFirst :lengthFirst :audio->channel1 + startSecond :lengthSecond :resultChannel1];
+        vDSP_vadd(result, stride, resultChannel1, stride, result, stride, lengthResult);
+        
+        free(resultChannel1);
+    }
 }
 
 

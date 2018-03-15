@@ -15,7 +15,7 @@
 
 @implementation LoopFinderAuto
 
-@synthesize nBestDurations, nBestPairs, leftIgnore, rightIgnore, sampleDiffTol, minLoopLength, minTimeDiff, fftLength, overlapPercent, t1Estimate, t2Estimate, tauRadius, t1Radius, t2Radius, tauPenalty, t1Penalty, t2Penalty, useFadeDetection, fftSetup, nSetup;
+@synthesize nBestDurations, nBestPairs, leftIgnore, rightIgnore, sampleDiffTol, minLoopLength, minTimeDiff, fftLength, overlapPercent, t1Estimate, t2Estimate, tauRadius, t1Radius, t2Radius, tauPenalty, t1Penalty, t2Penalty, useFadeDetection, useMonoAudio, fftSetup, nSetup;
 
 - (id)init
 {
@@ -45,7 +45,7 @@
     
     leftIgnore = 5;
     rightIgnore = 5;
-    sampleDiffTol = 0.05;    // DETERMINE A GOOD VALUE FOR THIS.
+    sampleDiffTol = 0.05;
     minLoopLength = 5;
     minTimeDiff = 0.1;
     fftLength = (1 << 17);
@@ -60,6 +60,7 @@
     t2Penalty = 0;
     
     useFadeDetection = false;
+    useMonoAudio = true;
     
 //    nSetup = 0;
 }
@@ -305,6 +306,12 @@ float lastTime(UInt32 numFrames)
     floatAudio->channel1 = malloc(floatAudio->numFrames * sizeof(float));
     audio16bitFormatToFloatFormat(audio, floatAudio);
     
+    if (self.useMonoAudio)
+    {
+        floatAudio->mono = malloc(floatAudio->numFrames * sizeof(float));
+        fillMonoSignalData(floatAudio);
+    }
+    
     avgVol = [self powToDB:calcAvgPow(floatAudio)];
     
     // Prepare the FFT if needed
@@ -323,6 +330,9 @@ float lastTime(UInt32 numFrames)
         NSLog(@"RESULTS WITH ESTIMATES: %@", results);
     }
     
+    
+    if (self.useMonoAudio)
+        free(floatAudio->mono);
     free(floatAudio->channel0);
     free(floatAudio->channel1);
     free(floatAudio);
@@ -373,7 +383,7 @@ float lastTime(UInt32 numFrames)
 }
 
 
-// C-style helper functions.
+// Helper functions.
 void audio16bitToAudioFloat(SInt16 *data16bit, vDSP_Stride stride, float *dataFloat, vDSP_Length n)
 {
     float maxAmp = 1 << 15;
@@ -390,6 +400,13 @@ void audio16bitFormatToFloatFormat(const AudioData *audio16bit, AudioDataFloat *
     
     audio16bitToAudioFloat((SInt16 *)audio16bit->playingList->mBuffers[0].mData, stride, audioFloat->channel0, audioFloat->numFrames);
     audio16bitToAudioFloat((SInt16 *)audio16bit->playingList->mBuffers[1].mData, stride, audioFloat->channel1, audioFloat->numFrames);
+}
+void fillMonoSignalData(AudioDataFloat *audioFloat)
+{
+    vDSP_Stride stride = 1;
+    
+    float half = 0.5;
+    vDSP_vasm(audioFloat->channel0, stride, audioFloat->channel1, stride, &half, audioFloat->mono, stride, audioFloat->numFrames);
 }
 float calcAvgPow(AudioDataFloat *audioFloat)
 {

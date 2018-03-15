@@ -19,6 +19,8 @@ typedef struct AudioDataFloat
     float *channel0;
     /// The second channel data for the track.
     float *channel1;
+    /// Mono signal data for the track.
+    float *mono;
 } AudioDataFloat;
 
 #endif /* AudioDataFloat_h */

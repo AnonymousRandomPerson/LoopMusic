@@ -308,7 +308,7 @@ float nextAboveCutoff(float *array, vDSP_Length n, float cutoff)
     UInt32 endLagged =  regionEndSample + lag;
     
     float *mse = malloc((2*(regionEndSample - regionStartSample) + 1) * sizeof(float));
-    [self audioMSE:audio :startLagged :endLagged :regionStartSample :regionEndSample :mse]; // TAKES TIME FOR LARGE REGIONS (SMALL LAGS)
+    [self audioMSE:audio :self.useMonoAudio :startLagged :endLagged :regionStartSample :regionEndSample :mse]; // TAKES TIME FOR LARGE REGIONS (SMALL LAGS)
     
     UInt32 zeroLagIndex = regionEndSample - regionStartSample;
     UInt32 radius = MIN(zeroLagIndex, (UInt32)lroundf(self.minTimeDiff/2.0 * FRAMERATE));   // Search radius, in frames.
@@ -344,11 +344,11 @@ void calcSampleDiffs(AudioDataFloat *audio, UInt32 lag, vDSP_Length *starts, vDS
     vDSP_Stride stride = 1;
     
     float *diffs0 = malloc(nStarts * sizeof(float));
-    float *diffs1 = malloc(nStarts * sizeof(float));
-    
     vDSP_vsub(audio->channel0 + *starts, stride, audio->channel0 + lag + *starts, stride, diffs0, stride, nStarts);
-    vDSP_vsub(audio->channel1 + *starts, stride, audio->channel1 + lag + *starts, stride, diffs1, stride, nStarts);
     
+    float *diffs1 = malloc(nStarts * sizeof(float));
+    vDSP_vsub(audio->channel1 + *starts, stride, audio->channel1 + lag + *starts, stride, diffs1, stride, nStarts);
+
     vDSP_vmaxmg(diffs0, stride, diffs1, stride, diffs0, stride, nStarts);
     free(diffs1);
     

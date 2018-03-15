@@ -297,7 +297,7 @@
     UInt32 sRightIgnore = MAX(0, MIN(audio->numFrames - sLeftIgnore, roundf(self.rightIgnore * FRAMERATE)));
     
     float *autoMSE = malloc(audio->numFrames * sizeof(float));
-    [self audioAutoMSE:audio :autoMSE]; // TAKES LOTS OF TIME
+    [self audioAutoMSE:audio :self.useMonoAudio :autoMSE]; // TAKES LOTS OF TIME
     NSArray *minIdx = [self spacedMinima:autoMSE+sLeftIgnore :audio->numFrames - sLeftIgnore - sRightIgnore :self.nBestDurations][@"indices"];  // TAKES A FAIR AMOUNT OF TIME
     
     for (id i in minIdx)
@@ -444,7 +444,7 @@
     
     UInt32 nMSE = sampleEnd1-sampleStart1 + sampleEnd2-sampleStart2 + 1;
     float *slidingMSEs = malloc(nMSE * sizeof(float));
-    [self audioMSE:audio :sampleStart2 :sampleEnd2 :sampleStart1 :sampleEnd1 :slidingMSEs];
+    [self audioMSE:audio :self.useMonoAudio :sampleStart2 :sampleEnd2 :sampleStart1 :sampleEnd1 :slidingMSEs];
     
     UInt32 sLeftIgnore = roundf(self.leftIgnore * FRAMERATE);
     UInt32 sRightIgnore = roundf(self.rightIgnore * FRAMERATE);

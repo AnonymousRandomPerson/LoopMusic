@@ -231,22 +231,32 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
         *(results->windowSizes + i) = MIN(self.fftLength, signal->numFrames - lag - i*windowStride);
         *(results->effectiveWindowDurations + i) = windowStride / (float)FRAMERATE;
         
-        // Channel 0
-        [self calcSpectrum:signal->channel0 + i*windowStride :*(results->windowSizes + i) :&spectrumPrimary :&nBins];
-        [self calcSpectrum:signal->channel0 + lag + i*windowStride :*(results->windowSizes + i) :&spectrumLagged :&nBins];
+        // Channel 0 or mono
+        float *signalPtr = 0;
+        if (self.useMonoAudio)
+            signalPtr = signal->mono;
+        else
+            signalPtr = signal->channel0;
+        
+        [self calcSpectrum:signalPtr + i*windowStride :*(results->windowSizes + i) :&spectrumPrimary :&nBins];
+        [self calcSpectrum:signalPtr + lag + i*windowStride :*(results->windowSizes + i) :&spectrumLagged :&nBins];
         [self spectrumMSE:spectrumPrimary :spectrumLagged :nBins :results->mses + i];
         // Free the memory allocated by calcSpectrum
         free(spectrumPrimary);
         free(spectrumLagged);
+        signalPtr = 0;
         
-        // Channel 1
-        [self calcSpectrum:signal->channel1 + i*windowStride :*(results->windowSizes + i) :&spectrumPrimary :&nBins];
-        [self calcSpectrum:signal->channel1 + lag + i*windowStride :*(results->windowSizes + i) :&spectrumLagged :&nBins];
-        [self spectrumMSE:spectrumPrimary :spectrumLagged :nBins :&mseChannel1];
-        free(spectrumPrimary);
-        free(spectrumLagged);
+        if (!self.useMonoAudio)
+        {
+            // Channel 1
+            [self calcSpectrum:signal->channel1 + i*windowStride :*(results->windowSizes + i) :&spectrumPrimary :&nBins];
+            [self calcSpectrum:signal->channel1 + lag + i*windowStride :*(results->windowSizes + i) :&spectrumLagged :&nBins];
+            [self spectrumMSE:spectrumPrimary :spectrumLagged :nBins :&mseChannel1];
+            free(spectrumPrimary);
+            free(spectrumLagged);
         
-        *(results->mses + i) += mseChannel1;
+            *(results->mses + i) += mseChannel1;
+        }
     }
     *(results->effectiveWindowDurations + results->nWindows-1) = (signal->numFrames-lag - *(results->startSamples + results->nWindows-1)) / (float)FRAMERATE;
 }

@@ -53,7 +53,7 @@
 
 /*!
  * Refines the loop lag value using the loop region estimate.
- * @param audio The stereo audio signal.
+ * @param audio The audio signal.
  * @param lag The base loop lag value, in frames.
  * @param regionStartSample The starting sample number of the loop region.
  * @param regionEndSample The ending sample number of the loop region.
@@ -64,7 +64,7 @@
 
 /*!
  * Finds the (self.nBestPairs) best loop starting points out of given candidates, and the lag values to corresponding end points.
- * @param audio The stereo audio signal.
+ * @param audio The audio signal.
  * @param lag The desired base lag value.
  * @param starts Vector of sample numbers of starting point candidates.
  * @param nStarts Number of starting point candidates.
@@ -74,7 +74,7 @@
 
 /*!
  * Finds the (self.nBestPairs) best loop starting points and the lag values to corresponding end points, based on spectrogram differencing and loop region inferencing results.
- * @param audio The stereo audio signal.
+ * @param audio The audio signal.
  * @param lag The desired base lag value.
  * @param specMSEs Vector of the spectrum MSE values from spectrogram differencing.
  * @param nWindows Size of specMSEs.

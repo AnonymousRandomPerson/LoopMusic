@@ -84,6 +84,8 @@ typedef enum loopModeValue { loopModeAuto, loopModeT1T2, loopModeT1Only, loopMod
 
 /// Flag for whether or not to automatically detect and remove a possible ending fade in the input audio data.
 @property(nonatomic) bool useFadeDetection;
+/// Flag for using the mono audio signal in some places for speedup
+@property(nonatomic) bool useMonoAudio;
 
 /// FFT setup object for vDSP.
 @property(nonatomic) FFTSetup fftSetup;
