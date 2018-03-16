@@ -15,7 +15,7 @@
 
 @implementation LoopFinderAuto
 
-@synthesize nBestDurations, nBestPairs, leftIgnore, rightIgnore, sampleDiffTol, minLoopLength, minTimeDiff, fftLength, overlapPercent, t1Estimate, t2Estimate, tauRadius, t1Radius, t2Radius, tauPenalty, t1Penalty, t2Penalty, useFadeDetection, useMonoAudio, fftSetup, nSetup;
+@synthesize nBestDurations, nBestPairs, leftIgnore, rightIgnore, sampleDiffTol, minLoopLength, minTimeDiff, fftLength, overlapPercent, t1Estimate, t2Estimate, tauRadius, t1Radius, t2Radius, tauPenalty, t1Penalty, t2Penalty, useFadeDetection, useMonoAudio, effectiveFramerate,fftSetup, nSetup;
 
 - (id)init
 {
@@ -61,6 +61,7 @@
     
     useFadeDetection = false;
     useMonoAudio = true;
+    effectiveFramerate = (float)FRAMERATE;
     
 //    nSetup = 0;
 }
@@ -186,38 +187,38 @@
 
 - (UInt32)s1Estimate
 {
-    return roundf(self.t1Estimate * FRAMERATE);
+    return roundf(self.t1Estimate * self.effectiveFramerate);
 }
 
 - (UInt32)s2Estimate
 {
-    return roundf(self.t2Estimate * FRAMERATE);
+    return roundf(self.t2Estimate * self.effectiveFramerate);
 }
 
 
-float lastTime(UInt32 numFrames)
+- (float)lastTime:(UInt32)numFrames
 {
-    return (float)(MAX(numFrames, 1) - 1) / FRAMERATE;  // Floor at 0.
+    return (float)(MAX(numFrames, 1) - 1) / self.effectiveFramerate;  // Floor at 0.
 }
 // Helper for the three limit functions below.
 - (NSArray *)estimateLimits:(UInt32)numFrames :(float)estimate :(float)penalty :(float)radius
 {
-    float lastFrameTime = lastTime(numFrames);
+    float lastFrameTime = [self lastTime:numFrames];
     if (penalty == 1)
         return @[[NSNumber numberWithFloat:estimate], [NSNumber numberWithFloat:estimate]];
     else if(penalty == 0)
         return @[[NSNumber numberWithFloat:[self sanitizeFloat:estimate-radius :0 :lastFrameTime]], [NSNumber numberWithFloat:[self sanitizeFloat:estimate+radius :0 :lastFrameTime]]];
     else
     {
-        float minVal = [self sanitizeFloat:MAX(estimate - 1.0/[self slopeFromPenalty:penalty] + 1.0/FRAMERATE, estimate-radius) :0 :lastFrameTime];
-        float maxVal = [self sanitizeFloat:MIN(estimate + 1.0/[self slopeFromPenalty:penalty] - 1.0/FRAMERATE, estimate+radius) :0 :lastFrameTime];
+        float minVal = [self sanitizeFloat:MAX(estimate - 1.0/[self slopeFromPenalty:penalty] + 1.0/self.effectiveFramerate, estimate-radius) :0 :lastFrameTime];
+        float maxVal = [self sanitizeFloat:MIN(estimate + 1.0/[self slopeFromPenalty:penalty] - 1.0/self.effectiveFramerate, estimate+radius) :0 :lastFrameTime];
         return @[[NSNumber numberWithFloat:minVal], [NSNumber numberWithFloat:maxVal]];
     }
 }
 - (NSArray *)tauLimits:(UInt32)numFrames
 {
     if ([self loopMode] != loopModeT1T2)
-        return @[[NSNumber numberWithFloat:self.minLoopLength], [NSNumber numberWithFloat:lastTime(numFrames)]];
+        return @[[NSNumber numberWithFloat:self.minLoopLength], [NSNumber numberWithFloat:[self lastTime:numFrames]]];
     
     return [self estimateLimits:numFrames :self.t2Estimate - self.t1Estimate :self.tauPenalty :self.tauRadius];
 }
@@ -226,7 +227,7 @@ float lastTime(UInt32 numFrames)
     if (![self hasT1Estimate])
     {
         if (![self hasT2Estimate])  // Ensures that when t2Limits calls t1Limits, infinite loops don't occur.
-            return @[@0, [NSNumber numberWithFloat:lastTime(numFrames)-self.minLoopLength]];
+            return @[@0, [NSNumber numberWithFloat:[self lastTime:numFrames]-self.minLoopLength]];
         else
             return @[@0, [NSNumber numberWithFloat:[self sanitizeFloat:[[self t2Limits:numFrames][1] floatValue] - self.minLoopLength :0]]];
     }
@@ -237,7 +238,7 @@ float lastTime(UInt32 numFrames)
 {
     if (![self hasT2Estimate])
     {
-        float lastFrameTime = lastTime(numFrames);
+        float lastFrameTime = [self lastTime:numFrames];
         if (![self hasT1Estimate])  // Ensures that when t1Limits calls t2Limits, infinite loops don't occur.
             return @[[NSNumber numberWithFloat:self.minLoopLength], [NSNumber numberWithFloat:lastFrameTime]];
         else
@@ -301,10 +302,14 @@ float lastTime(UInt32 numFrames)
             floatAudio->numFrames = fadeStart;
     }
     
-    // Convert 16-bit audio to 32-bit floating point audio, and calculate the average decibel level.
-    floatAudio->channel0 = malloc(floatAudio->numFrames * sizeof(float));
-    floatAudio->channel1 = malloc(floatAudio->numFrames * sizeof(float));
-    audio16bitFormatToFloatFormat(audio, floatAudio);
+    // Reduce the framerate if necessary to improve performance
+    NSInteger framerateReductionFactor = 6;
+    self.effectiveFramerate = (float)FRAMERATE / framerateReductionFactor;
+    
+    // Convert 16-bit audio to 32-bit floating point audio, with the necessary framerate reduction (also modifies floatAudio->numFrames)
+    floatAudio->channel0 = malloc(floatAudio->numFrames/framerateReductionFactor * sizeof(float));  // Integer division will floor.
+    floatAudio->channel1 = malloc(floatAudio->numFrames/framerateReductionFactor * sizeof(float));
+    audio16bitFormatToFloatFormat(audio, floatAudio, framerateReductionFactor);
     
     if (self.useMonoAudio)
     {
@@ -312,6 +317,7 @@ float lastTime(UInt32 numFrames)
         fillMonoSignalData(floatAudio);
     }
     
+    // Calculate average decibel level.
     avgVol = [self powToDB:calcAvgPow(floatAudio)];
     
     // Prepare the FFT if needed
@@ -374,7 +380,7 @@ float lastTime(UInt32 numFrames)
 //                              }
 //                             copy];
     
-    return results;
+    return [self restoreGlobalFramerate:results :framerateReductionFactor];
 }
 
 - (float)powToDB:(float)power
@@ -384,13 +390,73 @@ float lastTime(UInt32 numFrames)
 
 
 // Helper functions.
+- (NSDictionary *)restoreGlobalFramerate:(NSDictionary *)results :(NSInteger)framerateReductionFactor
+{
+    if (framerateReductionFactor == 1)  // No changes to be done
+        return results;
+    
+    
+    // Converts the output of the loop finding algorithm under its own effective framerate to the actual global framerate.
+    NSDictionary *modifiedArrays = @{@"baseDurations": [[NSMutableArray alloc] initWithCapacity:[results[@"baseDurations"] count]],
+                                     @"startFrames": [[NSMutableArray alloc] initWithCapacity:[results[@"baseDurations"] count]],
+                                     @"endFrames": [[NSMutableArray alloc] initWithCapacity:[results[@"baseDurations"] count]]
+                                     };
+
+    for (NSUInteger i = 0; i < [results[@"baseDurations"] count]; i++)
+    {
+        NSUInteger baseDuration = [results[@"baseDurations"][i] unsignedIntegerValue] * framerateReductionFactor;
+        [modifiedArrays[@"baseDurations"] addObject:[NSNumber numberWithUnsignedInteger:baseDuration]];
+        
+        for (id key in @[@"startFrames", @"endFrames"])
+        {
+            NSMutableArray *innerArray = [[NSMutableArray alloc] initWithCapacity:[results[key][i] count]];
+            for (NSUInteger j = 0; j < [results[key][i] count]; j++)
+            {
+                NSUInteger modifiedVal = [results[key][i][j] unsignedIntegerValue] * framerateReductionFactor;
+                [innerArray addObject:[NSNumber numberWithUnsignedInteger:modifiedVal]];
+            }
+            [modifiedArrays[key] addObject:[innerArray copy]];
+        }
+    }
+
+    return @{@"baseDurations": [modifiedArrays[@"baseDurations"] copy],
+             @"startFrames": [modifiedArrays[@"startFrames"] copy],
+             @"endFrames": [modifiedArrays[@"endFrames"] copy],
+             @"sampleDifferences": results[@"sampleDifferences"],
+             @"confidences": results[@"confidences"]
+             };
+}
+
 void audio16bitToAudioFloat(SInt16 *data16bit, vDSP_Stride stride, float *dataFloat, vDSP_Length n)
 {
     float maxAmp = 1 << 15;
     vDSP_vflt16(data16bit, stride, dataFloat, stride, n);
     vDSP_vsdiv(dataFloat, stride, &maxAmp, dataFloat, stride, n);
 }
-void audio16bitFormatToFloatFormat(const AudioData *audio16bit, AudioDataFloat *audioFloat)
+void reduceFramerate(float *dataFloat, vDSP_Stride stride, vDSP_Length n, NSInteger framerateReductionFactor, float *reducedData)
+{
+    // reducedData should be floor(n/framerateReductionFactor) long.
+    
+    // No reducing to be done if the factor is 1
+    if (framerateReductionFactor == 1)
+    {
+        memcpy(reducedData, dataFloat, n*sizeof(float));
+        return;
+    }
+    
+    vDSP_Length nWindows = MAX(0, (NSInteger)n - framerateReductionFactor + 1);
+    if (nWindows == 0)  // Nothing to be done
+        return;
+    
+    float *slidingSum = malloc(nWindows * sizeof(float));
+    vDSP_vswsum(dataFloat, stride, slidingSum, stride, nWindows, framerateReductionFactor);
+    
+    float divisor = (float)framerateReductionFactor;
+    vDSP_vsdiv(slidingSum, framerateReductionFactor*stride, &divisor, reducedData, stride, n / framerateReductionFactor);   // Integer division will floor n/framerateReductionFactor
+    
+    free(slidingSum);
+}
+void audio16bitFormatToFloatFormat(const AudioData *audio16bit, AudioDataFloat *audioFloat, NSInteger framerateReductionFactor)
 {
     vDSP_Stride stride = 1;
     
@@ -398,8 +464,16 @@ void audio16bitFormatToFloatFormat(const AudioData *audio16bit, AudioDataFloat *
 //    vDSP_Stride stride = 4;
 //    audioFloat->numFrames = ceilf((float)audioFloat->numFrames / stride);
     
-    audio16bitToAudioFloat((SInt16 *)audio16bit->playingList->mBuffers[0].mData, stride, audioFloat->channel0, audioFloat->numFrames);
-    audio16bitToAudioFloat((SInt16 *)audio16bit->playingList->mBuffers[1].mData, stride, audioFloat->channel1, audioFloat->numFrames);
+    float *workArray = malloc(audioFloat->numFrames * sizeof(float));
+    audio16bitToAudioFloat((SInt16 *)audio16bit->playingList->mBuffers[0].mData, stride, workArray, audioFloat->numFrames);
+    reduceFramerate(workArray, stride, audioFloat->numFrames, framerateReductionFactor, audioFloat->channel0);
+    
+    audio16bitToAudioFloat((SInt16 *)audio16bit->playingList->mBuffers[1].mData, stride, workArray, audioFloat->numFrames);
+    reduceFramerate(workArray, stride, audioFloat->numFrames, framerateReductionFactor, audioFloat->channel1);
+    
+    free(workArray);
+    
+    audioFloat->numFrames /= framerateReductionFactor;  // Integer division will floor.
 }
 void fillMonoSignalData(AudioDataFloat *audioFloat)
 {

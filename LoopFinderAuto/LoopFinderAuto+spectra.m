@@ -114,7 +114,7 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
         vDSP_vfill(&zero, paddedSignal + n, stride, paddedN - n);
     }
     
-    *nBins = MIN(1 + floorf(paddedN*fmax/FRAMERATE), 1 + paddedN/2);
+    *nBins = MIN(1 + floorf(paddedN*fmax/self.effectiveFramerate), 1 + paddedN/2);
     *spectrum = malloc(*nBins * sizeof(float));
     
     
@@ -127,11 +127,11 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
     vDSP_fft_zript(self.fftSetup, &signalSplitComplex, stride, &buffer, log2(paddedN), kFFTDirection_Forward);
     free(bufferMemory);
 
-    vDSP_zvabs(&signalSplitComplex, stride, *spectrum, stride, *nBins);
+    vDSP_zvabs(&signalSplitComplex, stride, *spectrum, stride, MIN(*nBins, paddedN/2));
     
     // Unpack the first and last bins separately
     **spectrum = fabs(*signalSplitComplex.realp / 2);
-    if (2*fmax >= FRAMERATE)    // Last bin will only be used if fmax reaches the Nyquist frequency
+    if (2*fmax >= self.effectiveFramerate)    // Last bin will only be used if fmax reaches the Nyquist frequency
     {
         *(*spectrum + *nBins-1) = fabs(*signalSplitComplex.imagp / 2);
     }
@@ -229,7 +229,7 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
     {
         *(results->startSamples + i) = i*windowStride;
         *(results->windowSizes + i) = MIN(self.fftLength, signal->numFrames - lag - i*windowStride);
-        *(results->effectiveWindowDurations + i) = windowStride / (float)FRAMERATE;
+        *(results->effectiveWindowDurations + i) = windowStride / self.effectiveFramerate;
         
         // Channel 0 or mono
         float *signalPtr = 0;
@@ -258,7 +258,7 @@ void freeDiffSpectrogramInfo(DiffSpectrogramInfo *info)
             *(results->mses + i) += mseChannel1;
         }
     }
-    *(results->effectiveWindowDurations + results->nWindows-1) = (signal->numFrames-lag - *(results->startSamples + results->nWindows-1)) / (float)FRAMERATE;
+    *(results->effectiveWindowDurations + results->nWindows-1) = (signal->numFrames-lag - *(results->startSamples + results->nWindows-1)) / self.effectiveFramerate;
 }
 
 @end

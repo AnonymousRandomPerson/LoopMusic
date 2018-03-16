@@ -213,7 +213,7 @@
     
     
     // 2. Of those that were permuted in (1), and that also meet the stride threshold, reshuffle based on match length, mismatch length, and base lag value
-    float stride = (float)self.fftLength / FRAMERATE * (1 - self.overlapPercent/100);
+    float stride = (float)self.fftLength / self.effectiveFramerate * (1 - self.overlapPercent/100);
     bool (^withinStrideThreshold)(NSNumber *) = ^(NSNumber *num) {
         return (bool)([num floatValue] <= strideThreshold * stride + [results[@"mismatchLengths"][0] floatValue]);
     };
@@ -229,7 +229,7 @@
     NSMutableArray *matchMismatchTau = [[NSMutableArray alloc] initWithCapacity:[results[@"matchLengths"] count]];
     for (NSUInteger i = 0; i < [results[@"matchLengths"] count]; i++)
     {
-        float combo = matchWeight*[results[@"matchLengths"][i] floatValue] - mismatchWeight*[results[@"mismatchLengths"][i] floatValue] + tauWeight*[results[@"baseLags"][i] floatValue]/FRAMERATE;
+        float combo = matchWeight*[results[@"matchLengths"][i] floatValue] - mismatchWeight*[results[@"mismatchLengths"][i] floatValue] + tauWeight*[results[@"baseLags"][i] floatValue]/self.effectiveFramerate;
         [matchMismatchTau addObject:[NSNumber numberWithFloat:combo]];
     }
     
@@ -265,7 +265,7 @@
     while ([farElements count] > 1)
     {
         bool (^withinTauThreshold)(NSNumber *) = ^(NSNumber *num) {
-            return (bool)(fabsf([num floatValue] - [results[@"baseLags"][[farElements[0] unsignedIntegerValue]] floatValue]) <=  + tauThreshold*FRAMERATE);
+            return (bool)(fabsf([num floatValue] - [results[@"baseLags"][[farElements[0] unsignedIntegerValue]] floatValue]) <=  + tauThreshold*self.effectiveFramerate);
         };
         
         NSArray *close = [[self findIndices:results[@"baseLags"] :withinTauThreshold] mutableCopy];
@@ -293,8 +293,8 @@
 - (void)getInitialCandidates:(AudioDataFloat *)audio :(NSDictionary *)results
 {
     // Frames in the sliding MSE to ignore from the left and right
-    UInt32 sLeftIgnore = MAX(0, MIN(audio->numFrames, roundf(self.leftIgnore * FRAMERATE)));
-    UInt32 sRightIgnore = MAX(0, MIN(audio->numFrames - sLeftIgnore, roundf(self.rightIgnore * FRAMERATE)));
+    UInt32 sLeftIgnore = MAX(0, MIN(audio->numFrames, roundf(self.leftIgnore * self.effectiveFramerate)));
+    UInt32 sRightIgnore = MAX(0, MIN(audio->numFrames - sLeftIgnore, roundf(self.rightIgnore * self.effectiveFramerate)));
     
     float *autoMSE = malloc(audio->numFrames * sizeof(float));
     [self audioAutoMSE:audio :self.useMonoAudio :autoMSE]; // TAKES LOTS OF TIME
@@ -345,7 +345,7 @@
     float matchWeight = 1;
     float mismatchWeight = 1;
     float tauWeight = 0.9;  // Tau is lag in seconds
-    float tauThreshold = (float)self.fftLength / (2*FRAMERATE);
+    float tauThreshold = (float)self.fftLength / (2*self.effectiveFramerate);
     
     // Calculate confidence levels
     [results[@"confidences"] addObjectsFromArray:[self calcConfidence:results[@"specMSEs"]]];
@@ -412,8 +412,8 @@
 {
     // Returns a dictionary with the candidate "baseLags" and "confidences"
     
-    UInt32 forwardSamples = roundf(self.minLoopLength * FRAMERATE * forwardProportion);
-    UInt32 backSamples = roundf(self.minLoopLength * FRAMERATE * (1 - forwardProportion));
+    UInt32 forwardSamples = roundf(self.minLoopLength * self.effectiveFramerate * forwardProportion);
+    UInt32 backSamples = roundf(self.minLoopLength * self.effectiveFramerate * (1 - forwardProportion));
     
     UInt32 sampleStart1 = 0;
     UInt32 sampleEnd1 = 0;
@@ -446,12 +446,12 @@
     float *slidingMSEs = malloc(nMSE * sizeof(float));
     [self audioMSE:audio :self.useMonoAudio :sampleStart2 :sampleEnd2 :sampleStart1 :sampleEnd1 :slidingMSEs];
     
-    UInt32 sLeftIgnore = roundf(self.leftIgnore * FRAMERATE);
-    UInt32 sRightIgnore = roundf(self.rightIgnore * FRAMERATE);
+    UInt32 sLeftIgnore = roundf(self.leftIgnore * self.effectiveFramerate);
+    UInt32 sRightIgnore = roundf(self.rightIgnore * self.effectiveFramerate);
     
     NSArray *tauLims = [self tauLimits:audio->numFrames];
-    UInt32 minLag = MAX(ceilf([tauLims[0] floatValue]*FRAMERATE), sLeftIgnore);
-    UInt32 maxLag = (UInt32)[self sanitizeInt:floorf([tauLims[1] floatValue]*FRAMERATE) :0 :(NSInteger)audio->numFrames-1-sRightIgnore];
+    UInt32 minLag = MAX(ceilf([tauLims[0] floatValue]*self.effectiveFramerate), sLeftIgnore);
+    UInt32 maxLag = (UInt32)[self sanitizeInt:floorf([tauLims[1] floatValue]*self.effectiveFramerate) :0 :(NSInteger)audio->numFrames-1-sRightIgnore];
     
     
     // Indices of valid lags must be >= minLagIdx and <= maxLagIdx
@@ -466,7 +466,7 @@
         
         for (NSInteger i = 0; i < nValidLags; i++)
         {
-            *(slidingMSEs+minLagIdx + i) *= 1.0 + [self slopeFromPenalty:self.tauPenalty]*fabsf((float)(minLag + i) / FRAMERATE - tauEstimate);
+            *(slidingMSEs+minLagIdx + i) *= 1.0 + [self slopeFromPenalty:self.tauPenalty]*fabsf((float)(minLag + i) / self.effectiveFramerate - tauEstimate);
         }
     }
     
@@ -496,8 +496,8 @@
     NSMutableArray *sampleDiffs = [[NSMutableArray alloc] initWithCapacity:[baseLags count]];
     for (id baseLag in baseLags)
     {
-        NSInteger firstStart = [self sanitizeInt:ceilf([t1Lims[0] floatValue]*FRAMERATE) :ceilf([t2Lims[0] floatValue]*FRAMERATE) - [baseLag integerValue] :ceilf([t1Lims[1] floatValue]*FRAMERATE)];
-        NSInteger lastStart = [self sanitizeInt:floorf([t1Lims[1] floatValue]*FRAMERATE) :0 :floorf([t2Lims[1] floatValue]*FRAMERATE) - [baseLag integerValue]];
+        NSInteger firstStart = [self sanitizeInt:ceilf([t1Lims[0] floatValue]*self.effectiveFramerate) :ceilf([t2Lims[0] floatValue]*self.effectiveFramerate) - [baseLag integerValue] :ceilf([t1Lims[1] floatValue]*self.effectiveFramerate)];
+        NSInteger lastStart = [self sanitizeInt:floorf([t1Lims[1] floatValue]*self.effectiveFramerate) :0 :floorf([t2Lims[1] floatValue]*self.effectiveFramerate) - [baseLag integerValue]];
         NSUInteger nStarts = MAX(0, lastStart - firstStart + 1);
         NSUInteger *starts = 0;
         

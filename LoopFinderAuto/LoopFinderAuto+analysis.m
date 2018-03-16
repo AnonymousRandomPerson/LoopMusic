@@ -102,7 +102,7 @@ int compareValue(const void* a, const void* b)
         bool suppress = false;
         for (int j = 0; j < [indices count]; j++)
         {
-            if (labs((NSInteger)((sortedArray + i)->index) - [indices[j] integerValue]) < self.minTimeDiff*FRAMERATE)
+            if (labs((NSInteger)((sortedArray + i)->index) - [indices[j] integerValue]) < self.minTimeDiff*self.effectiveFramerate)
             {
                 suppress = true;
                 break;
@@ -203,10 +203,10 @@ float nextAboveCutoff(float *array, vDSP_Length n, float cutoff)
     float medianFirstFew = medianSorted(sortedSpecMSEs, nFirstFew);
     float cutoff = rangeMultiplier * (medianFirstFew - minMSE) + minMSE;
     
-    vDSP_Length start = findFirstToMeetCutoff(specMSEs, nWindows, cutoff, false, false); // Find first below cutoff
-    vDSP_Length end = findFirstToMeetCutoff(specMSEs, nWindows, cutoff, false, true);
+    NSInteger start = findFirstToMeetCutoff(specMSEs, nWindows, cutoff, false, false); // Find first below cutoff
+    NSInteger end = findFirstToMeetCutoff(specMSEs, nWindows, cutoff, false, true);
     
-    while (sum(effectiveWindowDurations+start, end-start+1) < self.minLoopLength)
+    while (start == -1 || end == -1 || sum(effectiveWindowDurations+start, end-start+1) < self.minLoopLength)
     {
         
         if (nFirstFew < nWindows)
@@ -258,7 +258,7 @@ float nextAboveCutoff(float *array, vDSP_Length n, float cutoff)
     
     cutoff = MAX(MAX(cutoff1, cutoff2), cutoff3);
     
-    return @{@"start": [NSNumber numberWithUnsignedLong:start], @"end": [NSNumber numberWithUnsignedLong:end], @"cutoff": [NSNumber numberWithFloat:cutoff]};
+    return @{@"start": [NSNumber numberWithInteger:start], @"end": [NSNumber numberWithInteger:end], @"cutoff": [NSNumber numberWithFloat:cutoff]};
 }
 
 
@@ -311,7 +311,7 @@ float nextAboveCutoff(float *array, vDSP_Length n, float cutoff)
     [self audioMSE:audio :self.useMonoAudio :startLagged :endLagged :regionStartSample :regionEndSample :mse]; // TAKES TIME FOR LARGE REGIONS (SMALL LAGS)
     
     UInt32 zeroLagIndex = regionEndSample - regionStartSample;
-    UInt32 radius = MIN(zeroLagIndex, (UInt32)lroundf(self.minTimeDiff/2.0 * FRAMERATE));   // Search radius, in frames.
+    UInt32 radius = MIN(zeroLagIndex, (UInt32)lroundf(self.minTimeDiff/2.0 * self.effectiveFramerate));   // Search radius, in frames.
     
     float minMSE;  // Of no interest, just required for the vDSP_minvi call.
     vDSP_Length minIndex;
@@ -389,11 +389,11 @@ void calcSampleDiffs(AudioDataFloat *audio, UInt32 lag, vDSP_Length *starts, vDS
     free(diffs0);
 }
 
-void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStarts, float reference, float slope)
+void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStarts, float reference, float slope, float framerate)
 {
     // Uses weights = 1 + slope * abs(startTimes - reference)
     for (vDSP_Length i = 0; i < nStarts; i++)
-        *(array + i) *= 1 + slope * fabsf((float)(*(starts + i)) / FRAMERATE - reference);
+        *(array + i) *= 1 + slope * fabsf((float)(*(starts + i)) / framerate - reference);
 }
 - (NSDictionary *)getMinSampleDiffs :(float *)sampleDiffs :(vDSP_Length *)starts :(vDSP_Length)nStarts :(UInt32)lag
 {
@@ -424,9 +424,9 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
         
         // Do deviation penalties if necessary
         if ([self hasT1Estimate] && self.t1Penalty != 0)
-            applyDeviationPenalty(toMinimize, starts, nStarts, self.t1Estimate, [self slopeFromPenalty:self.t1Penalty]);
+            applyDeviationPenalty(toMinimize, starts, nStarts, self.t1Estimate, [self slopeFromPenalty:self.t1Penalty], self.effectiveFramerate);
         if ([self hasT2Estimate] && self.t2Penalty != 0)
-            applyDeviationPenalty(toMinimize, starts, nStarts, self.t2Estimate - (float)lag/FRAMERATE, [self slopeFromPenalty:self.t2Penalty]);
+            applyDeviationPenalty(toMinimize, starts, nStarts, self.t2Estimate - (float)lag/self.effectiveFramerate, [self slopeFromPenalty:self.t2Penalty], self.effectiveFramerate);
         
         NSArray *minIndexResults = [self spacedMinima:toMinimize :nStarts :self.nBestPairs][@"indices"];
         free(toMinimize);
@@ -585,7 +585,7 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
     // Make sure neither the t1 constraints nor the t2 constraints are violated.
     NSArray *t1Lims = [self t1Limits:audio->numFrames];
     NSArray *t2Lims = [self t2Limits:audio->numFrames];
-    constrainStarts(starts, startsFloat, nStarts, MAX([t1Lims[0] floatValue]*FRAMERATE, [t2Lims[0] floatValue]*FRAMERATE - lag), MIN([t1Lims[1] floatValue]*FRAMERATE, [t2Lims[1] floatValue]*FRAMERATE - lag), 0, startsWorkArray, &nNewStarts);
+    constrainStarts(starts, startsFloat, nStarts, MAX([t1Lims[0] floatValue]*self.effectiveFramerate, [t2Lims[0] floatValue]*self.effectiveFramerate - lag), MIN([t1Lims[1] floatValue]*self.effectiveFramerate, [t2Lims[1] floatValue]*self.effectiveFramerate - lag), 0, startsWorkArray, &nNewStarts);
 
     float *sampleDiffs = malloc(nStarts * sizeof(float));
 
@@ -605,19 +605,19 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
         bool incLagOnly = false;
         bool decLagOnly = false;
         NSInteger dlag = 1;
-        while ([endpointPairs[@"starts"] count] < self.nBestPairs && labs(dlag) <= self.minTimeDiff*FRAMERATE/2) // Only perturb lag by half a minTimeDiff window before giving up
+        while ([endpointPairs[@"starts"] count] < self.nBestPairs && labs(dlag) <= self.minTimeDiff*self.effectiveFramerate/2) // Only perturb lag by half a minTimeDiff window before giving up
         {
             UInt32 newLag = (UInt32)MAX(0, (NSInteger)lag + dlag);
             vDSP_Length nNewStarts;
             
             // Shift start samples. Make sure neither the t1 constraints nor the t2 constraints are violated.
-            constrainStarts(starts, startsFloat, nStarts, MAX([t1Lims[0] floatValue]*FRAMERATE + dlag, [t2Lims[0] floatValue]*FRAMERATE - lag), MIN([t1Lims[1] floatValue]*FRAMERATE + dlag, [t2Lims[1] floatValue]*FRAMERATE - lag), -dlag, startsWorkArray, &nNewStarts);
+            constrainStarts(starts, startsFloat, nStarts, MAX([t1Lims[0] floatValue]*self.effectiveFramerate + dlag, [t2Lims[0] floatValue]*self.effectiveFramerate - lag), MIN([t1Lims[1] floatValue]*self.effectiveFramerate + dlag, [t2Lims[1] floatValue]*self.effectiveFramerate - lag), -dlag, startsWorkArray, &nNewStarts);
             calcSampleDiffs(audio, newLag, startsWorkArray, nNewStarts, sDiffRadius, sampleDiffs);
             NSDictionary *results1 = [self getMinSampleDiffs:sampleDiffs :startsWorkArray :nNewStarts :newLag];
             
             
             // Shift end samples
-            constrainStarts(starts, startsFloat, nStarts, MAX([t1Lims[0] floatValue]*FRAMERATE, [t2Lims[0] floatValue]*FRAMERATE - newLag), MIN([t1Lims[1] floatValue]*FRAMERATE, [t2Lims[1] floatValue]*FRAMERATE - newLag), 0, startsWorkArray, &nNewStarts);
+            constrainStarts(starts, startsFloat, nStarts, MAX([t1Lims[0] floatValue]*self.effectiveFramerate, [t2Lims[0] floatValue]*self.effectiveFramerate - newLag), MIN([t1Lims[1] floatValue]*self.effectiveFramerate, [t2Lims[1] floatValue]*self.effectiveFramerate - newLag), 0, startsWorkArray, &nNewStarts);
             calcSampleDiffs(audio, newLag, startsWorkArray, nNewStarts, sDiffRadius, sampleDiffs);
             NSDictionary *results2 = [self getMinSampleDiffs:sampleDiffs :startsWorkArray :nNewStarts :newLag];
             
@@ -638,13 +638,13 @@ void applyDeviationPenalty(float *array, vDSP_Length *starts, vDSP_Length nStart
             else
                 dlag = -dlag;
             
-            if ((NSInteger)lag + dlag < [tauLims[0] floatValue] * FRAMERATE)    // Lag is too small.
+            if ((NSInteger)lag + dlag < [tauLims[0] floatValue] * self.effectiveFramerate)    // Lag is too small.
             {
                 incLagOnly = true;
                 dlag = labs(dlag) + 1;
             }
             
-            if ((NSInteger)lag + dlag > [tauLims[1] floatValue] * FRAMERATE)   // Lag is too large.
+            if ((NSInteger)lag + dlag > [tauLims[1] floatValue] * self.effectiveFramerate)   // Lag is too large.
             {
                 decLagOnly = true;
                 dlag = -labs(dlag) - 1;

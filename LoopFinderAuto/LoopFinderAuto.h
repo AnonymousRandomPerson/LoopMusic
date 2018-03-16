@@ -86,6 +86,8 @@ typedef enum loopModeValue { loopModeAuto, loopModeT1T2, loopModeT1Only, loopMod
 @property(nonatomic) bool useFadeDetection;
 /// Flag for using the mono audio signal in some places for speedup
 @property(nonatomic) bool useMonoAudio;
+/// Effective framerate within the loop finder, as a result of reducing the global FRAMERATE by some factor.
+@property(nonatomic) float effectiveFramerate;
 
 /// FFT setup object for vDSP.
 @property(nonatomic) FFTSetup fftSetup;
