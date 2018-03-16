@@ -293,8 +293,10 @@
 - (void)getInitialCandidates:(AudioDataFloat *)audio :(NSDictionary *)results
 {
     // Frames in the sliding MSE to ignore from the left and right
-    UInt32 sLeftIgnore = MAX(0, MIN(audio->numFrames, roundf(self.leftIgnore * self.effectiveFramerate)));
-    UInt32 sRightIgnore = MAX(0, MIN(audio->numFrames - sLeftIgnore, roundf(self.rightIgnore * self.effectiveFramerate)));
+    UInt32 sLeftIgnore = (UInt32)[self sanitizeInt:roundf(self.leftIgnore * self.effectiveFramerate) :roundf(self.minLoopLength * self.effectiveFramerate) :audio->numFrames];
+//    MAX(0, MIN(audio->numFrames, roundf(self.leftIgnore * self.effectiveFramerate)));
+    UInt32 sRightIgnore = (UInt32)[self sanitizeInt:roundf(self.rightIgnore * self.effectiveFramerate) :0 :audio->numFrames - sLeftIgnore];
+//    MAX(0, MIN(audio->numFrames - sLeftIgnore, roundf(self.rightIgnore * self.effectiveFramerate)));
     
     float *autoMSE = malloc(audio->numFrames * sizeof(float));
     [self audioAutoMSE:audio :self.useMonoAudio :autoMSE]; // TAKES LOTS OF TIME
