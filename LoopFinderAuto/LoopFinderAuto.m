@@ -15,7 +15,7 @@
 
 @implementation LoopFinderAuto
 
-@synthesize nBestDurations, nBestPairs, leftIgnore, rightIgnore, sampleDiffTol, minLoopLength, minTimeDiff, fftLength, overlapPercent, t1Estimate, t2Estimate, tauRadius, t1Radius, t2Radius, tauPenalty, t1Penalty, t2Penalty, useFadeDetection, useMonoAudio, effectiveFramerate,fftSetup, nSetup;
+@synthesize nBestDurations, nBestPairs, leftIgnore, rightIgnore, sampleDiffTol, minLoopLength, minTimeDiff, fftLength, overlapPercent, t1Estimate, t2Estimate, tauRadius, t1Radius, t2Radius, tauPenalty, t1Penalty, t2Penalty, useFadeDetection, useMonoAudio, framerateReductionFactor, effectiveFramerate,fftSetup, nSetup;
 
 - (id)init
 {
@@ -61,6 +61,7 @@
     
     useFadeDetection = false;
     useMonoAudio = true;
+    framerateReductionFactor = 6;
     effectiveFramerate = (float)FRAMERATE;
     
 //    nSetup = 0;
@@ -303,13 +304,12 @@
     }
     
     // Reduce the framerate if necessary to improve performance
-    NSInteger framerateReductionFactor = 6;
-    self.effectiveFramerate = (float)FRAMERATE / framerateReductionFactor;
+    self.effectiveFramerate = (float)FRAMERATE / self.framerateReductionFactor;
     
     // Convert 16-bit audio to 32-bit floating point audio, with the necessary framerate reduction (also modifies floatAudio->numFrames)
-    floatAudio->channel0 = malloc(floatAudio->numFrames/framerateReductionFactor * sizeof(float));  // Integer division will floor.
-    floatAudio->channel1 = malloc(floatAudio->numFrames/framerateReductionFactor * sizeof(float));
-    audio16bitFormatToFloatFormat(audio, floatAudio, framerateReductionFactor);
+    floatAudio->channel0 = malloc(floatAudio->numFrames/self.framerateReductionFactor * sizeof(float));  // Integer division will floor.
+    floatAudio->channel1 = malloc(floatAudio->numFrames/self.framerateReductionFactor * sizeof(float));
+    audio16bitFormatToFloatFormat(audio, floatAudio, self.framerateReductionFactor);
     
     if (self.useMonoAudio)
     {
@@ -380,7 +380,7 @@
 //                              }
 //                             copy];
     
-    return [self restoreGlobalFramerate:results :framerateReductionFactor];
+    return [self restoreGlobalFramerate:results :self.framerateReductionFactor];
 }
 
 - (float)powToDB:(float)power
@@ -459,11 +459,7 @@ void reduceFramerate(float *dataFloat, vDSP_Stride stride, vDSP_Length n, NSInte
 void audio16bitFormatToFloatFormat(const AudioData *audio16bit, AudioDataFloat *audioFloat, NSInteger framerateReductionFactor)
 {
     vDSP_Stride stride = 1;
-    
-    // POSSIBLE SPEEDUP: REDUCE EFFECTIVE FRAMERATE
-//    vDSP_Stride stride = 4;
-//    audioFloat->numFrames = ceilf((float)audioFloat->numFrames / stride);
-    
+
     float *workArray = malloc(audioFloat->numFrames * sizeof(float));
     audio16bitToAudioFloat((SInt16 *)audio16bit->playingList->mBuffers[0].mData, stride, workArray, audioFloat->numFrames);
     reduceFramerate(workArray, stride, audioFloat->numFrames, framerateReductionFactor, audioFloat->channel0);
