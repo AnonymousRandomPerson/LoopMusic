@@ -54,6 +54,8 @@ enum loopEndpointsViewTags
     double startEst;
     /// Current initial end time estimate. -1 is a flag for nothing.
     double endEst;
+    /// Flag to prevent repeating the loop-finding algorithm without any setting changes.
+    bool alreadyLooped;
     
     /// Subview of loop durations results.
     IBOutlet UIView *loopDurationView;

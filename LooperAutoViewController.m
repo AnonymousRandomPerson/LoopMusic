@@ -19,6 +19,7 @@
     
     finder = [[LoopFinderAuto alloc] init];
 //    [finder performFFTSetup]; // TOO SLOW
+    alreadyLooped = false;
     
     // Default estimate flags/values, display settings
     [self disableEstimates];
@@ -89,15 +90,30 @@
              };
 }
 
-// Helper function to convert a frame number into a time
-
+// Helper to display "No results" alert
+- (void)displayNoResultsAlert
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Error" message:@"No loop points found!" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *okayButton = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+        [alert dismissViewControllerAnimated:YES completion:nil]; }];
+    [alert addAction:okayButton];
+    [self presentViewController:alert animated:YES completion:nil];
+}
 
 - (IBAction)findLoop:(id)sender
 {
-    loopFinderResults = [finder findLoop:[presenter getAudioData]];
-    long numResults = [[loopFinderResults objectForKey:@"baseDurations"] count];
+    NSDictionary *results;
+    long numResults = 0;
+    if (!alreadyLooped) // Don't rerun if the song has already been looped under the same settings
+    {
+        results = [finder findLoop:[presenter getAudioData]];
+        numResults = [results[@"baseDurations"] count];
+    }
+    
     if (numResults > 0)
     {
+        loopFinderResults = results;    // Store the results internally
+        
         currentDurationRank = 0;
         [currentPairRanks removeAllObjects];
         for (int i = 0; i < numResults; ++i)
@@ -107,20 +123,23 @@
         
         [self updateAllResults];
     }
+    else
+        [self displayNoResultsAlert];
+    
+    alreadyLooped = true;   // Don't loop again under the same settings
 }
 
 - (IBAction)toggleEstimates:(id)sender
 {
     useEstimates = self.estimateToggler.isOn;
     
+    // Settings have changed, so enable loop algorithm to execute again
+    alreadyLooped = false;
+    
     if (useEstimates)
-    {
         [self enableEstimates];
-    }
     else
-    {
         [self disableEstimates];
-    }
 }
 - (void)enableEstimates
 {
@@ -149,52 +168,52 @@
 - (void)setStartEstimate:(double)est
 {
     if (est < 0)
-    {
         est = 0;
-    }
     else if (endEst != -1 && est > endEst)
-    {
         est = endEst;
-    }
     else if (est > [presenter getAudioDuration])
-    {
         est = [presenter getAudioDuration];
-    }
     
     startEst = est;
     finder.t1Estimate = startEst;
     [self updateText:initialEstimateView :startEstimateTextField :[NSString stringWithFormat:@"%.6f", startEst]];
+    
+    // Settings have changed, so enable loop algorithm to execute again
+    alreadyLooped = false;
 }
 - (void)resetStartEstimate
 {
     startEst = -1;
     finder.t1Estimate = startEst;
     [self updateText:initialEstimateView :startEstimateTextField :@""];
+    
+    // Settings have changed, so enable loop algorithm to execute again
+    alreadyLooped = false;
 }
 - (void)setEndEstimate:(double)est
 {
     if (est < 0)
-    {
         est = 0;
-    }
     else if (startEst != -1 && est < startEst)
-    {
         est = startEst;
-    }
     else if (est > [presenter getAudioDuration])
-    {
         est = [presenter getAudioDuration];
-    }
     
     endEst = est;
     finder.t2Estimate = endEst;
     [self updateText:initialEstimateView :endEstimateTextField :[NSString stringWithFormat:@"%.6f", endEst]];
+    
+    // Settings have changed, so enable loop algorithm to execute again
+    alreadyLooped = false;
 }
 - (void)resetEndEstimate
 {
     endEst = -1;
     finder.t2Estimate = endEst;
     [self updateText:initialEstimateView :endEstimateTextField :@""];
+    
+    // Settings have changed, so enable loop algorithm to execute again
+    alreadyLooped = false;
 }
 - (void)incStartEst:(id)sender
 {
@@ -471,6 +490,9 @@
 {
     if ([segue.identifier isEqualToString:@"OpenAdvancedLoopingSettings"])
     {
+        // Reset the flag so that the looping algorithm gets executed again
+        alreadyLooped = false;
+        
         // Pass the loop finder object to the settings controller for settings modification.
         UINavigationController *navigationController = segue.destinationViewController;
         LooperSettingsMenuTableViewController *menuVC = navigationController.viewControllers[0];
