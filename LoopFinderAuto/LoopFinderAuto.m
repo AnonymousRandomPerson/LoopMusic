@@ -291,6 +291,10 @@
 
 - (NSDictionary *)findLoop:(const AudioData *)audio
 {
+    // EMPIRICAL LIMIT TO REDUCED AUDIO DATA LENGTH. Reduce the audio to this length before running the algorithm.
+    NSUInteger lengthLimit = 3200000;
+    NSInteger framerateReductionLimit = 10; // Maximum the framerate will be reduced by. Any lower and the typical human-audible frequencies will be unresolvable.
+    
     // To hold the floating-point-converted audio data.
     AudioDataFloat *floatAudio = malloc(sizeof(AudioDataFloat));
     
@@ -303,7 +307,18 @@
             floatAudio->numFrames = fadeStart;
     }
     
-    // Reduce the framerate if necessary to improve performance
+    // Truncate the audio signal if absolutely necessary
+    if (floatAudio->numFrames/framerateReductionLimit > lengthLimit)
+    {
+        floatAudio->numFrames = lengthLimit * framerateReductionLimit;
+        NSLog(@"Audio track is too long. Truncating signal.");
+    }
+    // Reduce the framerate if necessary to improve performance. If the current reduction factor isn't enough, make it so it is.
+    if (floatAudio->numFrames/self.framerateReductionFactor > lengthLimit)
+    {
+        self.framerateReductionFactor = MIN(framerateReductionLimit, ceilf((float)floatAudio->numFrames / lengthLimit));
+        NSLog(@"Audio track is too long. Reducing framerate by a factor of %i for analysis.", self.framerateReductionFactor);
+    }
     self.effectiveFramerate = (float)FRAMERATE / self.framerateReductionFactor;
     
     // Convert 16-bit audio to 32-bit floating point audio, with the necessary framerate reduction (also modifies floatAudio->numFrames)

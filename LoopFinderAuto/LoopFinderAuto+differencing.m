@@ -111,23 +111,30 @@
     
     // zero-pad so that the cross-correlation ends up being the left-most part of the inverse fft, with only trailing zeros and no leading zeros.
     float *aPadded = malloc(nFFT * sizeof(float));
-    float *bPadded = malloc(nFFT * sizeof(float));
     vDSP_vfill(&zero, aPadded, stride, nB-1);
     vDSP_vfill(&zero, aPadded+outputLength, stride, nFFT-outputLength);
-    vDSP_vfill(&zero, bPadded+nB, stride, nFFT-nB);
     memcpy(aPadded+nB-1, a, nA * sizeof(float));
-    memcpy(bPadded, b, nB * sizeof(float));
 
-    // Do FFT on aPadded and bPadded.
+    // Setup for FFT on aPadded.
     float *aSplitComplexMemory = malloc(nFFT * sizeof(float));
-    float *bSplitComplexMemory = malloc(nFFT * sizeof(float));
-    float *bufferMemory = malloc(2*nFFT * sizeof(float));   // 2x the size for later use in complex-complex inverse FFT
     DSPSplitComplex aSplitComplex = {aSplitComplexMemory, aSplitComplexMemory + nFFT/2};
+    vDSP_ctoz((DSPComplex *)aPadded, 2*stride, &aSplitComplex, stride, nFFT/2);
+    free(aPadded);
+    
+    // zero-pad b
+    float *bPadded = malloc(nFFT * sizeof(float));
+    vDSP_vfill(&zero, bPadded+nB, stride, nFFT-nB);
+    memcpy(bPadded, b, nB * sizeof(float));
+    
+    // Setup for FFT on bPadded.
+    float *bSplitComplexMemory = malloc(nFFT * sizeof(float));
     DSPSplitComplex bSplitComplex = {bSplitComplexMemory, bSplitComplexMemory + nFFT/2};
+    vDSP_ctoz((DSPComplex *)bPadded, 2*stride, &bSplitComplex, stride, nFFT/2);
+    free(bPadded);
+    
+    float *bufferMemory = malloc(2*nFFT * sizeof(float));   // 2x the size for later use in complex-complex inverse FFT
     DSPSplitComplex buffer = {bufferMemory, bufferMemory + nFFT/2};
     
-    vDSP_ctoz((DSPComplex *)aPadded, 2*stride, &aSplitComplex, stride, nFFT/2);
-    vDSP_ctoz((DSPComplex *)bPadded, 2*stride, &bSplitComplex, stride, nFFT/2);
     vDSP_fft_zript(self.fftSetup, &aSplitComplex, stride, &buffer, log2nFFT, kFFTDirection_Forward);
     vDSP_fft_zript(self.fftSetup, &bSplitComplex, stride, &buffer, log2nFFT, kFFTDirection_Forward);
     
@@ -141,6 +148,10 @@
     *(fullXcorr.imagp) = 0;
     *(fullXcorr.realp + nFFT/2) = *(aSplitComplex.imagp) * *(bSplitComplex.imagp);
     *(fullXcorr.imagp + nFFT/2) = 0;
+    
+    free(aSplitComplexMemory);
+    free(bSplitComplexMemory);
+    
     // Normalize everything by 4 = 2^2, because each of the FFT values is scaled to be 2x the standard value.
     float normalizeFFT = 4;
     vDSP_vsdiv(fullXcorr.realp, stride, &normalizeFFT, fullXcorr.realp, stride, nFFT/2 + 1);
@@ -149,9 +160,6 @@
     vDSP_vsadd(fullXcorr.realp + 1, stride, &zero, fullXcorr.realp + nFFT-1, -stride, nFFT/2 - 1);
     float negative1 = -1;   // For flipping the sign on the imaginary part.
     vDSP_vsmul(fullXcorr.imagp + 1, stride, &negative1, fullXcorr.imagp + nFFT-1, -stride, nFFT/2 - 1);
-    
-    free(aSplitComplexMemory);
-    free(bSplitComplexMemory);
     
     // Inverse FFT fullXcorr to get the actual cross-correlation, with zeros at the end.
     buffer.realp = bufferMemory; buffer.imagp = bufferMemory + nFFT;  // Resize the buffer.
@@ -169,9 +177,6 @@
     float scaleDown = (float)nFFT;
     vDSP_vsdiv(fullXcorr.realp, stride, &scaleDown, result, stride, outputLength);
     free(fullXcorrMemory);
-    
-    free(aPadded);
-    free(bPadded);
 }
 
 // Supporting functions for slidingWeightedMSE to calculate the weights. The last argument is the output in each function.
