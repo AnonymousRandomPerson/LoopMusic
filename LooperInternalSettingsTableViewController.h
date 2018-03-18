@@ -14,13 +14,11 @@
 /*!
  * Sets the looper fade detection flag.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)setFadeDetection:(id)sender;
 
 /*!
  * Updates the UISwitch to match the current looper fade detection flag.
- * @return
  */
 - (void)updateFadeDetectionToggler;
 

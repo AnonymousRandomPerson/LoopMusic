@@ -293,7 +293,7 @@
 {
     // EMPIRICAL LIMIT TO REDUCED AUDIO DATA LENGTH. Reduce the audio to this length before running the algorithm.
     NSUInteger lengthLimit = 3200000;
-    NSInteger framerateReductionLimit = 10; // Maximum the framerate will be reduced by. Any lower and the typical human-audible frequencies will be unresolvable.
+    NSInteger framerateReductionLimit = 12; // Maximum the framerate will be reduced by. Any lower and the typical human-audible frequencies will be unresolvable.
     
     // To hold the floating-point-converted audio data.
     AudioDataFloat *floatAudio = malloc(sizeof(AudioDataFloat));

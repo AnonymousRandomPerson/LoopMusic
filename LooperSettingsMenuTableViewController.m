@@ -18,6 +18,21 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    [self turnOffTouchDelays];
+}
+
+/// Turn off content touch delay in all the cells
+- (void)turnOffTouchDelays
+{
+    for (UIView *currentView in self.tableView.subviews)
+    {
+        if([currentView isKindOfClass:[UIScrollView class]])
+        {
+            ((UIScrollView *)currentView).delaysContentTouches = NO;
+            break;
+        }
+    }
 }
 
 
@@ -38,12 +53,14 @@
     // Dispose of any resources that can be recreated.
 }
 
+
 #pragma mark - Navigation
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
     if ([segue.identifier isEqualToString:@"NavigateToInitialEstimateSettings"] ||
         [segue.identifier isEqualToString:@"NavigateToInternalSettings"] ||
+        [segue.identifier isEqualToString:@"NavigateToPerformanceSettings"] ||
         [segue.identifier isEqualToString:@"NavigateToOutputSettings"])
     {
         // Pass the loop finder object to the settings controller for settings modification.

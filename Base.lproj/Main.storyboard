@@ -632,10 +632,11 @@
                         <constraints>
                             <constraint firstItem="V4e-Uu-AZf" firstAttribute="top" secondItem="a3N-ZV-7Ur" secondAttribute="bottom" id="5Tz-eH-DTY"/>
                             <constraint firstItem="a3N-ZV-7Ur" firstAttribute="top" secondItem="lT3-zz-lwL" secondAttribute="bottom" constant="12" id="5mk-sO-B0A"/>
-                            <constraint firstItem="a3N-ZV-7Ur" firstAttribute="width" secondItem="5zt-Qk-v1T" secondAttribute="width" id="9Ds-QM-w5l"/>
                             <constraint firstItem="lT3-zz-lwL" firstAttribute="top" secondItem="5zt-Qk-v1T" secondAttribute="top" constant="20" id="CtD-9A-VnD"/>
                             <constraint firstItem="a3N-ZV-7Ur" firstAttribute="centerX" secondItem="5zt-Qk-v1T" secondAttribute="centerX" id="MVt-Ki-G23"/>
+                            <constraint firstItem="a3N-ZV-7Ur" firstAttribute="leading" secondItem="5zt-Qk-v1T" secondAttribute="leading" constant="16" id="aRb-2l-SJB"/>
                             <constraint firstItem="q5F-2F-O73" firstAttribute="top" secondItem="V4e-Uu-AZf" secondAttribute="bottom" id="awX-9h-mTf"/>
+                            <constraint firstAttribute="trailing" secondItem="a3N-ZV-7Ur" secondAttribute="trailing" constant="16" id="iJe-0n-yOf"/>
                             <constraint firstItem="lT3-zz-lwL" firstAttribute="trailing" secondItem="5zt-Qk-v1T" secondAttribute="trailingMargin" id="jNs-Ip-5r3"/>
                             <constraint firstItem="V4e-Uu-AZf" firstAttribute="width" secondItem="5zt-Qk-v1T" secondAttribute="width" id="mXO-xb-0cC"/>
                             <constraint firstItem="V4e-Uu-AZf" firstAttribute="centerX" secondItem="5zt-Qk-v1T" secondAttribute="centerX" id="vRH-z7-lLW"/>
@@ -1312,7 +1313,7 @@
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
-                            <tableViewSection footerTitle="Configuration for loop-finding output." id="r62-HD-Irx">
+                            <tableViewSection footerTitle="Configuration for loop-finding speed and accuracy." id="r62-HD-Irx">
                                 <cells>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="cpA-uV-UIQ" style="IBUITableViewCellStyleDefault" id="JS1-xj-Bzo">
                                         <rect key="frame" x="0.0" y="251" width="320" height="44"/>
@@ -1321,7 +1322,7 @@
                                             <rect key="frame" x="0.0" y="0.0" width="286" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Output" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="cpA-uV-UIQ">
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Performance Settings" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="cpA-uV-UIQ">
                                                     <rect key="frame" x="16" y="0.0" width="269" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
@@ -1331,7 +1332,31 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                         <connections>
-                                            <segue destination="riP-Lt-f8C" kind="push" identifier="NavigateToOutputSettings" id="H56-XP-FD2"/>
+                                            <segue destination="1Zp-Rf-t4M" kind="push" identifier="NavigateToPerformanceSettings" id="5S9-kW-hfH"/>
+                                        </connections>
+                                    </tableViewCell>
+                                </cells>
+                            </tableViewSection>
+                            <tableViewSection footerTitle="Configuration for loop-finding output." id="nfY-E0-ZIi">
+                                <cells>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="XAI-dr-tNf" style="IBUITableViewCellStyleDefault" id="FRp-kI-lYm">
+                                        <rect key="frame" x="0.0" y="359" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="FRp-kI-lYm" id="egx-x7-naK">
+                                            <rect key="frame" x="0.0" y="0.0" width="286" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Output" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="XAI-dr-tNf">
+                                                    <rect key="frame" x="16" y="0.0" width="269" height="43.5"/>
+                                                    <autoresizingMask key="autoresizingMask"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                        <connections>
+                                            <segue destination="riP-Lt-f8C" kind="push" identifier="NavigateToOutputSettings" id="Dl5-DB-4Nj"/>
                                         </connections>
                                     </tableViewCell>
                                 </cells>
@@ -1339,14 +1364,14 @@
                             <tableViewSection headerTitle=" " footerTitle="Reset all settings to their default values." id="Daq-OJ-2JF">
                                 <cells>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="FWq-Gb-rmb">
-                                        <rect key="frame" x="0.0" y="370.5" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="478.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="FWq-Gb-rmb" id="eK5-AS-4G7">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="LJZ-uM-bHY">
-                                                    <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                                                    <rect key="frame" x="0.0" y="-1" width="320" height="45"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <color key="backgroundColor" red="0.79825129530000005" green="0.0072204054710000003" blue="0.094853776089999994" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                     <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="18"/>
@@ -1539,7 +1564,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Endpoint Diff. Tol." textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="tGO-ib-eHc">
-                                                    <rect key="frame" x="16" y="11" width="135" height="21"/>
+                                                    <rect key="frame" x="16" y="11" width="183" height="21"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -1634,7 +1659,96 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Ot5-Tf-6pY" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="3179" y="-793"/>
+            <point key="canvasLocation" x="3555" y="-1096"/>
+        </scene>
+        <!--Performance-->
+        <scene sceneID="fcy-cb-FiL">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="WbS-I9-4Uk" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <tableViewController title="Performance" id="1Zp-Rf-t4M" customClass="LooperPerformanceSettingsTableViewController" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" delaysContentTouches="NO" dataMode="static" style="grouped" separatorStyle="default" allowsSelection="NO" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="18" sectionFooterHeight="18" id="AT0-8p-KSb">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                        <sections>
+                            <tableViewSection headerTitle="Mono/Stereo" id="lKx-Rr-45c">
+                                <string key="footerTitle">Controls whether to do certain portions of loop finding using mono audio data rather than stereo data. Enabling usually gives about a 2x speedup, but may reduce accuracy somewhat.</string>
+                                <cells>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="Ee6-4R-N7O">
+                                        <rect key="frame" x="0.0" y="55.5" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="Ee6-4R-N7O" id="cIt-sq-ZMf">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Use Mono Audio" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BMu-f7-zhC">
+                                                    <rect key="frame" x="16" y="11" width="126" height="21"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="Yho-GR-Zwl">
+                                                    <rect key="frame" x="257" y="6" width="49" height="31"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                                                    <connections>
+                                                        <action selector="setUseMonoAudio:" destination="1Zp-Rf-t4M" eventType="valueChanged" id="q0x-2f-a2P"/>
+                                                    </connections>
+                                                </switch>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                </cells>
+                            </tableViewSection>
+                            <tableViewSection headerTitle="Framerate Reduction" id="1Js-vX-XdZ">
+                                <string key="footerTitle">Controls how to reduce the framerate of the audio data before performing loop finding. Usually leads to a factor speedup equal to the reduction value, but may be less accurate. For values of 7+, results may start to fluctuate between runs of the algorithm.</string>
+                                <cells>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="uQl-lY-3uv">
+                                        <rect key="frame" x="0.0" y="223" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="uQl-lY-3uv" id="Xkv-m0-vrD">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Value" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yyo-kY-6ja">
+                                                    <rect key="frame" x="262" y="11" width="42" height="21"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="1" minValue="1" maxValue="12" translatesAutoresizingMaskIntoConstraints="NO" id="UQ8-dH-Y56">
+                                                    <rect key="frame" x="28" y="6.5" width="228" height="31"/>
+                                                    <connections>
+                                                        <action selector="setFramerateReductionFactor:" destination="1Zp-Rf-t4M" eventType="valueChanged" id="hLc-af-A2F"/>
+                                                    </connections>
+                                                </slider>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstItem="yyo-kY-6ja" firstAttribute="centerY" secondItem="Xkv-m0-vrD" secondAttribute="centerY" id="IJo-2S-cI0"/>
+                                                <constraint firstItem="UQ8-dH-Y56" firstAttribute="leading" secondItem="Xkv-m0-vrD" secondAttribute="leading" constant="30" id="Ovp-06-GT6"/>
+                                                <constraint firstAttribute="trailing" secondItem="yyo-kY-6ja" secondAttribute="trailing" constant="16" id="aeb-Z3-kbm"/>
+                                                <constraint firstItem="UQ8-dH-Y56" firstAttribute="centerY" secondItem="yyo-kY-6ja" secondAttribute="centerY" id="dpj-b7-d7G"/>
+                                                <constraint firstItem="yyo-kY-6ja" firstAttribute="leading" secondItem="UQ8-dH-Y56" secondAttribute="trailing" constant="8" id="tOG-2r-q0A"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                </cells>
+                            </tableViewSection>
+                        </sections>
+                        <connections>
+                            <outlet property="dataSource" destination="1Zp-Rf-t4M" id="VOd-HA-vbn"/>
+                            <outlet property="delegate" destination="1Zp-Rf-t4M" id="QQR-b8-bkD"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Performance" id="aFY-x2-FLM"/>
+                    <connections>
+                        <outlet property="framerateReductionFactorSlider" destination="UQ8-dH-Y56" id="HRJ-PD-bCy"/>
+                        <outlet property="framerateReductionFactorVal" destination="yyo-kY-6ja" id="r6T-iV-RCB"/>
+                        <outlet property="useMonoAudioToggler" destination="Yho-GR-Zwl" id="bdE-fO-iss"/>
+                    </connections>
+                </tableViewController>
+            </objects>
+            <point key="canvasLocation" x="3167" y="-453"/>
         </scene>
         <!--Output-->
         <scene sceneID="XlO-Ep-ov4">
@@ -1715,7 +1829,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="bv1-Zx-5Vh" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="3179" y="-42"/>
+            <point key="canvasLocation" x="3555" y="-453"/>
         </scene>
         <!--Initial Estimate-->
         <scene sceneID="4u2-W7-FAV">
@@ -1913,7 +2027,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Y6g-vC-9Hk" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="3179" y="-1496"/>
+            <point key="canvasLocation" x="3167" y="-1096"/>
         </scene>
         <!--Initial Estimates-->
         <scene sceneID="EcX-5r-srk">

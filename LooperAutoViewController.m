@@ -123,7 +123,7 @@
         
         [self updateAllResults];
     }
-    else
+    else if (!alreadyLooped)
         [self displayNoResultsAlert];
     
     alreadyLooped = true;   // Don't loop again under the same settings

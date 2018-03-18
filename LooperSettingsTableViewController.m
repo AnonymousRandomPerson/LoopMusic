@@ -21,6 +21,7 @@
     [super viewDidLoad];
     
     parameterNames = [self formParamNamesDict];
+    [self turnOffTouchDelays];
     
     // Refresh the parameter displays with their current values upon opening.
     [NSTimer scheduledTimerWithTimeInterval:.1
@@ -28,6 +29,19 @@
                                    selector:@selector(refreshParameterDisplays)
                                    userInfo:nil
                                     repeats:NO];
+}
+
+/// Turn off content touch delay in all the cells
+- (void)turnOffTouchDelays
+{
+    for (UIView *currentView in self.tableView.subviews)
+    {
+        if([currentView isKindOfClass:[UIScrollView class]])
+        {
+            ((UIScrollView *)currentView).delaysContentTouches = NO;
+            break;
+        }
+    }
 }
 
 /// Returns the parameter names dictionary. Keys should be NSInteger and values should be NSString *. Reimplement in subclasses.
