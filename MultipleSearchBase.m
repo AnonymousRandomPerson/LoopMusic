@@ -19,11 +19,27 @@
     {
         selectedItems = [NSMutableArray arrayWithCapacity:items ? items.count : 8];
     }
+    
+    recentlySelectedItems = [[NSMutableArray alloc] init];
+    recentlyUnselectedItems = [[NSMutableArray alloc] init];
+}
+
+// Flushes memory of what was recently selected/unselected.
+-(void)flushMemory
+{
+    [recentlySelectedItems removeAllObjects];
+    [recentlyUnselectedItems removeAllObjects];
 }
 
 -(void)selectItem:(NSString *)item
 {
     [selectedItems addObject:item];
+    
+    // Only consider something recently selected if it wasn't also recently unselected.
+    if ([recentlyUnselectedItems containsObject:item])
+        [recentlyUnselectedItems removeObject:item];
+    else
+        [recentlySelectedItems addObject:item];
 }
 
 /*!
@@ -53,6 +69,12 @@
 -(void)unselectItem:(NSString *)item
 {
     [selectedItems removeObject:item];
+    
+    // Only consider something recently unselected if it wasn't also recently selected.
+    if ([recentlySelectedItems containsObject:item])
+        [recentlySelectedItems removeObject:item];
+    else
+        [recentlyUnselectedItems addObject:item];
 }
 
 /*!

@@ -196,6 +196,12 @@ extern NSInteger playlistIndex;
  */
 - (NSInteger)getIntegerDB:(NSString *)query;
 /*!
+ * Gets multiple integers from a database query.
+ * @param query The database query to get the integers with.
+ * @return Array of integers obtained from the database query.
+ */
+- (NSArray*)getMultiIntegerDB:(NSString *)query;
+/*!
  * Opens the database and updates it.
  * @param query The query to update the database with.
  */

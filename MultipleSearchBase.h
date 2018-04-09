@@ -15,6 +15,12 @@
 {
     /// The selected items in the list.
     NSMutableArray *selectedItems;
+    
+    /// Items selected since the instance was created
+    NSMutableArray *recentlySelectedItems;
+    
+    /// Items unselected since the instance was created that were selected at creation
+    NSMutableArray *recentlyUnselectedItems;
 }
 
 @end

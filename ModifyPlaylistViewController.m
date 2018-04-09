@@ -21,20 +21,42 @@
     [super viewDidLoad];
 }
 
+-(NSString *)formStringTuple:(NSArray *)array
+{
+    // Assumes array is not empty
+    return [NSString stringWithFormat:@"(\"%@\")", [array componentsJoinedByString:@"\", \""]];
+}
+-(NSString *)formIntTuple:(NSArray *)array
+{
+    return [NSString stringWithFormat:@"(%@)", [array componentsJoinedByString:@", "]];
+}
+-(NSString *)formIntTupleList:(NSInteger)first :(NSArray *)secondsArray
+{
+    // Forms (first, second[0]), (first, second[1]), ...
+    // Assumes secondsArray is not empty
+    return [NSString stringWithFormat:@"(%ld, %@)", first, [secondsArray componentsJoinedByString:[NSString stringWithFormat:@"), (%ld, ", first]]];
+}
+
 - (IBAction)confirmButton:(id)sender
 {
     [self dismissViewControllerAnimated:true completion:nil];
     [self openDB];
-    [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE id = %ld", (long)playlistIndex]];
-    for (NSString *item in selectedItems)
+    
+    // Remove stuff
+    NSArray *trackIndices;
+    if (recentlyUnselectedItems.count > 0)
     {
-        /// The ID of the track in the current iteration.
-        NSInteger trackIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Tracks WHERE name = \"%@\"", item]];
-        if (trackIndex)
-        {
-            [self updateDB:[NSString stringWithFormat:@"INSERT INTO Playlists (id, track) VALUES (%ld, %ld)", (long)playlistIndex, trackIndex]];
-        }
+        trackIndices = [self getMultiIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Tracks WHERE name in %@ AND id != 0", [self formStringTuple:recentlyUnselectedItems]]];
+        [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE id = %ld AND track in %@", (long)playlistIndex, [self formIntTuple:trackIndices]]];
     }
+    
+    // Add stuff
+    if (recentlySelectedItems.count > 0)
+    {
+        trackIndices = [self getMultiIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Tracks WHERE name in %@ AND id != 0", [self formStringTuple:recentlySelectedItems]]];
+        [self updateDB:[NSString stringWithFormat:@"INSERT INTO Playlists (id, track) VALUES %@", [self formIntTupleList:playlistIndex :trackIndices]]];
+    }
+    
     sqlite3_close(trackData);
     [presenter updatePlaylistSongs];
 }

@@ -754,6 +754,21 @@ static const double TESTTIMEOFFSET = 5;
     return returnValue;
 }
 
+- (NSArray*)getMultiIntegerDB:(NSString *)query
+{
+    /// The statement to execute the query with.
+    sqlite3_stmt *tempStatement;
+    sqlite3_prepare_v2(trackData, [query UTF8String], -1, &tempStatement, NULL);
+    /// Array of integers obtained from the query.
+    NSMutableArray *returnValues = [[NSMutableArray alloc] init];
+    while (sqlite3_step(tempStatement) == SQLITE_ROW)
+    {
+        [returnValues addObject:[NSNumber numberWithInteger:sqlite3_column_int(tempStatement, 0)]];
+    }
+    sqlite3_finalize(tempStatement);
+    return [returnValues copy];
+}
+
 /*!
  * Gets a string from a database query.
  * @param query The query to get a string from.

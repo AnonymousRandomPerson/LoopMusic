@@ -23,8 +23,6 @@
     
     /// Pointer to the current audio track.
     AudioData *audioData;
-    /// Data for the current audio track.
-    AudioData audioDataStore;
     /// Data for the queued audio track.
     AudioData *bufferAudioData;
     /// Audio data to free from memory.
