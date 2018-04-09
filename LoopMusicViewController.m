@@ -454,10 +454,9 @@ static const double TESTTIMEOFFSET = 5;
         [self showNoSongMessage];
         return;
     }
-    time = [self getTime];
+
     repeats = 0;
-    choose = false;
-    [self playMusic];
+    [self shuffleTrack];
 }
 
 - (IBAction)playSong:(id)sender
