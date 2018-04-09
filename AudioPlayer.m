@@ -31,6 +31,7 @@ static const float SEARCHTOLERANCE = 300;
     {
         NSLog(@"%@", [error description]);
     }
+    [self resetRepeatCounter];
     [self startFreeTimer];
     
     return self;
@@ -38,7 +39,6 @@ static const float SEARCHTOLERANCE = 300;
 
 /*!
  * Starts the free timer if it isn't already started.
- * @return
  */
 - (void)startFreeTimer
 {
@@ -55,7 +55,6 @@ static const float SEARCHTOLERANCE = 300;
 /*!
  * Checks if memory can be freed.
  * @param timer The timer that called this function.
- * @return
  */
 - (void)checkFree:(NSTimer *)timer
 {
@@ -83,7 +82,7 @@ static const float SEARCHTOLERANCE = 300;
 
 - (void)setCurrentTime:(NSTimeInterval)currentTime
 {
-    bufferAudioData->currentFrame = currentTime * FRAMERATE;
+    bufferAudioData->currentFrame = round(currentTime * FRAMERATE);
 }
 
 - (float)volume
@@ -185,6 +184,15 @@ static const float SEARCHTOLERANCE = 300;
     }
 }
 
+- (NSUInteger)getRepeats
+{
+    return repeats;
+}
+- (void)resetRepeatCounter
+{
+    repeats = 0;
+}
+
 /*!
  * Gets the number of active channels in the audio controller.
  * @return The number of active channels in the audio controller.
@@ -239,10 +247,12 @@ static const float SEARCHTOLERANCE = 300;
                     if (audioData->currentFrame >= audioData->numFrames)
                     {
                         audioData->currentFrame = 0;
+                        repeats++;
                     }
                     else if (!audioData->loading && audioData->currentFrame >= _loopEnd)
                     {
                         audioData->currentFrame = _loopStart;
+                        repeats++;
                     }
                 }
             }];

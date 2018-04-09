@@ -41,6 +41,10 @@ extern NSInteger playlistIndex;
     NSString *songString;
     /// Whether a track is being chosen by its name.
     bool chooseSongString;
+    /// The amount of milliseconds that the current track has been playing for before the shuffle timer was most recently activated... only updated at pause time, and reset at stop time or song changes.
+    double elapsedTimeBeforeTimerActivation;
+    /// The time at which to resume the track if paused.
+    double pauseTime;
     /// The amount of milliseconds that the current track has been fading out for.
     double fadeTime;
     /// The amount to decrement volume per tick when fading out.
@@ -48,7 +52,7 @@ extern NSInteger playlistIndex;
     
     /// Button to randomize the current track.
     IBOutlet UIButton *randomSong;
-    /// Button to play the current track.
+    /// Button to play/resume the current track.
     IBOutlet UIButton *playSong;
     /// Button to stop playback of the current track.
     IBOutlet UIButton *stopSong;
@@ -91,8 +95,6 @@ extern NSInteger playlistIndex;
     
     /// The time that the current track started playing at.
     long long time;
-    /// The number of times the current track has repeated.
-    NSUInteger repeats;
     /// Whether a screen other than the main screen is showing.
     bool occupied;
     
@@ -126,10 +128,15 @@ extern NSInteger playlistIndex;
  */
 - (IBAction)randomSong:(id)sender;
 /*!
- * Plays the current track.
+ * Plays or resumes the current track.
  * @param sender The object that called this function.
  */
 - (IBAction)playSong:(id)sender;
+/*!
+ * Pauses playback of the current track.
+ * @param sender The object that called this function.
+ */
+- (IBAction)pauseSong:(id)sender;
 /*!
  * Stops playback of the current track.
  * @param sender The object that called this function.
@@ -289,7 +296,7 @@ extern NSInteger playlistIndex;
 - (void)updatePlaylistName:(NSString *)name;
 
 /*!
- * Plays a track.
+ * Plays a track from the beginning.
  */
 - (void)playMusic;
 /*!

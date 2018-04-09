@@ -196,6 +196,15 @@
                                 <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="hmN-aI-y96">
+                                <rect key="frame" x="137" y="248" width="42" height="30"/>
+                                <state key="normal" title="Pause">
+                                    <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                </state>
+                                <connections>
+                                    <action selector="pauseSong:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="K7v-U6-sW7"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
@@ -203,6 +212,7 @@
                             <constraint firstItem="4ro-d2-Z0x" firstAttribute="trailing" secondItem="3sO-4y-4m2" secondAttribute="trailing" id="3Io-Nb-xFR"/>
                             <constraint firstItem="bRb-WC-AMs" firstAttribute="leading" secondItem="6dM-KI-621" secondAttribute="leading" id="4tb-nr-pOk"/>
                             <constraint firstItem="QXm-7J-bFf" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="6UI-fJ-Abs"/>
+                            <constraint firstItem="hmN-aI-y96" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" id="BPL-HZ-xjb"/>
                             <constraint firstItem="idY-Fr-F03" firstAttribute="top" secondItem="pER-TL-t6s" secondAttribute="bottom" constant="8" id="GNE-sK-Ai7"/>
                             <constraint firstItem="mQu-h2-UKm" firstAttribute="top" secondItem="4ro-d2-Z0x" secondAttribute="bottom" constant="36" id="Jo0-uq-ios"/>
                             <constraint firstItem="bRb-WC-AMs" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" id="O8C-0k-TK7"/>
@@ -225,6 +235,7 @@
                             <constraint firstItem="ao7-As-jf5" firstAttribute="width" secondItem="tne-Gd-byn" secondAttribute="width" id="vve-re-as2"/>
                             <constraint firstItem="mQu-h2-UKm" firstAttribute="top" secondItem="kPk-Do-5np" secondAttribute="bottom" constant="36" id="vxY-EF-tyQ"/>
                             <constraint firstItem="idY-Fr-F03" firstAttribute="leading" secondItem="kh9-bI-dsS" secondAttribute="leadingMargin" constant="25" id="xbw-UI-DHN"/>
+                            <constraint firstItem="hmN-aI-y96" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="ySj-qB-shB"/>
                         </constraints>
                     </view>
                     <connections>
@@ -1664,7 +1675,6 @@
         <!--Performance-->
         <scene sceneID="fcy-cb-FiL">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="WbS-I9-4Uk" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <tableViewController title="Performance" id="1Zp-Rf-t4M" customClass="LooperPerformanceSettingsTableViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" delaysContentTouches="NO" dataMode="static" style="grouped" separatorStyle="default" allowsSelection="NO" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="18" sectionFooterHeight="18" id="AT0-8p-KSb">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
@@ -1747,6 +1757,7 @@
                         <outlet property="useMonoAudioToggler" destination="Yho-GR-Zwl" id="bdE-fO-iss"/>
                     </connections>
                 </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="WbS-I9-4Uk" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="3167" y="-453"/>
         </scene>

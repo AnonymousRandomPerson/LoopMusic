@@ -78,9 +78,6 @@ static const double TESTTIMEOFFSET = 5;
     choose = false;
     songString = @"";
     chooseSongString = false;
-    time = [self getTime];
-    [self activateShuffleTimer];
-    repeats = 0;
     musicNumber = -1;
     
     /// The file path of the settings file.
@@ -175,7 +172,6 @@ static const double TESTTIMEOFFSET = 5;
 
 /*!
  * Activates the shuffle loop timer.
- * @return
  */
 - (void)activateShuffleTimer
 {
@@ -189,7 +185,6 @@ static const double TESTTIMEOFFSET = 5;
 
 /*!
  * Activates the fade out timer.
- * @return
  */
 - (void)activateFadeTimer
 {
@@ -203,7 +198,6 @@ static const double TESTTIMEOFFSET = 5;
 
 /*!
  * Stops the shuffle loop timer.
- * @return
  */
 - (void)stopShuffleTimer
 {
@@ -216,7 +210,6 @@ static const double TESTTIMEOFFSET = 5;
 
 /*!
  * Stops the fade out timer.
- * @return
  */
 - (void)stopFadeTimer
 {
@@ -230,7 +223,6 @@ static const double TESTTIMEOFFSET = 5;
 /*!
  * Checks if the audio track should be shuffled.
  * @param timer The timer that invoked this function.
- * @return
  */
 - (void)checkShuffle:(NSTimer *)timer
 {
@@ -239,11 +231,11 @@ static const double TESTTIMEOFFSET = 5;
         if (!occupied)
         {
             bool willSwitch = false;
-            if (shuffleSetting == 2 && repeatsShuffle > 0 && repeats >= repeatsShuffle)
+            if (shuffleSetting == 2 && repeatsShuffle > 0 && [audioPlayer getRepeats] >= repeatsShuffle)
             {
                 willSwitch = true;
             }
-            else if (shuffleSetting == 1 && timeShuffle > 0 && ([self getTime] - time) >= timeShuffle2)
+            else if (shuffleSetting == 1 && timeShuffle > 0 && ([self getTime] - time) + elapsedTimeBeforeTimerActivation >= timeShuffle2)
             {
                 willSwitch = true;
             }
@@ -265,7 +257,6 @@ static const double TESTTIMEOFFSET = 5;
 /*!
  * Gradually fades out a track.
  * @param The timer that invoked this function.
- * @return
  */
 - (void)fadeOut:(NSTimer *)timer
 {
@@ -281,12 +272,32 @@ static const double TESTTIMEOFFSET = 5;
 }
 
 /*!
+ * Starts tracking and playback of the audio player.
+ */
+- (void)startPlayback
+{
+    time = [self getTime];
+    [audioPlayer play];
+    [self activateShuffleTimer];
+    playSymbol.hidden = false;
+}
+
+/*!
+ * Cleans up internal values affecting playback, after a stop or before a new song. (Used in playMusic, stopPlayer)
+ */
+- (void)resetForNewPlayback
+{
+    [audioPlayer resetRepeatCounter];
+    fadeTime = 0;
+    pauseTime = 0;
+    elapsedTimeBeforeTimerActivation = 0;
+}
+
+/*!
  * Shuffles the currently playing track.
- * @return
  */
 - (void)shuffleTrack
 {
-    time = [self getTime];
     choose = false;
     [self playMusic];
 }
@@ -388,18 +399,14 @@ static const double TESTTIMEOFFSET = 5;
     sqlite3_close(trackData);
     [self setAudioPlayer:url];
     [self updateVolumeDec];
-    repeats = 0;
-    fadeTime = 0;
-    time = [self getTime];
     if (audioPlayer.loopEnd == 0.0)
     {
         audioPlayer.loopEnd = audioPlayer.duration;
         [self openDB];
         [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET loopend = %f WHERE id=\"%li\"", audioPlayer.loopEnd, (long)musicNumber]];
     }
-    [audioPlayer play];
-    [self activateShuffleTimer];
-    playSymbol.hidden = false;
+    [self resetForNewPlayback];
+    [self startPlayback];
 }
 
 - (void)setAudioPlayer:(NSURL*)newURL
@@ -455,7 +462,6 @@ static const double TESTTIMEOFFSET = 5;
         return;
     }
 
-    repeats = 0;
     [self shuffleTrack];
 }
 
@@ -468,15 +474,20 @@ static const double TESTTIMEOFFSET = 5;
     }
     if (!audioPlayer.playing)
     {
-        time = [self getTime];
-        repeats = 0;
-        audioPlayer.currentTime = 0;
-        [audioPlayer play];
-        [self activateShuffleTimer];
-        playSymbol.hidden = false;
+        audioPlayer.currentTime = pauseTime;
+        [self startPlayback];
     }
 }
 
+- (IBAction)pauseSong:(id)sender
+{
+    if ([self isSongListEmpty])
+    {
+        [self showNoSongMessage];
+        return;
+    }
+    [self pausePlayer];
+}
 - (IBAction)stopSong:(id)sender
 {
     if ([self isSongListEmpty])
@@ -487,16 +498,30 @@ static const double TESTTIMEOFFSET = 5;
     [self stopPlayer];
 }
 
+- (void)controllerStopPlaying
+{
+    [self stopShuffleTimer];
+    [self stopFadeTimer];
+    playSymbol.hidden = true;
+}
+
+/*!
+ * Pauses the audio player.
+ */
+- (void)pausePlayer
+{
+    pauseTime = audioPlayer.currentTime;
+    [audioPlayer stop];
+    [self controllerStopPlaying];
+}
 /*!
  * Stops the audio player.
- * @return
  */
 - (void)stopPlayer
 {
     [audioPlayer stop];
-    [self stopShuffleTimer];
-    [self stopFadeTimer];
-    playSymbol.hidden = true;
+    [self controllerStopPlaying];
+    [self resetForNewPlayback];
 }
 
 - (void)chooseSong:(NSString *)newSong
