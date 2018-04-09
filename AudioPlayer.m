@@ -31,7 +31,7 @@ static const float SEARCHTOLERANCE = 300;
     {
         NSLog(@"%@", [error description]);
     }
-    [self resetRepeatCounter];
+    [self resetLoopCounter];
     [self startFreeTimer];
     
     return self;
@@ -184,13 +184,18 @@ static const float SEARCHTOLERANCE = 300;
     }
 }
 
-- (NSUInteger)getRepeats
+- (NSUInteger)getLoopCount
 {
-    return repeats;
+    return loopCount;
 }
-- (void)resetRepeatCounter
+- (void)resetLoopCounter
 {
-    repeats = 0;
+    loopCount = 0;
+}
+- (NSInteger)getRepeatNumber:(double)elapsedTime
+{
+    // Use a more robust time-based method, rather than a loop-based method. This allows for jumping around in playback, while still having around the desired number of repeats in playback time.
+    return ((NSInteger)(elapsedTime*FRAMERATE) - (NSInteger)_loopStart) / ((NSInteger)_loopEnd - (NSInteger)_loopStart);
 }
 
 /*!
@@ -247,12 +252,12 @@ static const float SEARCHTOLERANCE = 300;
                     if (audioData->currentFrame >= audioData->numFrames)
                     {
                         audioData->currentFrame = 0;
-                        repeats++;
+                        loopCount++;
                     }
                     else if (!audioData->loading && audioData->currentFrame >= _loopEnd)
                     {
                         audioData->currentFrame = _loopStart;
-                        repeats++;
+                        loopCount++;
                     }
                 }
             }];

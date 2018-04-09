@@ -12,7 +12,7 @@
 NSString *settingsSongString = @"";
 /// The base amount of time to play a track before shuffling.
 double timeShuffle = -1;
-/// The actual amount of time to play a track before shuffling.
+/// The actual amount of time (in microseconds) to play a track before shuffling.
 double timeShuffle2 = -1;
 /// The number of times to repeat a track before shuffling.
 NSInteger repeatsShuffle = -1;
@@ -231,11 +231,11 @@ static const double TESTTIMEOFFSET = 5;
         if (!occupied)
         {
             bool willSwitch = false;
-            if (shuffleSetting == 2 && repeatsShuffle > 0 && [audioPlayer getRepeats] >= repeatsShuffle)
+            if (shuffleSetting == 2 && repeatsShuffle > 0 && [self getRepeats] >= repeatsShuffle)
             {
                 willSwitch = true;
             }
-            else if (shuffleSetting == 1 && timeShuffle > 0 && ([self getTime] - time) + elapsedTimeBeforeTimerActivation >= timeShuffle2)
+            else if (shuffleSetting == 1 && timeShuffle > 0 && [self getElapsedTime] >= timeShuffle2)
             {
                 willSwitch = true;
             }
@@ -287,7 +287,7 @@ static const double TESTTIMEOFFSET = 5;
  */
 - (void)resetForNewPlayback
 {
-    [audioPlayer resetRepeatCounter];
+    [audioPlayer resetLoopCounter];
     fadeTime = 0;
     pauseTime = 0;
     elapsedTimeBeforeTimerActivation = 0;
@@ -511,6 +511,7 @@ static const double TESTTIMEOFFSET = 5;
 - (void)pausePlayer
 {
     pauseTime = audioPlayer.currentTime;
+    elapsedTimeBeforeTimerActivation += [self getTime] - time;
     [audioPlayer stop];
     [self controllerStopPlaying];
 }
@@ -594,6 +595,23 @@ static const double TESTTIMEOFFSET = 5;
     struct timeval t;
     gettimeofday(&t, nil);
     return t.tv_sec * 1000000 + t.tv_usec;
+}
+/*!
+ * Gets the elapsed playback time (in microseconds) of the current track.
+ * @return The elapsed playback time.
+ */
+- (double)getElapsedTime
+{
+    return [self getTime] - time + elapsedTimeBeforeTimerActivation;
+}
+/*!
+ * Gets the number of repeats of the current track.
+ * @return The current number of repeats.
+ */
+- (NSInteger)getRepeats
+{
+    // Use a more robust time-based method, rather than a loop-based method. This allows for jumping around in playback, while still having around the desired number of repeats in playback time.
+    return [audioPlayer getRepeatNumber:[self getElapsedTime]*1e-6];
 }
 
 - (void)setOccupied:(bool)newOccupied

@@ -39,7 +39,7 @@
     /// The time that the current track will loop back from when looping.
     UInt32 _loopEnd;
     /// The number of times the track has looped.
-    NSUInteger repeats;
+    NSUInteger loopCount;
     
     /// Timer for freeing tracks from memory.
     NSTimer *freeTimer;
@@ -102,13 +102,17 @@
 
 
 /*!
- * Gets the current number of repeats
+ * Gets the current loop count
  */
-- (NSUInteger)getRepeats;
+- (NSUInteger)getLoopCount;
 /*!
- * Resets the repeat counter.
+ * Resets the loop counter.
  */
-- (void)resetRepeatCounter;
+- (void)resetLoopCounter;
+/*!
+ * Gets the repeat number, given an elapsed playback time in seconds.
+ */
+- (NSInteger)getRepeatNumber:(double)elapsedTime;
 
 /*!
  * Initializes the audio player.

@@ -41,7 +41,7 @@ extern NSInteger playlistIndex;
     NSString *songString;
     /// Whether a track is being chosen by its name.
     bool chooseSongString;
-    /// The amount of milliseconds that the current track has been playing for before the shuffle timer was most recently activated... only updated at pause time, and reset at stop time or song changes.
+    /// The amount of microseconds that the current track has been playing for before the shuffle timer was most recently activated... only updated at pause time, and reset at stop time or song changes.
     double elapsedTimeBeforeTimerActivation;
     /// The time at which to resume the track if paused.
     double pauseTime;
