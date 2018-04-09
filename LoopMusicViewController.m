@@ -728,7 +728,7 @@ static const double TESTTIMEOFFSET = 5;
 
 - (double)timeVariance
 {
-    return (((double)((int)(arc4random_uniform(60) - TIMEVARIANCE))) / 60.0 + timeShuffle) * 60000000.0;
+    return (((double)((int)(arc4random_uniform(2*TIMEVARIANCE) - TIMEVARIANCE))) / 60.0 + timeShuffle) * 60000000.0;
 }
 
 // Screen changing helpers.
