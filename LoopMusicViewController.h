@@ -11,6 +11,7 @@
 #import <sys/time.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import "AudioPlayer.h"
+#import "UILoopSlider.h"
 #import <Accelerate/Accelerate.h>
 
 /// The name of the current track.
@@ -102,6 +103,8 @@ extern NSInteger playlistIndex;
     NSTimer *shuffleTimer;
     /// Timer used to fade out tracks.
     NSTimer *fadeTimer;
+    /// Timer used to update the playback slider.
+    NSTimer *playSliderUpdateTimer;
 }
 
 /// Button to randomize the current track.
@@ -116,6 +119,8 @@ extern NSInteger playlistIndex;
 @property(nonatomic, retain) UILabel *songName;
 /// Button to go to playback settings.
 @property(nonatomic, retain) UIButton *settings;
+/// Playback slider.
+@property (nonatomic, retain) IBOutlet UILoopSlider *playSlider;
 
 /// FFT setup object for vDSP.
 @property(nonatomic) FFTSetup fftSetup;
@@ -142,6 +147,21 @@ extern NSInteger playlistIndex;
  * @param sender The object that called this function.
  */
 - (IBAction)stopSong:(id)sender;
+/*!
+ * Suspends the slider update timer when the user starts interacting with the playback slider.
+ * @param sender The object that called this function.
+ */
+- (IBAction)playSliderTouchDown:(id)sender;
+/*!
+ * Resumes the slider update timer after the user lets go of the playback slider.
+ * @param sender The object that called this function.
+ */
+- (IBAction)playSliderTouchUp:(id)sender;
+/*!
+ * Updates the audio player time and the playback slider time when the slider is interacted with.
+ * @param sender The object that called this function.
+ */
+- (IBAction)playSliderUpdate:(id)sender;
 /*!
  * Navigates to the search screen.
  * @param sender The object that called this function.

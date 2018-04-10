@@ -34,7 +34,7 @@ static const double TESTTIMEOFFSET = 5;
 
 @implementation LoopMusicViewController
 
-@synthesize searchSong, playSong, randomSong, stopSong, songName, settings, fftSetup, nSetup;
+@synthesize searchSong, playSong, randomSong, stopSong, songName, settings, fftSetup, nSetup, playSlider;
 
 - (void)viewDidAppear:(BOOL)animated
 {
@@ -114,6 +114,8 @@ static const double TESTTIMEOFFSET = 5;
         [self updatePlaylistSongs];
         [self updatePlaylistName];
     }
+    
+    [playSlider useDefaultParameters];
     
 // Load local test files from the testSongs/ directory if testing on the simulator
 #if TARGET_OS_SIMULATOR
@@ -197,15 +199,37 @@ static const double TESTTIMEOFFSET = 5;
 }
 
 /*!
+ * Activates the playback slider update timer.
+ */
+- (void)activatePlaySliderUpdates
+{
+    [self stopPlaySliderUpdates];
+    playSliderUpdateTimer = [NSTimer scheduledTimerWithTimeInterval:playSlider.timeBetweenUpdates
+                                     target:self
+                                   selector:@selector(refreshPlaySlider:)
+                                   userInfo:nil
+                                    repeats:YES];
+}
+
+/*!
+ * Stops an active timer.
+ * @param timer Pointer to timer pointer. The inner pointer will be invalidated.
+ */
+- (void)stopTimer:(NSTimer *__strong*)timer
+{
+    if (*timer)
+    {
+        [*timer invalidate];
+        *timer = nil;
+    }
+}
+
+/*!
  * Stops the shuffle loop timer.
  */
 - (void)stopShuffleTimer
 {
-    if (shuffleTimer)
-    {
-        [shuffleTimer invalidate];
-        shuffleTimer = nil;
-    }
+    [self stopTimer:&shuffleTimer];
 }
 
 /*!
@@ -213,11 +237,15 @@ static const double TESTTIMEOFFSET = 5;
  */
 - (void)stopFadeTimer
 {
-    if (fadeTimer)
-    {
-        [fadeTimer invalidate];
-        fadeTimer = nil;
-    }
+    [self stopTimer:&fadeTimer];
+}
+
+/*!
+ * Stops the playback slider update timer.
+ */
+- (void)stopPlaySliderUpdates
+{
+    [self stopTimer:&playSliderUpdateTimer];
 }
 
 /*!
@@ -256,7 +284,7 @@ static const double TESTTIMEOFFSET = 5;
 
 /*!
  * Gradually fades out a track.
- * @param The timer that invoked this function.
+ * @param timer The timer that invoked this function.
  */
 - (void)fadeOut:(NSTimer *)timer
 {
@@ -279,6 +307,7 @@ static const double TESTTIMEOFFSET = 5;
     time = [self getTime];
     [audioPlayer play];
     [self activateShuffleTimer];
+    [self activatePlaySliderUpdates];
     playSymbol.hidden = false;
 }
 
@@ -407,6 +436,7 @@ static const double TESTTIMEOFFSET = 5;
     }
     [self resetForNewPlayback];
     [self startPlayback];
+    [playSlider setupNewTrack:audioPlayer.duration :audioPlayer.loopStart :audioPlayer.loopEnd];
 }
 
 - (void)setAudioPlayer:(NSURL*)newURL
@@ -426,10 +456,12 @@ static const double TESTTIMEOFFSET = 5;
 - (void)setAudioLoopStart:(NSTimeInterval)newStart
 {
     audioPlayer.loopStart = newStart;
+    playSlider.loopStart = audioPlayer.loopStart;
 }
 - (void)setAudioLoopEnd:(NSTimeInterval)newEnd
 {
     audioPlayer.loopEnd = newEnd;
+    playSlider.loopEnd = audioPlayer.loopEnd;
 }
 - (UInt32)getAudioLoopStartFrame
 {
@@ -502,6 +534,7 @@ static const double TESTTIMEOFFSET = 5;
 {
     [self stopShuffleTimer];
     [self stopFadeTimer];
+    [self stopPlaySliderUpdates];
     playSymbol.hidden = true;
 }
 
@@ -522,8 +555,39 @@ static const double TESTTIMEOFFSET = 5;
 {
     [audioPlayer stop];
     [self controllerStopPlaying];
+    [playSlider stop];
     [self resetForNewPlayback];
 }
+
+/*!
+ * Refreshes the play slider display.
+ * @param timer The timer that invoked this function.
+ */
+- (void)refreshPlaySlider:(NSTimer *)timer
+{
+    [playSlider setTime:[self findTime]];
+}
+
+- (IBAction)playSliderTouchDown:(id)sender
+{
+    [self stopPlaySliderUpdates];
+}
+- (IBAction)playSliderTouchUp:(id)sender
+{
+    if (audioPlayer.playing)
+        [self activatePlaySliderUpdates];
+}
+- (IBAction)playSliderUpdate:(id)sender
+{
+    // Check if the value has actually changed, since the valueChanged event seems to fire on touchUp even when the value didn't actually change. This is to get the "snap to the current playing time" feature if the user holds down the slider, lets it play for a bit, and then let's go without moving.
+    if (playSlider.value != playSlider.previousValue)
+    {
+        [playSlider refreshTime];
+        audioPlayer.currentTime = playSlider.value;
+        pauseTime = playSlider.value;   // Won't have any effect if not paused, since pauseTime gets reset upon pausing anyway.
+    }
+}
+
 
 - (void)chooseSong:(NSString *)newSong
 {
@@ -692,7 +756,7 @@ static const double TESTTIMEOFFSET = 5;
     }
     else
     {
-        return 0;
+        return pauseTime;
     }
 }
 

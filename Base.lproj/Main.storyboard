@@ -128,8 +128,8 @@
                                     <action selector="stopSong:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="o4A-Py-xx0"/>
                                 </connections>
                             </button>
-                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="right" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3sO-4y-4m2">
-                                <rect key="frame" x="180" y="165" width="99" height="30"/>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="right" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3sO-4y-4m2">
+                                <rect key="frame" x="180" y="146.5" width="99" height="30"/>
                                 <state key="normal" title="Random Track">
                                     <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
@@ -137,8 +137,8 @@
                                     <action selector="randomSong:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="EDQ-wf-5P4"/>
                                 </connections>
                             </button>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="No tracks added." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="tne-Gd-byn">
-                                <rect key="frame" x="16" y="28" width="288" height="46"/>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No tracks added." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="tne-Gd-byn">
+                                <rect key="frame" x="16" y="28" width="288" height="20.5"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
@@ -150,15 +150,6 @@
                                 </state>
                                 <connections>
                                     <action selector="settings:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="QRD-tK-Uho"/>
-                                </connections>
-                            </button>
-                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6dM-KI-621">
-                                <rect key="frame" x="47" y="165" width="102" height="30"/>
-                                <state key="normal" title="Choose Track">
-                                    <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                </state>
-                                <connections>
-                                    <action selector="searchSong:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="kre-aH-BoV"/>
                                 </connections>
                             </button>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="ao7-As-jf5">
@@ -191,7 +182,7 @@
                                 </connections>
                             </button>
                             <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="▶" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QXm-7J-bFf">
-                                <rect key="frame" x="137" y="111" width="42" height="21"/>
+                                <rect key="frame" x="139" y="111" width="42" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
@@ -205,6 +196,31 @@
                                     <action selector="pauseSong:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="K7v-U6-sW7"/>
                                 </connections>
                             </button>
+                            <slider opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="4lF-cQ-drj" customClass="UILoopSlider">
+                                <rect key="frame" x="43" y="193" width="230" height="31"/>
+                                <color key="backgroundColor" red="0.74898773429999999" green="0.74903941149999997" blue="0.76478832959999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <color key="maximumTrackTintColor" red="0.83522337680000003" green="0.83534115549999999" blue="0.83518618349999996" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                        <integer key="value" value="5"/>
+                                    </userDefinedRuntimeAttribute>
+                                </userDefinedRuntimeAttributes>
+                                <connections>
+                                    <action selector="playSliderTouchDown:" destination="vXZ-lx-hvc" eventType="touchDown" id="nJk-FC-zvN"/>
+                                    <action selector="playSliderTouchUp:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="DHR-yj-091"/>
+                                    <action selector="playSliderTouchUp:" destination="vXZ-lx-hvc" eventType="touchUpOutside" id="b3v-yV-Oxg"/>
+                                    <action selector="playSliderUpdate:" destination="vXZ-lx-hvc" eventType="valueChanged" id="Wd0-ov-aYw"/>
+                                </connections>
+                            </slider>
+                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6dM-KI-621">
+                                <rect key="frame" x="47" y="146" width="102" height="30"/>
+                                <state key="normal" title="Choose Track">
+                                    <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                </state>
+                                <connections>
+                                    <action selector="searchSong:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="kre-aH-BoV"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
@@ -212,21 +228,24 @@
                             <constraint firstItem="4ro-d2-Z0x" firstAttribute="trailing" secondItem="3sO-4y-4m2" secondAttribute="trailing" id="3Io-Nb-xFR"/>
                             <constraint firstItem="bRb-WC-AMs" firstAttribute="leading" secondItem="6dM-KI-621" secondAttribute="leading" id="4tb-nr-pOk"/>
                             <constraint firstItem="QXm-7J-bFf" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="6UI-fJ-Abs"/>
+                            <constraint firstItem="4lF-cQ-drj" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="9NT-Zr-HS1"/>
                             <constraint firstItem="hmN-aI-y96" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" id="BPL-HZ-xjb"/>
                             <constraint firstItem="idY-Fr-F03" firstAttribute="top" secondItem="pER-TL-t6s" secondAttribute="bottom" constant="8" id="GNE-sK-Ai7"/>
+                            <constraint firstItem="hmN-aI-y96" firstAttribute="top" secondItem="4lF-cQ-drj" secondAttribute="bottom" priority="900" constant="32" id="Hmz-bm-PeW"/>
                             <constraint firstItem="mQu-h2-UKm" firstAttribute="top" secondItem="4ro-d2-Z0x" secondAttribute="bottom" constant="36" id="Jo0-uq-ios"/>
+                            <constraint firstItem="4lF-cQ-drj" firstAttribute="leading" secondItem="bRb-WC-AMs" secondAttribute="leading" id="O7b-Ai-2pG"/>
                             <constraint firstItem="bRb-WC-AMs" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" id="O8C-0k-TK7"/>
                             <constraint firstAttribute="trailingMargin" secondItem="3sO-4y-4m2" secondAttribute="trailing" constant="25" id="PsA-V3-mPf"/>
                             <constraint firstItem="ao7-As-jf5" firstAttribute="top" secondItem="tne-Gd-byn" secondAttribute="bottom" constant="8" id="Wh0-ex-YCJ"/>
-                            <constraint firstItem="3sO-4y-4m2" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" multiplier="2:3" id="aSj-rd-MPX"/>
                             <constraint firstItem="ao7-As-jf5" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="bM6-Vh-aEU"/>
                             <constraint firstAttribute="leadingMargin" secondItem="tne-Gd-byn" secondAttribute="leading" id="dA9-dD-FQi"/>
                             <constraint firstAttribute="trailingMargin" secondItem="idY-Fr-F03" secondAttribute="trailing" constant="29" id="e8A-Bk-Q7U"/>
+                            <constraint firstItem="3sO-4y-4m2" firstAttribute="top" secondItem="QXm-7J-bFf" secondAttribute="bottom" constant="40" id="g7g-EE-eA7"/>
+                            <constraint firstItem="6dM-KI-621" firstAttribute="top" secondItem="QXm-7J-bFf" secondAttribute="bottom" constant="40" id="hGg-CW-MYD"/>
                             <constraint firstAttribute="trailingMargin" secondItem="tne-Gd-byn" secondAttribute="trailing" id="hSj-Rk-NVU"/>
                             <constraint firstItem="pER-TL-t6s" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="iJV-ul-hav"/>
                             <constraint firstItem="6dM-KI-621" firstAttribute="leading" secondItem="kh9-bI-dsS" secondAttribute="leadingMargin" constant="31" id="niS-sf-red"/>
                             <constraint firstItem="tne-Gd-byn" firstAttribute="top" secondItem="uIr-Ix-2ZE" secondAttribute="bottom" constant="8" id="orr-cG-PTE"/>
-                            <constraint firstItem="6dM-KI-621" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" multiplier="2:3" id="q0Z-0H-MTK"/>
                             <constraint firstItem="pER-TL-t6s" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" multiplier="4:3" id="rBf-Gm-YOC"/>
                             <constraint firstItem="qO1-pU-Pmq" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" id="rPJ-Qa-fOS"/>
                             <constraint firstItem="tne-Gd-byn" firstAttribute="centerX" secondItem="kh9-bI-dsS" secondAttribute="centerX" id="rUI-Ub-dcX"/>
@@ -239,6 +258,7 @@
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="playSlider" destination="4lF-cQ-drj" id="TqD-H6-evi"/>
                         <outlet property="playSong" destination="bRb-WC-AMs" id="MyL-tw-xHz"/>
                         <outlet property="playSymbol" destination="QXm-7J-bFf" id="9aa-9u-siC"/>
                         <outlet property="playlistName" destination="ao7-As-jf5" id="VR9-UH-Zji"/>
