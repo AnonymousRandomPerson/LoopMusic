@@ -335,6 +335,7 @@ static const double TESTTIMEOFFSET = 5;
 {
     if ([self isSongListEmpty])
     {
+        playSlider.maximumValue = 0;    // Prevents any sliding
         return;
     }
     if (!playlistIndex || !totalPlaylistSongs)
@@ -579,6 +580,9 @@ static const double TESTTIMEOFFSET = 5;
 }
 - (IBAction)playSliderUpdate:(id)sender
 {
+    if ([self isSongListEmpty])
+        return;
+    
     // Check if the value has actually changed, since the valueChanged event seems to fire on touchUp even when the value didn't actually change. This is to get the "snap to the current playing time" feature if the user holds down the slider, lets it play for a bit, and then let's go without moving.
     if (playSlider.value != playSlider.previousValue)
     {
