@@ -30,6 +30,13 @@
 - (void)useDefaultParameters;
 
 /*!
+ * Sets the thumb image of the slider. Necessary workaround to prevent the slider "jumping" upon valueChanged, due to some weird glitch with the slider.
+ * @param imageName The name of the image file.
+ * @param sideLength The side length the image should be resized to before setting it as the slider image.
+ */
+- (void)setThumbImageFromFilename:(NSString *)imageName :(NSInteger)sideLength;
+
+/*!
  * Sets a new loop start point.
  */
 - (void)setLoopStart:(double)loopStart;

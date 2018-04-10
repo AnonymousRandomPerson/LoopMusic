@@ -116,6 +116,7 @@ static const double TESTTIMEOFFSET = 5;
     }
     
     [playSlider useDefaultParameters];
+    [playSlider setThumbImageFromFilename:@"thumb.png" :40];    // Necessary workaround for the weird tracking glitch with the slider thumb.
     
 // Load local test files from the testSongs/ directory if testing on the simulator
 #if TARGET_OS_SIMULATOR

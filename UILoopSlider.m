@@ -20,6 +20,19 @@
     looping = false;
     timeBetweenUpdates = 0.25;
     previousValue = -1;
+    
+}
+
+- (void)setThumbImageFromFilename:(NSString *)imageName :(NSInteger)sideLength
+{
+    CGSize size = CGSizeMake(sideLength, sideLength);
+    UIGraphicsBeginImageContextWithOptions(size, NO, 0.0);
+    [[UIImage imageNamed:imageName] drawInRect:CGRectMake(0, 0, size.width, size.height)];
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    [self setThumbImage:image forState:UIControlStateNormal];
+    [self setThumbImage:image forState:UIControlStateSelected];
+    [self setThumbImage:image forState:UIControlStateHighlighted];
 }
 
 - (void)setLoopStart:(double)loopStart
