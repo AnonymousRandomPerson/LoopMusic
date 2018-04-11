@@ -456,7 +456,7 @@
     else
     {
         NSInteger endpointsRank = [currentPairRanks[durationRank] integerValue];
-        [self updateText:loopEndpointView:endpointsRankLabel:[NSString stringWithFormat:@"Rank: %li", 1+endpointsRank]];
+        [self updateText:loopEndpointView:endpointsRankLabel:[NSString stringWithFormat:@"Rank: %li.%li", 1+durationRank, 1+endpointsRank]];
         
         if ([loopFinderResults[@"startFrames"][durationRank] count] > 0)
         {
