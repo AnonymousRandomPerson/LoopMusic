@@ -70,4 +70,11 @@
 - (void)cycleFromVC:(UIViewController *)oldVC toVC:(UIViewController *)newVC;
 
 
+/*!
+ * Sets the playback time to five seconds before the loop time.
+ * @param sender The object that called this function.
+ */
+- (IBAction)testTime:(id)sender;
+
+
 @end

@@ -118,4 +118,10 @@
     [newVC didMoveToParentViewController:self];
 }
 
+
+- (IBAction)testTime:(id)sender
+{
+    [presenter testTime];
+}
+
 @end

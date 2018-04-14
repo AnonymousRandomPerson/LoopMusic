@@ -70,13 +70,6 @@
 
 
 
-- (IBAction)testTime:(id)sender
-{
-    [presenter testTime];
-}
-
-
-
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
