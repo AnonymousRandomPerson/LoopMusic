@@ -15,7 +15,7 @@
 
 @implementation LoopFinderAuto
 
-@synthesize nBestDurations, nBestPairs, leftIgnore, rightIgnore, sampleDiffTol, minLoopLength, minTimeDiff, fftLength, overlapPercent, t1Estimate, t2Estimate, tauRadius, t1Radius, t2Radius, tauPenalty, t1Penalty, t2Penalty, useFadeDetection, useMonoAudio, framerateReductionFactor, effectiveFramerate,fftSetup, nSetup;
+@synthesize nBestDurations, nBestPairs, leftIgnore, rightIgnore, sampleDiffTol, minLoopLength, minTimeDiff, fftLength, overlapPercent, t1Estimate, t2Estimate, tauRadius, t1Radius, t2Radius, tauPenalty, t1Penalty, t2Penalty, useFadeDetection, useMonoAudio, framerateReductionFactor, effectiveFramerate, lengthLimit, framerateReductionLimit, fftSetup, nSetup;
 
 - (id)init
 {
@@ -40,15 +40,15 @@
     confidenceRegularization = 2.5;
     
     // PARAMETERS
-    nBestDurations = 10;
+    nBestDurations = 12;
     nBestPairs = 5;
     
-    leftIgnore = 5;
+    leftIgnore = 15;
     rightIgnore = 5;
     sampleDiffTol = 0.05;
     minLoopLength = 5;
-    minTimeDiff = 0.1;
-    fftLength = (1 << 16);
+    minTimeDiff = 0.5;
+    fftLength = (1 << 15);
     overlapPercent = 50;
     
     tauRadius = 1;
@@ -63,6 +63,9 @@
     useMonoAudio = true;
     framerateReductionFactor = 6;
     effectiveFramerate = (float)FRAMERATE;
+    
+    lengthLimit = 1 << 21;   // Anything above around 3200000 will lead to crashes.
+    framerateReductionLimit = 10; // Any lower and the typical human-audible frequencies will be unresolvable.
     
 //    nSetup = 0;
 }
@@ -291,10 +294,6 @@
 
 - (NSDictionary *)findLoop:(const AudioData *)audio
 {
-    // EMPIRICAL LIMIT TO REDUCED AUDIO DATA LENGTH. Reduce the audio to this length before running the algorithm.
-    NSUInteger lengthLimit = 3200000;
-    NSInteger framerateReductionLimit = 12; // Maximum the framerate will be reduced by. Any lower and the typical human-audible frequencies will be unresolvable.
-    
     // To hold the floating-point-converted audio data.
     AudioDataFloat *floatAudio = malloc(sizeof(AudioDataFloat));
     

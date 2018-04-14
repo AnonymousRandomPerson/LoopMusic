@@ -90,6 +90,10 @@ typedef enum loopModeValue { loopModeAuto, loopModeT1T2, loopModeT1Only, loopMod
 @property(nonatomic) int framerateReductionFactor;
 /// Effective framerate within the loop finder, as a result of reducing the global FRAMERATE by some factor.
 @property(nonatomic) float effectiveFramerate;
+/// EMPIRICAL LIMIT TO REDUCED AUDIO DATA LENGTH. Reduce the audio to this length before running the algorithm.
+@property(nonatomic) NSUInteger lengthLimit;
+// Maximum the framerate will be reduced by.
+@property(nonatomic) NSInteger framerateReductionLimit;
 
 /// FFT setup object for vDSP.
 @property(nonatomic) FFTSetup fftSetup;

@@ -1769,7 +1769,7 @@
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="1" minValue="1" maxValue="12" translatesAutoresizingMaskIntoConstraints="NO" id="UQ8-dH-Y56">
+                                                <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="1" minValue="1" maxValue="10" translatesAutoresizingMaskIntoConstraints="NO" id="UQ8-dH-Y56">
                                                     <rect key="frame" x="28" y="6.5" width="228" height="31"/>
                                                     <connections>
                                                         <action selector="setFramerateReductionFactor:" destination="1Zp-Rf-t4M" eventType="valueChanged" id="hLc-af-A2F"/>
