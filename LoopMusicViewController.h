@@ -418,6 +418,11 @@ extern NSInteger playlistIndex;
  */
 - (float)findTime;
 /*!
+ * Gets whether the audio player is playing.
+ * @return Boolean for whether the audio player is playing.
+ */
+- (bool)isPlaying;
+/*!
  * Sets the loop time of the current track.
  * @param newLoopTime The time to set the loop time to.
  * @return The result code of the database update query for setting the loop time.

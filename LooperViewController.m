@@ -6,7 +6,6 @@
 //  Copyright © 2018 Cheng Hann Gan. All rights reserved.
 //
 
-
 #import "LooperViewController.h"
 
 @interface LooperViewController ()
@@ -29,11 +28,25 @@
     self->presenter = presenterPtr;
 }
 
+// Loads a pointer to the play slider on the parent view controller.
+- (void)loadPlaySlider:(UILoopSlider *)sliderPtr
+{
+    self->playSlider = sliderPtr;
+}
+
 // Clears the borrowed presenter pointer.
 - (void)unloadPresenter
 {
     presenter = nil;
 }
+
+// Clears the borrowed slider pointer.
+- (void)unloadPlaySlider
+{
+    playSlider = nil;
+}
+
+
 
 
 
@@ -60,15 +73,20 @@
 - (void)setLoopStart:(NSTimeInterval)loopStart
 {
     [presenter setAudioLoopStart:loopStart];
+    [playSlider setLoopStart:loopStart];
     [self sqliteUpdate:@"loopstart" newTime:[presenter getAudioLoopStart]];
 }
 - (void)setLoopEnd:(NSTimeInterval)loopEnd
 {
     [presenter setAudioLoopEnd:loopEnd];
+    [playSlider setLoopEnd:loopEnd];
     [self sqliteUpdate:@"loopend" newTime:[presenter getAudioLoopEnd]];
 }
-
-
+- (void)setCurrentTime:(NSTimeInterval)time
+{
+    [playSlider setTime:time];
+    [presenter setCurrentTime:time];
+}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

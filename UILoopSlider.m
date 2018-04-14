@@ -10,7 +10,7 @@
 
 @implementation UILoopSlider
 
-@synthesize loopingEnabled, looping, loopStart, loopEnd, timeBetweenUpdates, previousValue, getCurrentTime;
+@synthesize loopingEnabled, looping, loopStart, loopEnd, timeBetweenUpdates, fastMode, intervalThreshold, previousValue, getCurrentTime;
 
 - (void)useDefaultParameters
 {
@@ -19,6 +19,8 @@
     loopingEnabled = true;
     looping = false;
     timeBetweenUpdates = 0.25;
+    intervalThreshold = 1.5;
+    fastMode = false;
     previousValue = -1;
     [self setThumbImageFromFilename:@"thumb.png" :40]; // Necessary workaround for the weird tracking glitch with the slider thumb.
     getCurrentTime = ^float (void) { return 0; };   // Default block always returns 0 as the current time. Needs to be set for proper functioning.
@@ -43,12 +45,55 @@
 - (void)refreshSlider:(NSTimer *)timer
 {
     [self setTime:self.getCurrentTime()];
+    
+    if (!fastMode && loopEnd - self.getCurrentTime() <= intervalThreshold*timeBetweenUpdates)
+    {
+        [self switchToFastTimerMode];
+//        NSLog(@"Activating fast mode.");
+    }
+    else if (fastMode && loopEnd - self.getCurrentTime() > intervalThreshold*timeBetweenUpdates)
+    {
+        [self activateUpdateTimer];
+//        NSLog(@"Deactivating fast mode.");
+    }
+}
+
+- (void)copySettingsFromSlider:(UILoopSlider *)otherSlider
+{
+    loopingEnabled = otherSlider.loopingEnabled;
+    timeBetweenUpdates = otherSlider.timeBetweenUpdates;
+    getCurrentTime = otherSlider.getCurrentTime;
+    
+    self.minimumValue = otherSlider.minimumValue;
+    self.maximumValue = otherSlider.maximumValue;
+    loopStart = otherSlider.loopStart;
+    loopEnd = otherSlider.loopEnd;
+    self.value = otherSlider.value;
+    previousValue = otherSlider.previousValue;
+    
+    looping = otherSlider.looping;
 }
 
 - (void)activateUpdateTimer
 {
     [self stopUpdateTimer];
-    updateTimer = [NSTimer scheduledTimerWithTimeInterval:self.timeBetweenUpdates
+    fastMode = false;
+    updateTimer = [NSTimer scheduledTimerWithTimeInterval:timeBetweenUpdates
+                                                   target:self
+                                                 selector:@selector(refreshSlider:)
+                                                 userInfo:nil
+                                                  repeats:YES];
+}
+
+/*!
+ * Switches the update timer to a much finer resolution. For when the loop point is near.
+ */
+- (void)switchToFastTimerMode
+{
+    double fastUpdateInterval = 1e-3;   // Millisecond resolution
+    [self stopUpdateTimer];
+    fastMode = true;
+    updateTimer = [NSTimer scheduledTimerWithTimeInterval:fastUpdateInterval
                                                    target:self
                                                  selector:@selector(refreshSlider:)
                                                  userInfo:nil

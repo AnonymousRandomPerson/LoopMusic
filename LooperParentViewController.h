@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import "UILoopSlider.h"
 #import "LoopMusicViewController.h"
 #import "LooperAutoViewController.h"
 #import "LooperManualViewController.h"
@@ -40,6 +41,8 @@
 @property(weak, nonatomic) IBOutlet UIView *containerView;
 /// Current child view controller being displayed.
 @property(weak, nonatomic) UIViewController *currentViewController;
+/// Playback slider.
+@property(strong, nonatomic) IBOutlet UILoopSlider *playSlider;
 
 
 /*!

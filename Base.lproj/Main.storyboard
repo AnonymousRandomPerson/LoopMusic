@@ -686,7 +686,7 @@
                                 </connections>
                             </button>
                             <slider opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="251" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="VjI-sE-JSv" customClass="UILoopSlider">
-                                <rect key="frame" x="-2" y="523" width="248" height="31"/>
+                                <rect key="frame" x="-2" y="523" width="240" height="31"/>
                                 <color key="backgroundColor" red="0.74898773429999999" green="0.74903941149999997" blue="0.76478832959999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <color key="minimumTrackTintColor" red="0.53661210280000005" green="0.54961935679999996" blue="0.58864111870000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <color key="maximumTrackTintColor" red="0.83522337680000003" green="0.83534115549999999" blue="0.83518618349999996" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -696,10 +696,10 @@
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
                                 <connections>
-                                    <action selector="playSliderTouchDown:" destination="vXZ-lx-hvc" eventType="touchDown" id="FNQ-dQ-6IO"/>
-                                    <action selector="playSliderTouchUp:" destination="vXZ-lx-hvc" eventType="touchUpOutside" id="0YP-SV-Rdl"/>
-                                    <action selector="playSliderTouchUp:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="hNW-Ak-2fp"/>
-                                    <action selector="playSliderUpdate:" destination="vXZ-lx-hvc" eventType="valueChanged" id="9U0-tb-SXl"/>
+                                    <action selector="playSliderTouchDown:" destination="Esr-xo-TVe" eventType="touchDown" id="w1S-mv-9Kk"/>
+                                    <action selector="playSliderTouchUp:" destination="Esr-xo-TVe" eventType="touchUpInside" id="9A9-1E-vUY"/>
+                                    <action selector="playSliderTouchUp:" destination="Esr-xo-TVe" eventType="touchUpOutside" id="NI1-rs-ROi"/>
+                                    <action selector="playSliderUpdate:" destination="Esr-xo-TVe" eventType="valueChanged" id="gRZ-Lc-Re6"/>
                                 </connections>
                             </slider>
                         </subviews>
@@ -726,6 +726,7 @@
                     <connections>
                         <outlet property="containerView" destination="V4e-Uu-AZf" id="rqu-zT-PQo"/>
                         <outlet property="modePicker" destination="lT3-zz-lwL" id="Rki-bC-v1n"/>
+                        <outlet property="playSlider" destination="VjI-sE-JSv" id="Phx-Hw-F5o"/>
                         <outlet property="songName" destination="a3N-ZV-7Ur" id="7uf-vq-sHA"/>
                     </connections>
                 </viewController>

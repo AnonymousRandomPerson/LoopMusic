@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "UILoopSlider.h"
 #import "LoopMusicViewController.h"
 
 /// Base class for the LooperAutoViewConroller and LooperManualViewController.
@@ -14,6 +15,9 @@
 {
     /// The main screen of the app.
     LoopMusicViewController *presenter;
+    
+    /// The slider of the parent view
+    UILoopSlider *playSlider;
 }
 
 
@@ -24,9 +28,19 @@
  */
 - (void)loadPresenter:(LoopMusicViewController *)presenterPtr;
 /*!
+ * Reads in the play slider.
+ * @param sliderPtr The pointer to the play slider.
+ */
+- (void)loadPlaySlider:(UILoopSlider *)sliderPtr;
+
+/*!
  * Empties the borrowed pointer to the main screen.
  */
 - (void)unloadPresenter;
+/*!
+ * Empties the borrowed pointer to the play slider.
+ */
+- (void)unloadPlaySlider;
 
 
 // Helpers for loop setting.
@@ -40,6 +54,11 @@
  * @param loopEnd The new loop end point.
  */
 - (void)setLoopEnd:(NSTimeInterval)loopEnd;
+/*!
+ * Sets the playback time of the current track.
+ * @param time The time to set playback to.
+ */
+- (void)setCurrentTime:(NSTimeInterval)time;
 
 
 

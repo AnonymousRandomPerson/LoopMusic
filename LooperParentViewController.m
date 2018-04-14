@@ -10,7 +10,7 @@
 
 @implementation LooperParentViewController
 
-@synthesize modePicker, songName, containerView, currentViewController;
+@synthesize modePicker, songName, containerView, currentViewController, playSlider;
 
 - (void)viewDidLoad
 {
@@ -26,6 +26,9 @@
     self.currentViewController = childAuto;
     [self addChildViewController:self.currentViewController];
     [self addSubview:self.currentViewController.view toView:self.containerView];
+    
+    // Set defaults for play slider.
+    [playSlider useDefaultParameters];
     
     // Load the main screen of the app.
     /// Timer to load the current track name and the main screen of the app.
@@ -45,17 +48,32 @@
     // LooperViewController already opens/closes DB with each update
 //    [presenter openDB];
     
-    // Load the presenter into the current view controller
+    // Load the presenter and play slider into the current view controller
     if (!loopMode)
     {
         [childAuto loadPresenter:presenter];
+        [childAuto loadPlaySlider:playSlider];
     }
     else
     {
         [childManual loadPresenter:presenter];
+        [childManual loadPlaySlider:playSlider];
     }
     
     [childAuto loadFFTSetup:presenter.fftSetup :presenter.nSetup];
+    
+    // Copy over the settings from the main play slider and start the timer.
+    [playSlider copySettingsFromSlider:presenter.playSlider];
+    [self activateSliderUpdateTimer];
+}
+
+/*!
+ * Conditionally activate the play slider's update timer if the audio player is playing.
+ */
+- (void)activateSliderUpdateTimer
+{
+    if ([presenter isPlaying])
+        [playSlider activateUpdateTimer];
 }
 
 - (IBAction)back:(id)sender
@@ -75,13 +93,17 @@
     {
         case 0:
             [childManual unloadPresenter];
+            [childManual unloadPlaySlider];
             [childAuto loadPresenter:presenter];
+            [childAuto loadPlaySlider:playSlider];
             [self cycleFromVC:self.currentViewController toVC:childAuto];
             self.currentViewController = childAuto;
             break;
         case 1:
             [childAuto unloadPresenter];
+            [childAuto unloadPlaySlider];
             [childManual loadPresenter:presenter];
+            [childManual loadPlaySlider:playSlider];
             [self cycleFromVC:self.currentViewController toVC:childManual];
             self.currentViewController = childManual;
             break;
@@ -122,6 +144,22 @@
 - (IBAction)testTime:(id)sender
 {
     [presenter testTime];
+    [playSlider setTime:playSlider.getCurrentTime()];
+    [self activateSliderUpdateTimer];
+}
+
+- (IBAction)playSliderTouchDown:(id)sender
+{
+    [playSlider stopUpdateTimer];
+}
+- (IBAction)playSliderTouchUp:(id)sender
+{
+    if ([presenter isPlaying])
+        [playSlider activateUpdateTimer];
+}
+- (IBAction)playSliderUpdate:(id)sender
+{
+    [playSlider updateAudioPlayer:[presenter valueForKey:@"audioPlayer"]]; // Update the audio player time. Forcibly access the audioPlayer just for this purpose.
 }
 
 @end

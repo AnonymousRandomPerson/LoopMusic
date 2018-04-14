@@ -45,7 +45,7 @@ static const NSTimeInterval LOOPPOINTINCREMENT = 0.001;
         setCurrentTime.text = @"";
         return;
     }
-    [presenter setCurrentTime:[setCurrentTime.text doubleValue]];
+    [super setCurrentTime:[setCurrentTime.text doubleValue]];
 }
 
 - (IBAction)finderSetTime:(id)sender

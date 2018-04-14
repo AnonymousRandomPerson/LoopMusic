@@ -28,6 +28,10 @@
 @property (nonatomic) double timeBetweenUpdates;
 /// The most recently set value that went through bounds checking (setTime or refreshTime). Useful for checking if the value has actually changed, since the valueChanged event seems to fire on touchUp even when the value didn't actually change. This is to get the "snap to the current playing time" feature if the user holds down the slider, lets it play for a bit, and then let's go without moving.
 @property (nonatomic) float previousValue;
+/// Flag for whether the refresh timer is in fast mode in preparation for the loop end.
+@property (nonatomic) bool fastMode;
+/// Internal parameter for how many <timeBetweenUpdate>s there can be before the end point before switching to fast mode.
+@property (nonatomic) double intervalThreshold;
 /// Block that returns the current time to update to.
 @property (nonatomic) float (^getCurrentTime) (void);
 
@@ -44,7 +48,13 @@
 - (void)setThumbImageFromFilename:(NSString *)imageName :(NSInteger)sideLength;
 
 /*!
- * Activates the slider update timer.
+ * Copies the settings from one play slider to another.
+ * @param otherSlider The slider to copy settings from.
+ */
+- (void)copySettingsFromSlider:(UILoopSlider *)otherSlider;
+
+/*!
+ * Activates the slider update timer in normal (slow) mode.
  */
 - (void)activateUpdateTimer;
 /*!

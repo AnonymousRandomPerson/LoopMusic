@@ -48,7 +48,7 @@
     sampleDiffTol = 0.05;
     minLoopLength = 5;
     minTimeDiff = 0.1;
-    fftLength = (1 << 17);
+    fftLength = (1 << 16);
     overlapPercent = 50;
     
     tauRadius = 1;

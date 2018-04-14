@@ -735,6 +735,11 @@ static const double TESTTIMEOFFSET = 5;
     return audioPlayer.currentTime;
 }
 
+- (bool)isPlaying
+{
+    return audioPlayer.playing;
+}
+
 - (BOOL)canBecomeFirstResponder
 {
     return YES;
