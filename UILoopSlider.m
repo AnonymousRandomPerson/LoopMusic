@@ -10,7 +10,7 @@
 
 @implementation UILoopSlider
 
-@synthesize loopingEnabled, looping, loopStart, loopEnd, timeBetweenUpdates, previousValue;
+@synthesize loopingEnabled, looping, loopStart, loopEnd, timeBetweenUpdates, previousValue, getCurrentTime;
 
 - (void)useDefaultParameters
 {
@@ -20,7 +20,8 @@
     looping = false;
     timeBetweenUpdates = 0.25;
     previousValue = -1;
-    
+    [self setThumbImageFromFilename:@"thumb.png" :40]; // Necessary workaround for the weird tracking glitch with the slider thumb.
+    getCurrentTime = ^float (void) { return 0; };   // Default block always returns 0 as the current time. Needs to be set for proper functioning.
 }
 
 - (void)setThumbImageFromFilename:(NSString *)imageName :(NSInteger)sideLength
@@ -33,6 +34,45 @@
     [self setThumbImage:image forState:UIControlStateNormal];
     [self setThumbImage:image forState:UIControlStateSelected];
     [self setThumbImage:image forState:UIControlStateHighlighted];
+}
+
+/*!
+ * Refreshes the play slider.
+ * @param timer The timer that invoked this function.
+ */
+- (void)refreshSlider:(NSTimer *)timer
+{
+    [self setTime:self.getCurrentTime()];
+}
+
+- (void)activateUpdateTimer
+{
+    [self stopUpdateTimer];
+    updateTimer = [NSTimer scheduledTimerWithTimeInterval:self.timeBetweenUpdates
+                                                   target:self
+                                                 selector:@selector(refreshSlider:)
+                                                 userInfo:nil
+                                                  repeats:YES];
+}
+
+- (void)stopUpdateTimer
+{
+    if (updateTimer)
+    {
+        [updateTimer invalidate];
+        updateTimer = nil;
+    }
+}
+
+- (void)updateAudioPlayer:(AudioPlayer *)player
+{
+    // Check if the value has actually changed, since the valueChanged event seems to fire on touchUp even when the value didn't actually change. This is to get the "snap to the current playing time" feature if the user holds down the slider, lets it play for a bit, and then let's go without moving.
+    if (self.value != self.previousValue)
+    {
+        [self refreshTime];
+        player.currentTime = self.value;
+        player.pauseTime = self.value;  // Won't have any effect if not paused, since pauseTime gets reset upon pausing anyway.
+    }
 }
 
 - (void)setLoopStart:(double)loopStart
