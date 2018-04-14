@@ -115,8 +115,10 @@ static const double TESTTIMEOFFSET = 5;
         [self updatePlaylistName];
     }
     
+    // Set up the play slider
     [playSlider useDefaultParameters];
-    [playSlider setThumbImageFromFilename:@"thumb.png" :40];    // Necessary workaround for the weird tracking glitch with the slider thumb.
+    __weak typeof(self) weakSelf = self;
+    playSlider.getCurrentTime = ^float (void) { return [weakSelf findTime]; };
     
 // Load local test files from the testSongs/ directory if testing on the simulator
 #if TARGET_OS_SIMULATOR
@@ -199,18 +201,6 @@ static const double TESTTIMEOFFSET = 5;
                                                 repeats:YES];
 }
 
-/*!
- * Activates the playback slider update timer.
- */
-- (void)activatePlaySliderUpdates
-{
-    [self stopPlaySliderUpdates];
-    playSliderUpdateTimer = [NSTimer scheduledTimerWithTimeInterval:playSlider.timeBetweenUpdates
-                                     target:self
-                                   selector:@selector(refreshPlaySlider:)
-                                   userInfo:nil
-                                    repeats:YES];
-}
 
 /*!
  * Stops an active timer.
@@ -241,13 +231,6 @@ static const double TESTTIMEOFFSET = 5;
     [self stopTimer:&fadeTimer];
 }
 
-/*!
- * Stops the playback slider update timer.
- */
-- (void)stopPlaySliderUpdates
-{
-    [self stopTimer:&playSliderUpdateTimer];
-}
 
 /*!
  * Checks if the audio track should be shuffled.
@@ -308,7 +291,9 @@ static const double TESTTIMEOFFSET = 5;
     time = [self getTime];
     [audioPlayer play];
     [self activateShuffleTimer];
-    [self activatePlaySliderUpdates];
+    // Only update the play slider if on the main screen.
+    if (!occupied)
+        [playSlider activateUpdateTimer];
     playSymbol.hidden = false;
 }
 
@@ -535,7 +520,7 @@ static const double TESTTIMEOFFSET = 5;
 {
     [self stopShuffleTimer];
     [self stopFadeTimer];
-    [self stopPlaySliderUpdates];
+    [playSlider stopUpdateTimer];
     playSymbol.hidden = true;
 }
 
@@ -559,36 +544,21 @@ static const double TESTTIMEOFFSET = 5;
     [self resetForNewPlayback];
 }
 
-/*!
- * Refreshes the play slider display.
- * @param timer The timer that invoked this function.
- */
-- (void)refreshPlaySlider:(NSTimer *)timer
-{
-    [playSlider setTime:[self findTime]];
-}
-
 - (IBAction)playSliderTouchDown:(id)sender
 {
-    [self stopPlaySliderUpdates];
+    [playSlider stopUpdateTimer];
 }
 - (IBAction)playSliderTouchUp:(id)sender
 {
     if (audioPlayer.playing)
-        [self activatePlaySliderUpdates];
+        [playSlider activateUpdateTimer];
 }
 - (IBAction)playSliderUpdate:(id)sender
 {
     if ([self isSongListEmpty])
         return;
     
-    // Check if the value has actually changed, since the valueChanged event seems to fire on touchUp even when the value didn't actually change. This is to get the "snap to the current playing time" feature if the user holds down the slider, lets it play for a bit, and then let's go without moving.
-    if (playSlider.value != playSlider.previousValue)
-    {
-        [playSlider refreshTime];
-        audioPlayer.currentTime = playSlider.value;
-        audioPlayer.pauseTime = playSlider.value;   // Won't have any effect if not paused, since pauseTime gets reset upon pausing anyway.
-    }
+    [playSlider updateAudioPlayer:audioPlayer]; // Update the audio player time.
 }
 
 
@@ -687,6 +657,14 @@ static const double TESTTIMEOFFSET = 5;
     if (occupied)
     {
         audioPlayer.volume = volumeSet;
+        // Stop updating the play slider.
+        [playSlider stopUpdateTimer];
+    }
+    else
+    {
+        // Start updating the play slider again.
+        [playSlider setTime:[self findTime]]; // Refresh once right away, before starting the timer for subsequent calls.
+        [playSlider activateUpdateTimer];
     }
 }
 
