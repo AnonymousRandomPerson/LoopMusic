@@ -319,7 +319,7 @@ static const double TESTTIMEOFFSET = 5;
 {
     [audioPlayer resetLoopCounter];
     fadeTime = 0;
-    pauseTime = 0;
+    audioPlayer.pauseTime = 0;
     elapsedTimeBeforeTimerActivation = 0;
 }
 
@@ -508,7 +508,6 @@ static const double TESTTIMEOFFSET = 5;
     }
     if (!audioPlayer.playing)
     {
-        audioPlayer.currentTime = pauseTime;
         [self startPlayback];
     }
 }
@@ -545,9 +544,8 @@ static const double TESTTIMEOFFSET = 5;
  */
 - (void)pausePlayer
 {
-    pauseTime = audioPlayer.currentTime;
     elapsedTimeBeforeTimerActivation += [self getTime] - time;
-    [audioPlayer stop];
+    [audioPlayer pause];
     [self controllerStopPlaying];
 }
 /*!
@@ -589,7 +587,7 @@ static const double TESTTIMEOFFSET = 5;
     {
         [playSlider refreshTime];
         audioPlayer.currentTime = playSlider.value;
-        pauseTime = playSlider.value;   // Won't have any effect if not paused, since pauseTime gets reset upon pausing anyway.
+        audioPlayer.pauseTime = playSlider.value;   // Won't have any effect if not paused, since pauseTime gets reset upon pausing anyway.
     }
 }
 
@@ -728,6 +726,7 @@ static const double TESTTIMEOFFSET = 5;
     {
         test = 0;
     }
+    [self playSong:nil];    // Starts playback if not playing already.
     [self setCurrentTime:test];
 }
 
@@ -755,14 +754,7 @@ static const double TESTTIMEOFFSET = 5;
 
 - (float)findTime
 {
-    if (audioPlayer.playing)
-    {
-        return audioPlayer.currentTime;
-    }
-    else
-    {
-        return pauseTime;
-    }
+    return audioPlayer.currentTime;
 }
 
 - (BOOL)canBecomeFirstResponder

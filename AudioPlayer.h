@@ -55,6 +55,8 @@
 @property(nonatomic, readonly) bool playing;
 /// The duration of the track in the audio player in seconds.
 @property(nonatomic, readonly) double duration;
+/// The time at which to resume the track if paused.
+@property(nonatomic) double pauseTime;
 /// The time that the current track will loop back to when looping in seconds.
 @property(nonatomic) NSTimeInterval loopStart;
 /// The time that the current track will loop back from when looping in seconds.
@@ -91,9 +93,14 @@
 
 
 /*!
- * Starts playback of the audio player.
+ * Starts/resumes playback of the audio player.
  */
 - (void)play;
+
+/*!
+ * Pauses playback of the audio player.
+ */
+- (void)pause;
 
 /*!
  * Stops playback of the audio player.

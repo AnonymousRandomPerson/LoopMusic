@@ -18,6 +18,8 @@ static const float SEARCHTOLERANCE = 300;
 
 @implementation AudioPlayer
 
+@synthesize pauseTime;
+
 - (id)init
 {
     self = [super init];
@@ -31,6 +33,8 @@ static const float SEARCHTOLERANCE = 300;
     {
         NSLog(@"%@", [error description]);
     }
+    
+    pauseTime = 0;
     [self resetLoopCounter];
     [self startFreeTimer];
     
@@ -77,7 +81,7 @@ static const float SEARCHTOLERANCE = 300;
 
 - (NSTimeInterval)currentTime
 {
-    return audioData->currentFrame / (NSTimeInterval)FRAMERATE;
+    return _playing ? audioData->currentFrame / (NSTimeInterval)FRAMERATE : pauseTime;
 }
 
 - (void)setCurrentTime:(NSTimeInterval)currentTime
@@ -173,15 +177,30 @@ static const float SEARCHTOLERANCE = 300;
         [_audioController addChannels:@[_blockChannel]];
     }
     [self startFreeTimer];
+    self.currentTime = pauseTime;
 }
 
-- (void)stop
+/*!
+ *Stops playback of the audio player.
+ */
+- (void)stopPlayback
 {
     _playing = false;
     if ([self numChannels] > 0)
     {
         [_audioController removeChannels:@[_blockChannel]];
     }
+}
+- (void)pause
+{
+    pauseTime = self.currentTime;
+    [self stopPlayback];
+}
+
+- (void)stop
+{
+    pauseTime = 0;
+    [self stopPlayback];
 }
 
 - (NSUInteger)getLoopCount
