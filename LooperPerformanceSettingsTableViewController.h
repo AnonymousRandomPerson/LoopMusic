@@ -36,4 +36,11 @@
  */
 - (void)updateFramerateReductionFactorSlider;
 
+/*!
+ * Sets the framerate reduction limit.
+ * @param sender The object that called this function.
+ */
+- (IBAction)setFramerateReductionLimit:(id)sender;
+
+
 @end

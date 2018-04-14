@@ -167,6 +167,26 @@
 {
     self->tauPenalty = [self sanitizeFloat:tauPenalty :0 : 1];
 }
+- (void)setFramerateReductionFactor:(int)framerateReductionFactor
+{
+    self->framerateReductionFactor = [self sanitizeInt:framerateReductionFactor :1 :(int)self->framerateReductionLimit];
+}
+- (void)setFramerateReductionLimit:(float)framerateReductionLimit
+{
+    self->framerateReductionLimit = [self sanitizeInt:roundf(framerateReductionLimit) :1];
+}
+
+- (float)lengthLimit
+{
+    // Return value in minutes. Depends on the maximum framerate reduction limit.
+    return (float)self->lengthLimit / FRAMERATE / 60 * self->framerateReductionLimit;
+}
+- (void)setLengthLimit:(float)lengthLimit
+{
+    // Set by the number of minutes. The set value depends on the framerate reduction limit.
+    // Limit frame count between 2 and 2^22.
+    self->lengthLimit = [self sanitizeInt:roundf(lengthLimit / self->framerateReductionLimit * 60 * FRAMERATE) :2 : (1 << 22)];
+}
 
 - (bool)hasT1Estimate
 {

@@ -26,7 +26,9 @@
 /// Returns the parameter names dictionary.
 - (NSDictionary*)formParamNamesDict
 {
-    return @{};
+    return @{@1: @"framerateReductionLimit",
+             @2: @"lengthLimit"
+             };
 }
 
 
@@ -63,6 +65,14 @@
     [framerateReductionFactorSlider setValue:self.finder.framerateReductionFactor];
 }
 
+- (IBAction)setFramerateReductionLimit:(id)sender
+{
+    [self updateSetting:sender];
+    framerateReductionFactorSlider.maximumValue = self.finder.framerateReductionLimit;
+    [self setFramerateReductionFactor:sender];
+    [self refreshParameterDisplays];
+    
+}
 
 - (void)didReceiveMemoryWarning
 {
