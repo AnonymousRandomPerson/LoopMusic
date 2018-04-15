@@ -137,6 +137,7 @@
     if ([shuffleTime.text doubleValue] > 0)
     {
         timeShuffle = [shuffleTime.text doubleValue];
+        [presenter recalculateShuffleTime];
     }
     else
     {

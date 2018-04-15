@@ -90,7 +90,7 @@ static const double TESTTIMEOFFSET = 5;
         NSArray *splitSettings = [contentOfFile componentsSeparatedByString:@","];
         shuffleSetting = [splitSettings[0] integerValue];
         timeShuffle = [splitSettings[1] doubleValue];
-        timeShuffle2 = [self timeVariance];
+        [self recalculateShuffleTime];
         repeatsShuffle = [splitSettings[2] integerValue];
         fadeSetting = splitSettings.count > 3 ? [splitSettings[3] doubleValue] : 0;
         playlistIndex = splitSettings.count > 4 ? [splitSettings[4] integerValue] : 0;
@@ -101,7 +101,7 @@ static const double TESTTIMEOFFSET = 5;
         // Default values.
         shuffleSetting = 1;
         timeShuffle = 3.5;
-        timeShuffle2 = [self timeVariance];
+        [self recalculateShuffleTime];
         repeatsShuffle = 3;
         fadeSetting = 2;
         playlistIndex = 0;
@@ -304,7 +304,7 @@ static const double TESTTIMEOFFSET = 5;
 - (void)resetForNewPlayback
 {
     [audioPlayer resetLoopCounter];
-    fadeTime = 0;
+    [self stopFadeTimer];   // Stop fade if happening, and reset the fade time counter.
     audioPlayer.pauseTime = 0;
     elapsedTimeBeforeTimerActivation = 0;
 }
@@ -390,7 +390,7 @@ static const double TESTTIMEOFFSET = 5;
             }
         } while (musicNumber == random && totalPlaylistSongs != 1);
         musicNumber = random;
-        timeShuffle2 = [self timeVariance];
+        [self recalculateShuffleTime];
         
         [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks WHERE id = %li", (long)musicNumber]];
         if (sqlite3_step(statement) == SQLITE_ROW)
@@ -776,6 +776,10 @@ static const double TESTTIMEOFFSET = 5;
 - (double)timeVariance
 {
     return (((double)((int)(arc4random_uniform(2*TIMEVARIANCE) - TIMEVARIANCE))) / 60.0 + timeShuffle) * 60000000.0;
+}
+- (void)recalculateShuffleTime
+{
+    timeShuffle2 = [self timeVariance];
 }
 
 // Screen changing helpers.

@@ -438,6 +438,10 @@ extern NSInteger playlistIndex;
  * @return A randomly varied amount of time to play the current track before shuffling.
  */
 - (double)timeVariance;
+/*!
+ * Recalculates internal shuffle time limit parameter, based on the base time and a random variation.
+ */
+- (void)recalculateShuffleTime;
 
 /*!
  * Displays an error message on the screen.
