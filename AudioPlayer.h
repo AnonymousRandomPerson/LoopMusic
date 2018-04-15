@@ -65,6 +65,12 @@
 @property(nonatomic) bool loading;
 
 /*!
+ * Decrements the base volume.
+ * @param volumeDec The amount to decrement by.
+ */
+- (void)decrementVolume:(float)volumeDec;
+
+/*!
  * Returns the loop start point in frames.
  * @return The loop start point frame number.
  */

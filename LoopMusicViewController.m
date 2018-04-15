@@ -280,7 +280,7 @@ static const double TESTTIMEOFFSET = 5;
     }
     else if (audioPlayer.volume > 0)
     {
-        audioPlayer.volume -= volumeDec;
+        [audioPlayer decrementVolume:volumeDec];
     }
 }
 

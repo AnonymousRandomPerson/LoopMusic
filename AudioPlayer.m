@@ -103,6 +103,11 @@ static const float SEARCHTOLERANCE = 300;
     _volume = volume;
 }
 
+- (void)decrementVolume:(float)volumeDec
+{
+    [self setVolume:_volume - volumeDec];
+}
+
 - (void)setGlobalVolume:(float)globalVolume
 {
     if (globalVolume < 0)
