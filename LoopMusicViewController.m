@@ -224,11 +224,12 @@ static const double TESTTIMEOFFSET = 5;
 }
 
 /*!
- * Stops the fade out timer.
+ * Stops the fade out timer. Also reset the fade time counter.
  */
 - (void)stopFadeTimer
 {
     [self stopTimer:&fadeTimer];
+    fadeTime = 0;
 }
 
 
@@ -656,6 +657,8 @@ static const double TESTTIMEOFFSET = 5;
     occupied = newOccupied;
     if (occupied)
     {
+        // Temporarily stop the fade, if happening. The timer will be restarted when updates resume
+        [self stopFadeTimer];
         audioPlayer.volume = volumeSet;
         // Stop updating the play slider.
         [playSlider stopUpdateTimer];
