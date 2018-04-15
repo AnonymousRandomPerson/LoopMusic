@@ -87,7 +87,6 @@
 /*!
  * Gets the playback time of the current track.
  * @param sender The object that called this function.
- * @return The playback time of the current track.
  */
 - (IBAction)findTime:(id)sender;
 /*!

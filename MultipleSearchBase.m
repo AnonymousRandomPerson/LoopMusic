@@ -47,7 +47,6 @@
  * @discussion The delegate handles row deselections in this method. It could, for example, remove the check-mark image (UITableViewCellAccessoryCheckmark) associated with the row.
  * @param tableView A table-view object informing the delegate about the row deselection.
  * @param indexPath An index path locating the deselected row in tableView.
- * @return
  */
 -(void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -63,8 +62,7 @@
 
 /*!
  * Removes an item from the selected items list when it is deselected.
- * @param The name of the item that was deselected.
- * @return
+ * @param item The name of the item that was deselected.
  */
 -(void)unselectItem:(NSString *)item
 {
@@ -82,7 +80,6 @@
  * @param tableView The table-view object informing the delegate of this impending event.
  * @param cell A table-view cell object that tableView is going to use when drawing the row.
  * @param indexPath An index path locating the row in tableView.
- * @return
  */
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {

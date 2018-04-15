@@ -27,7 +27,6 @@
 /*!
  * Loads the main screen of the app.
  * @param loadTimer The timer that called this function.
- * @return
  */
 - (void)loadPresenter:(NSTimer*)loadTimer
 {
@@ -112,7 +111,6 @@
  * Filters the list of items according to the search query.
  * @param searchText The search query to filter the list with.
  * @param scope The scope of the search query.
- * @return
  */
 - (void)filterContentForSearchText:(NSString*)searchText scope:(NSString*)scope
 {

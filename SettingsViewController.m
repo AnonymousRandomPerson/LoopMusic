@@ -40,8 +40,7 @@
 
 /*!
  * Loads the main screen and settings for the app.
- * @param The timer that called this function.
- * @return
+ * @param loadTimer The timer that called this function.
  */
 - (void)loadSettings:(NSTimer*)loadTimer
 {
@@ -76,7 +75,6 @@
 /*!
  * Increases the relative volume of the current track by 0.1 if possible.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)addVolume:(id)sender
 {
@@ -96,7 +94,6 @@
 /*!
  * Decreases the relative volume of the current track by 0.1 if possible.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)subtractVolume:(id)sender
 {
@@ -189,7 +186,6 @@
 /*!
  * Prompts the user to add tracks to the app from iTunes.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)addSong:(id)sender
 {
@@ -209,7 +205,6 @@
 /*!
  * Prompts the user to rename the current track.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)renameSong:(id)sender
 {
@@ -227,7 +222,6 @@
  * @discussion The receiver is automatically dismissed after this method is invoked.
  * @param alertView The alert view containing the button.
  * @param buttonIndex The index of the button that was clicked. The button indices start at 0.
- * @return
  */
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
@@ -307,7 +301,6 @@
 /*!
  * Prompts the user to replace the current track with one from the device's iTunes library.
  * @param sender The object that called this method.
- * @return
  */
 - (IBAction)replaceSong:(id)sender
 {
@@ -392,7 +385,6 @@
 /*!
  * Navigates to the track deletion screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)deleteSong:(id)sender
 {

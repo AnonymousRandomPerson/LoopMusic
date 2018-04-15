@@ -166,13 +166,6 @@
     vDSP_fft_zipt(self.fftSetup, &fullXcorr, stride, &buffer, log2nFFT, kFFTDirection_Inverse);  // Note: complex FFT, not real FFT.
     free(bufferMemory);
     
-    //    NSLog(@"ifft, real part");
-    //    for (int i = 0; i < nFFT; i++)
-    //        NSLog(@"%f", *(fullXcorr.realp + i));
-    //    NSLog(@"ifft, imaginary part");
-    //    for (int i = 0; i < nFFT; i++)
-    //        NSLog(@"%f", *(fullXcorr.imagp + i));
-    
     // Copy the first outputLength elements into <results> and ignore the trailing zeros. Normalize by nFFT, since complex inverse transforms use a scaling factor of that size.
     float scaleDown = (float)nFFT;
     vDSP_vsdiv(fullXcorr.realp, stride, &scaleDown, result, stride, outputLength);
