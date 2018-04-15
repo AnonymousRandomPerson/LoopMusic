@@ -115,10 +115,10 @@ static const double TESTTIMEOFFSET = 5;
         [self updatePlaylistName];
     }
     
-    // Set up the play slider
-    [playSlider useDefaultParameters];
+    // Set up the play slider with the audio player.
     __weak typeof(self) weakSelf = self;
     playSlider.getCurrentTime = ^float (void) { return [weakSelf findTime]; };
+    [playSlider highlightLoopRegion];
     
 // Load local test files from the testSongs/ directory if testing on the simulator
 #if TARGET_OS_SIMULATOR

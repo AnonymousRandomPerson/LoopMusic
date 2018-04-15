@@ -14,7 +14,29 @@
 {
     /// Internal refresh timer.
     NSTimer *updateTimer;
+    
+    /// Box for the pre-loop region.
+    UIView *preLoopBox;
+    /// Box for the loop region.
+    UIView *loopBox;
+    /// Box for the post-loop region.
+    UIView *postLoopBox;
 }
+
+/// The height of the boxes over the three loop regions, as a multiple of the slider height.
+@property (nonatomic) double boxHeightMultiplier;
+/// Whether the preLoopBox is hidden. Needed because the actual pointers are nil for a while after viewDidLoad gets called in the main screen.
+@property (nonatomic) bool preLoopBoxHidden;
+/// Whether the loopBox is hidden.
+@property (nonatomic) bool loopBoxHidden;
+/// Whether the postLoopBox is hidden.
+@property (nonatomic) bool postLoopBoxHidden;
+/// Color of preLoopBox.
+@property (nonatomic) UIColor *preLoopBoxColor;
+/// Color of loopBox.
+@property (nonatomic) UIColor *loopBoxColor;
+/// Color of postLoopBox.
+@property (nonatomic) UIColor *postLoopBoxColor;
 
 /// Flag for whether track looping is enabled. Possibly use for modifying display and how the slider value gets set.
 @property (nonatomic) bool loopingEnabled;
@@ -39,6 +61,10 @@
  * Sets internal parameters to their defaults.
  */
 - (void)useDefaultParameters;
+/*!
+ * Sets graphical parameters to their defaults.
+ */
+- (void)useDefaultGraphics;
 
 /*!
  * Sets the thumb image of the slider. Necessary workaround to prevent the slider "jumping" upon valueChanged, due to some weird glitch with the slider.
@@ -61,6 +87,40 @@
  * Stops the playback slider update timer.
  */
 - (void)stopUpdateTimer;
+
+/*!
+ * Draws a box over the pre-loop region.
+ */
+- (void)highlightPreLoopRegion;
+/*!
+ * Draws a box over the loop region.
+ */
+- (void)highlightLoopRegion;
+/*!
+ * Draws a box over the post-loop region.
+ */
+- (void)highlightPostLoopRegion;
+/*!
+ * Draws a box over the pre- and post-loop regions.
+ */
+- (void)highlightNonLoopRegion;
+
+/*!
+ * Removes the pre-loop region box.
+ */
+- (void)unhighlightPreLoopRegion;
+/*!
+ * Removes the loop region box.
+ */
+- (void)unhighlightLoopRegion;
+/*!
+ * Removes the post-loop region box.
+ */
+- (void)unhighlightPostLoopRegion;
+/*!
+ * Removes the pre- and post-loop boxes.
+ */
+- (void)unhighlightNonLoopRegion;
 
 /*!
  * Updates an AudioPlayer based on the current slider value. Should be called for a valueChanged event.

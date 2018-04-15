@@ -27,9 +27,6 @@
     [self addChildViewController:self.currentViewController];
     [self addSubview:self.currentViewController.view toView:self.containerView];
     
-    // Set defaults for play slider.
-    [playSlider useDefaultParameters];
-    
     // Load the main screen of the app.
     /// Timer to load the current track name and the main screen of the app.
     [NSTimer scheduledTimerWithTimeInterval:.1
@@ -62,8 +59,10 @@
     
     [childAuto loadFFTSetup:presenter.fftSetup :presenter.nSetup];
     
-    // Copy over the settings from the main play slider and start the timer.
+    // Copy over the settings from the main play slider, set the highlighting settings, and start the timer.
     [playSlider copySettingsFromSlider:presenter.playSlider];
+    [playSlider highlightLoopRegion];
+    playSlider.boxHeightMultiplier = 1.2;
     [self activateSliderUpdateTimer];
 }
 
