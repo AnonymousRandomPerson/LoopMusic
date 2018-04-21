@@ -35,7 +35,6 @@
         preLoopBox = [[UIView alloc] initWithFrame:[self createFrame:self.minimumValue :loopStart]];
         postLoopBox = [[UIView alloc] initWithFrame:[self createFrame:loopEnd :self.maximumValue]];
         loopBox = [[UIView alloc] initWithFrame:[self createFrame:loopStart :loopEnd]];
-        NSLog(@"%f, %f", loopBox.layer.position.x, loopBox.layer.position.y);
         
         // To enable touches to pass through
         preLoopBox.userInteractionEnabled = false;
