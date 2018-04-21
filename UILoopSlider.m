@@ -308,19 +308,23 @@
 
 - (void)setLoopStart:(double)loopStart
 {
-    self->loopStart = loopStart;
+    self->loopStart = MAX(0, loopStart);
     looping = false; // Need to re-evaluate after the change
     [self refreshBoxes];
 }
 
 - (void)setLoopEnd:(double)loopEnd
 {
-    self->loopEnd = loopEnd;
+    self->loopEnd = MIN(self.maximumValue, loopEnd);
     [self refreshBoxes];
 }
 
 - (void)setTime:(double)time
 {
+    // Force out of looping. If the time gets set too far out of the loop region.
+    if (loopingEnabled && looping && fabs(time - self.value) > 2*timeBetweenUpdates)
+        looping = false;
+    
     // Start looping.
     if (loopingEnabled && !looping && time > loopStart)
         looping = true;

@@ -86,7 +86,8 @@ static const float SEARCHTOLERANCE = 300;
 
 - (void)setCurrentTime:(NSTimeInterval)currentTime
 {
-    bufferAudioData->currentFrame = round(currentTime * FRAMERATE);
+    NSInteger lastFrame = audioData ? (NSInteger)audioData->numFrames - 1 : 0;
+    bufferAudioData->currentFrame = MAX(0, MIN(lastFrame, round(currentTime * FRAMERATE)));
 }
 
 - (float)volume
