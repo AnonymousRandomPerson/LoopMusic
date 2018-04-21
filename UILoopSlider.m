@@ -322,7 +322,6 @@
 - (void)setTime:(double)time
 {
     // Start looping.
-    NSLog(@"%i", looping);
     if (loopingEnabled && !looping && time > loopStart)
         looping = true;
     
