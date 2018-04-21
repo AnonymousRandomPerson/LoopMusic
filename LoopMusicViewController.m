@@ -424,7 +424,7 @@ static const double TESTTIMEOFFSET = 5;
     }
     [self resetForNewPlayback];
     [self startPlayback];
-    [playSlider setupNewTrack:audioPlayer.duration :audioPlayer.loopStart :audioPlayer.loopEnd];
+    [self refreshPlaySlider];
 }
 
 - (void)setAudioPlayer:(NSURL*)newURL
@@ -440,6 +440,10 @@ static const double TESTTIMEOFFSET = 5;
         return;
     }
     audioPlayer.volume = volumeSet;
+}
+- (void)refreshPlaySlider
+{
+    [playSlider setupNewTrack:audioPlayer.duration :audioPlayer.loopStart :audioPlayer.loopEnd];
 }
 - (void)setAudioLoopStart:(NSTimeInterval)newStart
 {
@@ -714,6 +718,7 @@ static const double TESTTIMEOFFSET = 5;
 - (void)setCurrentTime:(double)newCurrentTime
 {
     audioPlayer.currentTime = newCurrentTime;
+    [playSlider forceSetTime:audioPlayer.currentTime];
 }
 
 - (float)getVolume

@@ -321,11 +321,8 @@
 
 - (void)setTime:(double)time
 {
-    // Force out of looping. If the time gets set too far out of the loop region.
-    if (loopingEnabled && looping && (time - loopEnd > 2*timeBetweenUpdates || loopStart - time > 2*timeBetweenUpdates))
-        looping = false;
-    
     // Start looping.
+    NSLog(@"%i", looping);
     if (loopingEnabled && !looping && time > loopStart)
         looping = true;
     
@@ -333,7 +330,18 @@
     if (loopingEnabled && looping)
         self.value = time >= loopStart ? loopStart + fmod(time-loopStart, loopEnd-loopStart) : loopEnd - fmod(loopStart-time, loopEnd-loopStart);
     else
-        self.value = MIN(time, self.maximumValue);
+        self.value = MAX(self.minimumValue, MIN(time, self.maximumValue));
+    
+    previousValue = self.value;
+}
+- (void)forceSetTime:(double)time
+{
+    self.value = MAX(self.minimumValue, MIN(time, self.maximumValue));
+    
+    if (self.value < loopStart || self.value > loopEnd)
+        looping = false;
+    else
+        looping = true;
     
     previousValue = self.value;
 }

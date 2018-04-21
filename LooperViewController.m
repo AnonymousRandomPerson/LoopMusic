@@ -84,7 +84,7 @@
 }
 - (void)setCurrentTime:(NSTimeInterval)time
 {
-    [playSlider setTime:time];
+    [playSlider forceSetTime:time];
     [presenter setCurrentTime:time];
 }
 

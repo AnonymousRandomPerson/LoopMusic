@@ -81,6 +81,7 @@
 //    [presenter closeDB];
     [childAuto saveFFTSetup:presenter];
     [presenter setOccupied:false];
+    [playSlider stopUpdateTimer];
     [presenter back:sender];
 }
 

@@ -138,6 +138,11 @@
  * @param time The time to set the slider to.
  */
 - (void)setTime:(double)time;
+/*!
+ * Sets the slider time with bounds checking (track length), disregarding loop region checking.
+ * @param time The time to set the slider to.
+ */
+- (void)forceSetTime:(double)time;
 
 /*!
  * Refreshes the slider time with the current slider value (possibly changed due to user interaction)

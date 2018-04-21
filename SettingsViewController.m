@@ -51,6 +51,7 @@
 
 - (IBAction)back:(id)sender
 {
+    [presenter refreshPlaySlider];  // For when the underlying audio file was changed.
     [presenter setOccupied:false];
     shuffleSetting = [shuffle selectedSegmentIndex];
     [self saveSettings];
@@ -374,7 +375,7 @@
             break;
         }
     }
-    sqlite3_close(trackData);
+    [self closeDB];
 }
 
 - (void)mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker

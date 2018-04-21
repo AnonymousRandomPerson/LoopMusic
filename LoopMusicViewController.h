@@ -324,6 +324,10 @@ extern NSInteger playlistIndex;
  */
 - (void)setAudioPlayer:(NSURL*)newURL;
 /*!
+ * Refreshes the play slider with the most current loop and track data.
+ */
+- (void)refreshPlaySlider;
+/*!
  * Sets the loop start point for the audio player.
  * @param newStart The new start point.
  */
