@@ -323,7 +323,7 @@
 - (void)setTime:(double)time
 {
     // Force out of looping. If the time gets set too far out of the loop region.
-    if (loopingEnabled && looping && fabs(time - self.value) > 2*timeBetweenUpdates)
+    if (loopingEnabled && looping && (time - loopEnd > 2*timeBetweenUpdates || loopStart - time > 2*timeBetweenUpdates))
         looping = false;
     
     // Start looping.
