@@ -21,6 +21,8 @@
     UIView *loopBox;
     /// Box for the post-loop region.
     UIView *postLoopBox;
+    /// Indicator box that the defined loop end is invalid.
+    UIView *invalidEndBox;
 }
 
 /// The height of the boxes over the three loop regions, as a multiple of the slider height.
@@ -37,6 +39,10 @@
 @property (nonatomic) UIColor *loopBoxColor;
 /// Color of postLoopBox.
 @property (nonatomic) UIColor *postLoopBoxColor;
+/// Color of the invalid end box.
+@property (nonatomic) UIColor *invalidEndBoxColor;
+/// Invalid end box's width.
+@property (nonatomic) NSInteger invalidEndBoxWidth;
 
 /// Flag for whether track looping is enabled. Possibly use for modifying display and how the slider value gets set.
 @property (nonatomic) bool loopingEnabled;
@@ -132,6 +138,11 @@
  * Sets a new loop start point.
  */
 - (void)setLoopStart:(double)loopStart;
+
+/*!
+ * Checks whether the set loop end point is valid.
+ */
+- (bool)validLoopEnd;
 
 /*!
  * Sets the slider time with bounds checking (loop region) if necessary.

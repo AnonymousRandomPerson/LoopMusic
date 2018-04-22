@@ -10,7 +10,7 @@
 
 @implementation UILoopSlider
 
-@synthesize boxHeightMultiplier, preLoopBoxHidden, loopBoxHidden, postLoopBoxHidden, preLoopBoxColor, loopBoxColor, postLoopBoxColor, loopingEnabled, looping, loopStart, loopEnd, timeBetweenUpdates, fastMode, intervalThreshold, previousValue, getCurrentTime;
+@synthesize boxHeightMultiplier, preLoopBoxHidden, loopBoxHidden, postLoopBoxHidden, preLoopBoxColor, loopBoxColor, postLoopBoxColor, invalidEndBoxColor, invalidEndBoxWidth, loopingEnabled, looping, loopStart, loopEnd, timeBetweenUpdates, fastMode, intervalThreshold, previousValue, getCurrentTime;
 
 - (id)initWithCoder:(NSCoder *)aDecoder
 {
@@ -31,24 +31,32 @@
     // Form the boxes.
     if (!preLoopBox && self.maximumValue > 0)
     {
+        // Attempts to completely encapsulate the thumb in the highlighted region, rather than gauging by the thumb's center.
+        CGFloat loopStartX = [self loopStartCoord];
+        CGFloat loopEndX = [self loopEndCoord];
+        
         // Initialize the boxes.
-        preLoopBox = [[UIView alloc] initWithFrame:[self createFrame:self.minimumValue :loopStart]];
-        postLoopBox = [[UIView alloc] initWithFrame:[self createFrame:loopEnd :self.maximumValue]];
-        loopBox = [[UIView alloc] initWithFrame:[self createFrame:loopStart :loopEnd]];
+        preLoopBox = [[UIView alloc] initWithFrame:[self createFrame:[self lowerBound] :loopStartX]];
+        postLoopBox = [[UIView alloc] initWithFrame:[self createFrame:loopEndX :[self upperBound]]];
+        loopBox = [[UIView alloc] initWithFrame:[self createFrame:loopStartX :loopEndX]];
+        invalidEndBox = [[UIView alloc] initWithFrame:[self createFrame:[self upperBound] :[self upperBound]+invalidEndBoxWidth]];
         
         // To enable touches to pass through
         preLoopBox.userInteractionEnabled = false;
         loopBox.userInteractionEnabled = false;
         postLoopBox.userInteractionEnabled = false;
+        invalidEndBox.userInteractionEnabled = false;
         
         // Aesthetics
         preLoopBox.layer.cornerRadius = 3;
         loopBox.layer.cornerRadius = 3;
         postLoopBox.layer.cornerRadius = 3;
+        invalidEndBox.layer.cornerRadius = 3;
         
         [self insertSubview:preLoopBox belowSubview:self.subviews.lastObject];
         [self insertSubview:postLoopBox belowSubview:self.subviews.lastObject];
         [self insertSubview:loopBox belowSubview:self.subviews.lastObject];
+        [self insertSubview:invalidEndBox belowSubview:self.subviews.lastObject];
         
         [self refreshBoxes];
     }
@@ -59,7 +67,7 @@
     // Default values
     self.minimumValue = 0;
     loopingEnabled = true;
-    looping = false;
+    self.looping = false;
     timeBetweenUpdates = 0.25;
     intervalThreshold = 1.5;
     fastMode = false;
@@ -68,6 +76,7 @@
 - (void)useDefaultGraphics
 {
     boxHeightMultiplier = 1.1;
+    invalidEndBoxWidth = 3;
     
     // Default to hidden
     [self unhighlightLoopRegion];
@@ -78,6 +87,7 @@
     self.preLoopBoxColor = [[UIColor redColor] colorWithAlphaComponent:alpha];
     self.postLoopBoxColor = [[UIColor blueColor] colorWithAlphaComponent:alpha];
     self.loopBoxColor = [[UIColor greenColor] colorWithAlphaComponent:alpha];
+    self.invalidEndBoxColor = [[UIColor redColor] colorWithAlphaComponent:2*alpha];
 }
 
 - (void)setThumbImageFromFilename:(NSString *)imageName :(NSInteger)sideLength
@@ -145,6 +155,23 @@
 }
 
 /*!
+ * Calculates the coordinate of the loop start point on the slider.
+ * @return The x-coordinate of the loop start.
+ */
+- (CGFloat)loopStartCoord
+{
+    return [self coordinateFromTime:loopStart] - [self thumbWidth]/2;
+}
+/*!
+ * Calculates the coordinate of the loop end point on the slider.
+ * @return The x-coordinate of the loop end.
+ */
+- (CGFloat)loopEndCoord
+{
+    return [self coordinateFromTime:self.loopEnd] + [self thumbWidth]/2;
+}
+
+/*!
  * Refreshes the state of the loop boxes.
  */
 - (void)refreshBoxes
@@ -153,20 +180,22 @@
     preLoopBox.hidden = preLoopBoxHidden;
     loopBox.hidden = loopBoxHidden;
     postLoopBox.hidden = postLoopBoxHidden;
+    invalidEndBox.hidden = [self validLoopEnd];
     
     // Refresh the colors
     preLoopBox.backgroundColor = preLoopBoxColor;
     loopBox.backgroundColor = loopBoxColor;
     postLoopBox.backgroundColor = postLoopBoxColor;
+    invalidEndBox.backgroundColor = invalidEndBoxColor;
     
     // Attempts to completely encapsulate the thumb in the highlighted region, rather than gauging by the thumb's center.
-    CGFloat loopStartCoord = [self coordinateFromTime:loopStart] - [self thumbWidth]/2;
-    CGFloat loopEndCoord = [self coordinateFromTime:loopEnd] + [self thumbWidth]/2;
+    CGFloat loopStartX = [self loopStartCoord];
+    CGFloat loopEndX = [self loopEndCoord];
 
     [UIView animateWithDuration:0.1 animations:^{
-        preLoopBox.frame = [self createFrame:[self lowerBound] :loopStartCoord];
-        loopBox.frame = [self createFrame:loopStartCoord :loopEndCoord];
-        postLoopBox.frame = [self createFrame:loopEndCoord :[self upperBound]];
+        preLoopBox.frame = [self createFrame:[self lowerBound] :loopStartX];
+        loopBox.frame = [self createFrame:loopStartX :loopEndX];
+        postLoopBox.frame = [self createFrame:loopEndX :[self upperBound]];
     }];
 }
 
@@ -178,12 +207,12 @@
 {
     [self setTime:self.getCurrentTime()];
     
-    if (!fastMode && loopEnd - self.getCurrentTime() <= intervalThreshold*timeBetweenUpdates)
+    if (!fastMode && self.loopEnd - self.getCurrentTime() <= intervalThreshold*timeBetweenUpdates)
     {
         [self switchToFastTimerMode];
 //        NSLog(@"Activating fast mode.");
     }
-    else if (fastMode && loopEnd - self.getCurrentTime() > intervalThreshold*timeBetweenUpdates)
+    else if (fastMode && self.loopEnd - self.getCurrentTime() > intervalThreshold*timeBetweenUpdates)
     {
         [self activateUpdateTimer];
 //        NSLog(@"Deactivating fast mode.");
@@ -199,7 +228,7 @@
     self.minimumValue = otherSlider.minimumValue;
     self.maximumValue = otherSlider.maximumValue;
     self.loopStart = otherSlider.loopStart;
-    self.loopEnd = otherSlider.loopEnd;
+    self.loopEnd = otherSlider->loopEnd;    // Want the raw value.
     self.value = otherSlider.value;
     self.previousValue = otherSlider.previousValue;
     
@@ -309,25 +338,40 @@
 - (void)setLoopStart:(double)loopStart
 {
     self->loopStart = MAX(0, loopStart);
-    looping = false; // Need to re-evaluate after the change
+    self.looping = false; // Need to re-evaluate after the change
     [self refreshBoxes];
 }
 
 - (void)setLoopEnd:(double)loopEnd
 {
-    self->loopEnd = MIN(self.maximumValue, loopEnd);
+    self->loopEnd = loopEnd;
     [self refreshBoxes];
+}
+- (double)loopEnd
+{
+    return MIN(self.maximumValue, self->loopEnd);
+}
+- (bool)validLoopEnd
+{
+    return self->loopEnd <= self.maximumValue;
+}
+
+- (void)setLooping:(bool)looping
+{
+    self->looping = looping && [self validLoopEnd];
 }
 
 - (void)setTime:(double)time
 {
+    NSLog(@"%i", looping);
+    
     // Start looping.
     if (loopingEnabled && !looping && time > loopStart)
-        looping = true;
+        self.looping = true;
     
     // Handle the wrap-around if needed.
     if (loopingEnabled && looping)
-        self.value = time >= loopStart ? loopStart + fmod(time-loopStart, loopEnd-loopStart) : loopEnd - fmod(loopStart-time, loopEnd-loopStart);
+        self.value = time >= loopStart ? loopStart + fmod(time-loopStart, self.loopEnd-loopStart) : self.loopEnd - fmod(loopStart-time, self.loopEnd-loopStart);
     else
         self.value = MAX(self.minimumValue, MIN(time, self.maximumValue));
     
@@ -337,10 +381,10 @@
 {
     self.value = MAX(self.minimumValue, MIN(time, self.maximumValue));
     
-    if (self.value < loopStart || self.value > loopEnd)
-        looping = false;
+    if (self.value < loopStart || self.value > self.loopEnd)
+        self.looping = false;
     else
-        looping = true;
+        self.looping = true;
     
     previousValue = self.value;
 }
@@ -353,7 +397,7 @@
 - (void)stop
 {
     self.value = 0;
-    looping = false;
+    self.looping = false;
 }
 
 - (void)setupNewTrack:(double)trackEnd :(double)loopStart :(double)loopEnd
