@@ -17,7 +17,6 @@
 /*!
  * Displays a confirmation dialogue before deleting the selected track.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)deleteButton:(id)sender;
 

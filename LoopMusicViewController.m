@@ -12,7 +12,7 @@
 NSString *settingsSongString = @"";
 /// The base amount of time to play a track before shuffling.
 double timeShuffle = -1;
-/// The actual amount of time to play a track before shuffling.
+/// The actual amount of time (in microseconds) to play a track before shuffling.
 double timeShuffle2 = -1;
 /// The number of times to repeat a track before shuffling.
 NSInteger repeatsShuffle = -1;
@@ -34,7 +34,7 @@ static const double TESTTIMEOFFSET = 5;
 
 @implementation LoopMusicViewController
 
-@synthesize searchSong, playSong, randomSong, stopSong, songName, settings;
+@synthesize searchSong, playSong, randomSong, stopSong, songName, settings, fftSetup, nSetup, playSlider;
 
 - (void)viewDidAppear:(BOOL)animated
 {
@@ -78,9 +78,6 @@ static const double TESTTIMEOFFSET = 5;
     choose = false;
     songString = @"";
     chooseSongString = false;
-    time = [self getTime];
-    [self activateShuffleTimer];
-    repeats = 0;
     musicNumber = -1;
     
     /// The file path of the settings file.
@@ -93,7 +90,7 @@ static const double TESTTIMEOFFSET = 5;
         NSArray *splitSettings = [contentOfFile componentsSeparatedByString:@","];
         shuffleSetting = [splitSettings[0] integerValue];
         timeShuffle = [splitSettings[1] doubleValue];
-        timeShuffle2 = [self timeVariance];
+        [self recalculateShuffleTime];
         repeatsShuffle = [splitSettings[2] integerValue];
         fadeSetting = splitSettings.count > 3 ? [splitSettings[3] doubleValue] : 0;
         playlistIndex = splitSettings.count > 4 ? [splitSettings[4] integerValue] : 0;
@@ -104,7 +101,7 @@ static const double TESTTIMEOFFSET = 5;
         // Default values.
         shuffleSetting = 1;
         timeShuffle = 3.5;
-        timeShuffle2 = [self timeVariance];
+        [self recalculateShuffleTime];
         repeatsShuffle = 3;
         fadeSetting = 2;
         playlistIndex = 0;
@@ -117,6 +114,11 @@ static const double TESTTIMEOFFSET = 5;
         [self updatePlaylistSongs];
         [self updatePlaylistName];
     }
+    
+    // Set up the play slider with the audio player.
+    __weak typeof(self) weakSelf = self;
+    playSlider.getCurrentTime = ^float (void) { return [weakSelf findTime]; };
+    [playSlider highlightLoopRegion];
     
 // Load local test files from the testSongs/ directory if testing on the simulator
 #if TARGET_OS_SIMULATOR
@@ -166,14 +168,15 @@ static const double TESTTIMEOFFSET = 5;
     }
 #endif
     
-    
+    // Setup a preliminary FFT for vDSP.
+    fftSetup = vDSP_create_fftsetup(0, kFFTRadix2);
+    nSetup = 1;
     
     [self playMusic];
 }
 
 /*!
  * Activates the shuffle loop timer.
- * @return
  */
 - (void)activateShuffleTimer
 {
@@ -187,7 +190,6 @@ static const double TESTTIMEOFFSET = 5;
 
 /*!
  * Activates the fade out timer.
- * @return
  */
 - (void)activateFadeTimer
 {
@@ -199,36 +201,41 @@ static const double TESTTIMEOFFSET = 5;
                                                 repeats:YES];
 }
 
+
 /*!
- * Stops the shuffle loop timer.
- * @return
+ * Stops an active timer.
+ * @param timer Pointer to timer pointer. The inner pointer will be invalidated.
  */
-- (void)stopShuffleTimer
+- (void)stopTimer:(NSTimer *__strong*)timer
 {
-    if (shuffleTimer)
+    if (*timer)
     {
-        [shuffleTimer invalidate];
-        shuffleTimer = nil;
+        [*timer invalidate];
+        *timer = nil;
     }
 }
 
 /*!
- * Stops the fade out timer.
- * @return
+ * Stops the shuffle loop timer.
+ */
+- (void)stopShuffleTimer
+{
+    [self stopTimer:&shuffleTimer];
+}
+
+/*!
+ * Stops the fade out timer. Also reset the fade time counter.
  */
 - (void)stopFadeTimer
 {
-    if (fadeTimer)
-    {
-        [fadeTimer invalidate];
-        fadeTimer = nil;
-    }
+    [self stopTimer:&fadeTimer];
+    fadeTime = 0;
 }
+
 
 /*!
  * Checks if the audio track should be shuffled.
  * @param timer The timer that invoked this function.
- * @return
  */
 - (void)checkShuffle:(NSTimer *)timer
 {
@@ -237,11 +244,11 @@ static const double TESTTIMEOFFSET = 5;
         if (!occupied)
         {
             bool willSwitch = false;
-            if (shuffleSetting == 2 && repeatsShuffle > 0 && repeats >= repeatsShuffle)
+            if (shuffleSetting == 2 && repeatsShuffle > 0 && [self getRepeats] >= repeatsShuffle)
             {
                 willSwitch = true;
             }
-            else if (shuffleSetting == 1 && timeShuffle > 0 && ([self getTime] - time) >= timeShuffle2)
+            else if (shuffleSetting == 1 && timeShuffle > 0 && [self getElapsedTime] >= timeShuffle2)
             {
                 willSwitch = true;
             }
@@ -262,8 +269,7 @@ static const double TESTTIMEOFFSET = 5;
 
 /*!
  * Gradually fades out a track.
- * @param The timer that invoked this function.
- * @return
+ * @param timer The timer that invoked this function.
  */
 - (void)fadeOut:(NSTimer *)timer
 {
@@ -274,17 +280,40 @@ static const double TESTTIMEOFFSET = 5;
     }
     else if (audioPlayer.volume > 0)
     {
-        audioPlayer.volume -= volumeDec;
+        [audioPlayer decrementVolume:volumeDec];
     }
 }
 
 /*!
+ * Starts tracking and playback of the audio player.
+ */
+- (void)startPlayback
+{
+    time = [self getTime];
+    [audioPlayer play];
+    [self activateShuffleTimer];
+    // Only update the play slider if on the main screen.
+    if (!occupied)
+        [playSlider activateUpdateTimer];
+    playSymbol.hidden = false;
+}
+
+/*!
+ * Cleans up internal values affecting playback, after a stop or before a new song. (Used in playMusic, stopPlayer)
+ */
+- (void)resetForNewPlayback
+{
+    [audioPlayer resetLoopCounter];
+    [self stopFadeTimer];   // Stop fade if happening, and reset the fade time counter.
+    audioPlayer.pauseTime = 0;
+    elapsedTimeBeforeTimerActivation = 0;
+}
+
+/*!
  * Shuffles the currently playing track.
- * @return
  */
 - (void)shuffleTrack
 {
-    time = [self getTime];
     choose = false;
     [self playMusic];
 }
@@ -293,6 +322,7 @@ static const double TESTTIMEOFFSET = 5;
 {
     if ([self isSongListEmpty])
     {
+        playSlider.maximumValue = 0;    // Prevents any sliding
         return;
     }
     if (!playlistIndex || !totalPlaylistSongs)
@@ -360,7 +390,7 @@ static const double TESTTIMEOFFSET = 5;
             }
         } while (musicNumber == random && totalPlaylistSongs != 1);
         musicNumber = random;
-        timeShuffle2 = [self timeVariance];
+        [self recalculateShuffleTime];
         
         [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks WHERE id = %li", (long)musicNumber]];
         if (sqlite3_step(statement) == SQLITE_ROW)
@@ -386,18 +416,15 @@ static const double TESTTIMEOFFSET = 5;
     sqlite3_close(trackData);
     [self setAudioPlayer:url];
     [self updateVolumeDec];
-    repeats = 0;
-    fadeTime = 0;
-    time = [self getTime];
     if (audioPlayer.loopEnd == 0.0)
     {
         audioPlayer.loopEnd = audioPlayer.duration;
         [self openDB];
         [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET loopend = %f WHERE id=\"%li\"", audioPlayer.loopEnd, (long)musicNumber]];
     }
-    [audioPlayer play];
-    [self activateShuffleTimer];
-    playSymbol.hidden = false;
+    [self resetForNewPlayback];
+    [self startPlayback];
+    [self refreshPlaySlider];
 }
 
 - (void)setAudioPlayer:(NSURL*)newURL
@@ -414,6 +441,37 @@ static const double TESTTIMEOFFSET = 5;
     }
     audioPlayer.volume = volumeSet;
 }
+- (void)refreshPlaySlider
+{
+    [playSlider setupNewTrack:audioPlayer.duration :audioPlayer.loopStart :audioPlayer.loopEnd];
+}
+- (void)setAudioLoopStart:(NSTimeInterval)newStart
+{
+    audioPlayer.loopStart = newStart;
+    playSlider.loopStart = audioPlayer.loopStart;
+}
+- (void)setAudioLoopEnd:(NSTimeInterval)newEnd
+{
+    audioPlayer.loopEnd = newEnd;
+    playSlider.loopEnd = audioPlayer.loopEnd;
+}
+- (UInt32)getAudioLoopStartFrame
+{
+    return [audioPlayer loopStartFrame];
+}
+- (NSTimeInterval)getAudioLoopStart
+{
+    return audioPlayer.loopStart;
+}
+- (UInt32)getAudioLoopEndFrame
+{
+    return [audioPlayer loopEndFrame];
+}
+- (NSTimeInterval)getAudioLoopEnd
+{
+    return audioPlayer.loopEnd;
+}
+
 
 - (void)updateVolumeDec
 {
@@ -427,10 +485,8 @@ static const double TESTTIMEOFFSET = 5;
         [self showNoSongMessage];
         return;
     }
-    time = [self getTime];
-    repeats = 0;
-    choose = false;
-    [self playMusic];
+
+    [self shuffleTrack];
 }
 
 - (IBAction)playSong:(id)sender
@@ -442,15 +498,19 @@ static const double TESTTIMEOFFSET = 5;
     }
     if (!audioPlayer.playing)
     {
-        time = [self getTime];
-        repeats = 0;
-        audioPlayer.currentTime = 0;
-        [audioPlayer play];
-        [self activateShuffleTimer];
-        playSymbol.hidden = false;
+        [self startPlayback];
     }
 }
 
+- (IBAction)pauseSong:(id)sender
+{
+    if ([self isSongListEmpty])
+    {
+        [self showNoSongMessage];
+        return;
+    }
+    [self pausePlayer];
+}
 - (IBAction)stopSong:(id)sender
 {
     if ([self isSongListEmpty])
@@ -461,17 +521,51 @@ static const double TESTTIMEOFFSET = 5;
     [self stopPlayer];
 }
 
+- (void)controllerStopPlaying
+{
+    [self stopShuffleTimer];
+    [self stopFadeTimer];
+    [playSlider stopUpdateTimer];
+    playSymbol.hidden = true;
+}
+
+/*!
+ * Pauses the audio player.
+ */
+- (void)pausePlayer
+{
+    elapsedTimeBeforeTimerActivation += [self getTime] - time;
+    [audioPlayer pause];
+    [self controllerStopPlaying];
+}
 /*!
  * Stops the audio player.
- * @return
  */
 - (void)stopPlayer
 {
     [audioPlayer stop];
-    [self stopShuffleTimer];
-    [self stopFadeTimer];
-    playSymbol.hidden = true;
+    [self controllerStopPlaying];
+    [playSlider stop];
+    [self resetForNewPlayback];
 }
+
+- (IBAction)playSliderTouchDown:(id)sender
+{
+    [playSlider stopUpdateTimer];
+}
+- (IBAction)playSliderTouchUp:(id)sender
+{
+    if (audioPlayer.playing)
+        [playSlider activateUpdateTimer];
+}
+- (IBAction)playSliderUpdate:(id)sender
+{
+    if ([self isSongListEmpty])
+        return;
+    
+    [playSlider updateAudioPlayer:audioPlayer]; // Update the audio player time.
+}
+
 
 - (void)chooseSong:(NSString *)newSong
 {
@@ -505,7 +599,7 @@ static const double TESTTIMEOFFSET = 5;
     }
     else
     {
-        [self changeScreen:@"loopFinder"];
+        [self changeScreen:@"looperParent"];
     }
 }
 
@@ -544,13 +638,40 @@ static const double TESTTIMEOFFSET = 5;
     gettimeofday(&t, nil);
     return t.tv_sec * 1000000 + t.tv_usec;
 }
+/*!
+ * Gets the elapsed playback time (in microseconds) of the current track.
+ * @return The elapsed playback time.
+ */
+- (double)getElapsedTime
+{
+    return [self getTime] - time + elapsedTimeBeforeTimerActivation;
+}
+/*!
+ * Gets the number of repeats of the current track.
+ * @return The current number of repeats.
+ */
+- (NSInteger)getRepeats
+{
+    // Use a more robust time-based method, rather than a loop-based method. This allows for jumping around in playback, while still having around the desired number of repeats in playback time.
+    return [audioPlayer getRepeatNumber:[self getElapsedTime]*1e-6];
+}
 
 - (void)setOccupied:(bool)newOccupied
 {
     occupied = newOccupied;
     if (occupied)
     {
+        // Temporarily stop the fade, if happening. The timer will be restarted when updates resume
+        [self stopFadeTimer];
         audioPlayer.volume = volumeSet;
+        // Stop updating the play slider.
+        [playSlider stopUpdateTimer];
+    }
+    else
+    {
+        // Start updating the play slider again.
+        [playSlider setTime:[self findTime]]; // Refresh once right away, before starting the timer for subsequent calls.
+        [playSlider activateUpdateTimer];
     }
 }
 
@@ -564,9 +685,23 @@ static const double TESTTIMEOFFSET = 5;
     songName.text = newName;
 }
 
+- (AudioData *)getAudioData
+{
+    return [audioPlayer getAudioData];
+}
+
+- (UInt32)getAudioFrameDuration
+{
+    return [audioPlayer frameDuration];
+}
 - (double)getAudioDuration
 {
     return audioPlayer.duration;
+}
+
+- (NSMutableArray *)audioFindLoopTime
+{
+    return [audioPlayer findLoopTime];
 }
 
 - (void)testTime
@@ -576,12 +711,14 @@ static const double TESTTIMEOFFSET = 5;
     {
         test = 0;
     }
+    [self playSong:nil];    // Starts playback if not playing already.
     [self setCurrentTime:test];
 }
 
 - (void)setCurrentTime:(double)newCurrentTime
 {
     audioPlayer.currentTime = newCurrentTime;
+    [playSlider forceSetTime:audioPlayer.currentTime];
 }
 
 - (float)getVolume
@@ -603,14 +740,12 @@ static const double TESTTIMEOFFSET = 5;
 
 - (float)findTime
 {
-    if (audioPlayer.playing)
-    {
-        return audioPlayer.currentTime;
-    }
-    else
-    {
-        return 0;
-    }
+    return audioPlayer.currentTime;
+}
+
+- (bool)isPlaying
+{
+    return audioPlayer.playing;
 }
 
 - (BOOL)canBecomeFirstResponder
@@ -645,7 +780,11 @@ static const double TESTTIMEOFFSET = 5;
 
 - (double)timeVariance
 {
-    return (((double)((int)(arc4random_uniform(60) - TIMEVARIANCE))) / 60.0 + timeShuffle) * 60000000.0;
+    return (((double)((int)(arc4random_uniform(2*TIMEVARIANCE) - TIMEVARIANCE))) / 60.0 + timeShuffle) * 60000000.0;
+}
+- (void)recalculateShuffleTime
+{
+    timeShuffle2 = [self timeVariance];
 }
 
 // Screen changing helpers.
@@ -672,6 +811,11 @@ static const double TESTTIMEOFFSET = 5;
 - (void)openDB
 {
     sqlite3_open([[[NSString alloc] initWithString:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0] stringByAppendingPathComponent: @"Tracks.db"]] UTF8String], &trackData);
+}
+
+- (void)closeDB
+{
+    sqlite3_close(trackData);
 }
 
 - (void)prepareQuery:(NSString *)query
@@ -706,6 +850,21 @@ static const double TESTTIMEOFFSET = 5;
     }
     sqlite3_finalize(tempStatement);
     return returnValue;
+}
+
+- (NSArray*)getMultiIntegerDB:(NSString *)query
+{
+    /// The statement to execute the query with.
+    sqlite3_stmt *tempStatement;
+    sqlite3_prepare_v2(trackData, [query UTF8String], -1, &tempStatement, NULL);
+    /// Array of integers obtained from the query.
+    NSMutableArray *returnValues = [[NSMutableArray alloc] init];
+    while (sqlite3_step(tempStatement) == SQLITE_ROW)
+    {
+        [returnValues addObject:[NSNumber numberWithInteger:sqlite3_column_int(tempStatement, 0)]];
+    }
+    sqlite3_finalize(tempStatement);
+    return [returnValues copy];
 }
 
 /*!

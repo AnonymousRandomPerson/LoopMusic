@@ -11,19 +11,8 @@
 
 #import <TheAmazingAudioEngine.h>
 #import <math.h>
+#import "AudioData.h"
 
-/// Contains data for an audio track.
-typedef struct AudioData
-{
-    /// The number of frames in the current track.
-    UInt32 numFrames;
-    /// The current playback frame of the audio player.
-    UInt32 currentFrame;
-    /// Whether a new track is being loaded.
-    bool loading;
-    /// The sample data for the playing track.
-    AudioBufferList *playingList;
-} AudioData;
 
 @interface AudioPlayer : NSObject
 {
@@ -34,8 +23,6 @@ typedef struct AudioData
     
     /// Pointer to the current audio track.
     AudioData *audioData;
-    /// Data for the current audio track.
-    AudioData audioDataStore;
     /// Data for the queued audio track.
     AudioData *bufferAudioData;
     /// Audio data to free from memory.
@@ -51,6 +38,8 @@ typedef struct AudioData
     UInt32 _loopStart;
     /// The time that the current track will loop back from when looping.
     UInt32 _loopEnd;
+    /// The number of times the track has looped.
+    NSUInteger loopCount;
     
     /// Timer for freeing tracks from memory.
     NSTimer *freeTimer;
@@ -64,34 +53,92 @@ typedef struct AudioData
 @property(nonatomic) float globalVolume;
 /// Whether the audio player is currently playing.
 @property(nonatomic, readonly) bool playing;
-/// The duration of the track in the audio player.
+/// The duration of the track in the audio player in seconds.
 @property(nonatomic, readonly) double duration;
-/// The time that the current track will loop back to when looping.
+/// The time at which to resume the track if paused.
+@property(nonatomic) double pauseTime;
+/// The time that the current track will loop back to when looping in seconds.
 @property(nonatomic) NSTimeInterval loopStart;
-/// The time that the current track will loop back from when looping.
+/// The time that the current track will loop back from when looping in seconds.
 @property(nonatomic) NSTimeInterval loopEnd;
 /// Whether a new track is being loaded.
 @property(nonatomic) bool loading;
 
 /*!
- * Starts playback of the audio player.
- * @return
+ * Decrements the base volume.
+ * @param volumeDec The amount to decrement by.
+ */
+- (void)decrementVolume:(float)volumeDec;
+
+/*!
+ * Returns the loop start point in frames.
+ * @return The loop start point frame number.
+ */
+- (UInt32)loopStartFrame;
+/*!
+ * Returns the loop end point in frames.
+ * @return The loop end point frame number.
+ */
+- (UInt32)loopEndFrame;
+/*!
+ * Returns the loop duration in frames.
+ * @return The loop duration in frames.
+ */
+- (UInt32)frameDuration;
+
+/*!
+ * Converts a time in seconds to frame number.
+ * @return The input time as a frame number.
+ */
++ (UInt32)timeToFrame:(NSTimeInterval)time;
+/*!
+ * Converts a frame number to a time in seconds.
+ * @return The input frame as a time in seconds.
+ */
++ (NSTimeInterval)frameToTime:(UInt32)frame;
+
+
+/*!
+ * Starts/resumes playback of the audio player.
  */
 - (void)play;
 
 /*!
+ * Pauses playback of the audio player.
+ */
+- (void)pause;
+
+/*!
  * Stops playback of the audio player.
- * @return
  */
 - (void)stop;
+
+
+/*!
+ * Gets the current loop count
+ */
+- (NSUInteger)getLoopCount;
+/*!
+ * Resets the loop counter.
+ */
+- (void)resetLoopCounter;
+/*!
+ * Gets the repeat number, given an elapsed playback time in seconds.
+ */
+- (NSInteger)getRepeatNumber:(double)elapsedTime;
 
 /*!
  * Initializes the audio player.
  * @param newURL The audio file to initialize the audio player with.
  * @param error Will be set if any errors occur during initialization.
- * @return
  */
 - (void)initAudioPlayer:(NSURL *)newURL :(NSError *)error;
+
+/*!
+ * Gets the currently loaded audio data in the audio player.
+ * @return The AudioData pointer to the current track.
+ */
+- (AudioData *)getAudioData;
 
 /*!
  * Finds suitable start times to loop to.

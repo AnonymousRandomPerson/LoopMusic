@@ -11,6 +11,8 @@
 #import <sys/time.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import "AudioPlayer.h"
+#import "UILoopSlider.h"
+#import <Accelerate/Accelerate.h>
 
 /// The name of the current track.
 extern NSString *settingsSongString;
@@ -40,6 +42,9 @@ extern NSInteger playlistIndex;
     NSString *songString;
     /// Whether a track is being chosen by its name.
     bool chooseSongString;
+    /// The amount of microseconds that the current track has been playing for before the shuffle timer was most recently activated... only updated at pause time, and reset at stop time or song changes.
+    double elapsedTimeBeforeTimerActivation;
+    
     /// The amount of milliseconds that the current track has been fading out for.
     double fadeTime;
     /// The amount to decrement volume per tick when fading out.
@@ -47,7 +52,7 @@ extern NSInteger playlistIndex;
     
     /// Button to randomize the current track.
     IBOutlet UIButton *randomSong;
-    /// Button to play the current track.
+    /// Button to play/resume the current track.
     IBOutlet UIButton *playSong;
     /// Button to stop playback of the current track.
     IBOutlet UIButton *stopSong;
@@ -90,8 +95,6 @@ extern NSInteger playlistIndex;
     
     /// The time that the current track started playing at.
     long long time;
-    /// The number of times the current track has repeated.
-    NSUInteger repeats;
     /// Whether a screen other than the main screen is showing.
     bool occupied;
     
@@ -99,6 +102,8 @@ extern NSInteger playlistIndex;
     NSTimer *shuffleTimer;
     /// Timer used to fade out tracks.
     NSTimer *fadeTimer;
+    /// Timer used to update the playback slider.
+    NSTimer *playSliderUpdateTimer;
 }
 
 /// Button to randomize the current track.
@@ -113,83 +118,101 @@ extern NSInteger playlistIndex;
 @property(nonatomic, retain) UILabel *songName;
 /// Button to go to playback settings.
 @property(nonatomic, retain) UIButton *settings;
+/// Playback slider.
+@property (nonatomic, retain) IBOutlet UILoopSlider *playSlider;
+
+/// FFT setup object for vDSP.
+@property(nonatomic) FFTSetup fftSetup;
+/// N used for the current FFT setup object.
+@property(nonatomic) unsigned long nSetup;
 
 /*!
  * Chooses a random track to be played.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)randomSong:(id)sender;
 /*!
- * Plays the current track.
+ * Plays or resumes the current track.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)playSong:(id)sender;
 /*!
+ * Pauses playback of the current track.
+ * @param sender The object that called this function.
+ */
+- (IBAction)pauseSong:(id)sender;
+/*!
  * Stops playback of the current track.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)stopSong:(id)sender;
 /*!
+ * Suspends the slider update timer when the user starts interacting with the playback slider.
+ * @param sender The object that called this function.
+ */
+- (IBAction)playSliderTouchDown:(id)sender;
+/*!
+ * Resumes the slider update timer after the user lets go of the playback slider.
+ * @param sender The object that called this function.
+ */
+- (IBAction)playSliderTouchUp:(id)sender;
+/*!
+ * Updates the audio player time and the playback slider time when the slider is interacted with.
+ * @param sender The object that called this function.
+ */
+- (IBAction)playSliderUpdate:(id)sender;
+/*!
  * Navigates to the search screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)searchSong:(id)sender;
 /*!
  * Navigates to the settings screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)settings:(id)sender;
 /*!
  * Navigates to the loop finder screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)loopFinder:(id)sender;
 /*!
  * Navigates to a certain screen.
- * @param sender The name of the screen to navigate to.
- * @return
+ * @param screen The name of the screen to navigate to.
  */
 - (IBAction)changeScreen:(NSString *)screen;
 /*!
  * Navigates to the previous screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)back:(id)sender;
 /*!
  * Sets the global volume of the app.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)setGlobalVolume:(id)sender;
 /*!
  * Saves the global volume of the app to the settings file.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)saveGlobalVolume:(id)sender;
 
 /*!
  * Opens the track database.
- * @return
  */
 - (void)openDB;
 /*!
+ * Closes the track database.
+ */
+- (void)closeDB;
+/*!
  * Prepares a database query.
  * @param query The query to prepare.
- * @return
  */
 - (void)prepareQuery:(NSString *)query;
 /*!
  * Executes a query to update the database.
  * @param query The query to update the database with.
- * @return
  */
 - (void)updateDB:(NSString *)query;
 /*!
@@ -199,9 +222,14 @@ extern NSInteger playlistIndex;
  */
 - (NSInteger)getIntegerDB:(NSString *)query;
 /*!
+ * Gets multiple integers from a database query.
+ * @param query The database query to get the integers with.
+ * @return Array of integers obtained from the database query.
+ */
+- (NSArray*)getMultiIntegerDB:(NSString *)query;
+/*!
  * Opens the database and updates it.
  * @param query The query to update the database with.
- * @return
  */
 - (void)openUpdateDB:(NSString *)query;
 /*!
@@ -214,12 +242,10 @@ extern NSInteger playlistIndex;
  * Executes queries to add a song to the database.
  * @param name The song name.
  * @param url The song URL.
- * @return
  */
 - (void)addSongToDB:(NSString *)name :(NSURL *)url;
 /*!
  * Wipes the database clean.
- * @return
  */
 - (void)wipeDB;
 
@@ -230,27 +256,22 @@ extern NSInteger playlistIndex;
 - (NSInteger)initializeTotalSongs;
 /*!
  * Increments the total number of tracks in the app.
- * @return
  */
 - (void)incrementTotalSongs;
 /*!
  * Decrements the total number of tracks in the app.
- * @return
  */
 - (void)decrementTotalSongs;
 /*!
  * Increments the total number of tracks in the current playlist.
- * @return
  */
 - (void)incrementPlaylistSongs;
 /*!
  * Decrements the total number of tracks in the current playlist.
- * @return
  */
 - (void)decrementPlaylistSongs;
 /*!
  * Updates the database with changes to the current playlist.
- * @return
  */
 - (void)updatePlaylistSongs;
 /*!
@@ -285,42 +306,70 @@ extern NSInteger playlistIndex;
 - (NSString *)getPlaylistName;
 /*!
  * Updates the name of the current playlist according to the playlist index.
- * @return
  */
 - (void)updatePlaylistName;
 /*!
  * Updates the name of the current playlist.
  * @param name The new name of the current playlist.
- * @return
  */
 - (void)updatePlaylistName:(NSString *)name;
 
 /*!
- * Plays a track.
- * @return
+ * Plays a track from the beginning.
  */
 - (void)playMusic;
 /*!
  * Sets audio players to the URL of the current track.
  * @param newURL The URL of the current track.
- * @return
  */
 - (void)setAudioPlayer:(NSURL*)newURL;
 /*!
+ * Refreshes the play slider with the most current loop and track data.
+ */
+- (void)refreshPlaySlider;
+/*!
+ * Sets the loop start point for the audio player.
+ * @param newStart The new start point.
+ */
+- (void)setAudioLoopStart:(NSTimeInterval)newStart;
+/*!
+ * Sets the loop end point for the audio player.
+ * @param newEnd The new start point.
+ */
+- (void)setAudioLoopEnd:(NSTimeInterval)newEnd;
+/*!
+ * Returns the loop start point for the audio player in frames.
+ * @return A UInt32 of the audio player's start frame.
+ */
+- (UInt32)getAudioLoopStartFrame;
+/*!
+ * Returns the loop start point for the audio player in seconds.
+ * @return A NSTimeInterval of the audio player's start point.
+ */
+- (NSTimeInterval)getAudioLoopStart;
+/*!
+ * Returns the loop end point for the audio player in frames.
+ * @return An NSTimeInterval of the audio player's end frame.
+ */
+- (UInt32)getAudioLoopEndFrame;
+/*!
+ * Returns the loop end point for the audio player in seconds.
+ * @return An NSTimeInterval of the audio player's end point.
+ */
+- (NSTimeInterval)getAudioLoopEnd;
+
+/*!
  * Updates the fade-out volume decrement according to the fade-out setting and the current track.
- * @return
  */
 - (void)updateVolumeDec;
 /*!
  * Plays a specific track.
  * @param newSong The name of the track to play.
- * @return
  */
 - (void)chooseSong:(NSString *)newSong;
 /*!
  * Sets whether a screen other than the main screen is showing.
  * @param newOccupied Whether a screen other than the main screen is showing.
- * @return
  */
 - (void)setOccupied:(bool)newOccupied;
 /*!
@@ -330,18 +379,31 @@ extern NSInteger playlistIndex;
 - (NSString *)getSongName;
 /*!
  * Sets the name of the current track.
- * @param The name to set the current track to.
- * @return
+ * @param newName The name to set the current track to.
  */
 - (void)setNewSongName:(NSString *)newName;
 /*!
- * Gets the duration of the current track.
- * @return The duration of the current track.
+ * Gets the currently loaded audio data in the audio player.
+ * @return The AudioData pointer to the current track.
+ */
+- (AudioData *)getAudioData;
+/*!
+ * Gets the duration of the current track in frames.
+ * @return The duration of the current track in frames.
+ */
+- (UInt32)getAudioFrameDuration;
+/*!
+ * Gets the duration of the current track in seconds.
+ * @return The duration of the current track in seconds.
  */
 - (double)getAudioDuration;
 /*!
+ * Calls the audioPlayer's method to find a loop time.
+ * @return An array of suitable start times.
+ */
+- (NSMutableArray *)audioFindLoopTime;
+/*!
  * Sets the playback time to five seconds before the loop time.
- * @return
  */
 - (void)testTime;
 /*!
@@ -352,7 +414,6 @@ extern NSInteger playlistIndex;
 /*!
  * Sets the relative volume of the current track.
  * @param newVolume The volume to set the relative volume to.
- * @return
  */
 - (void)setVolume:(double)newVolume;
 /*!
@@ -360,6 +421,11 @@ extern NSInteger playlistIndex;
  * @return The playback time of the current track.
  */
 - (float)findTime;
+/*!
+ * Gets whether the audio player is playing.
+ * @return Boolean for whether the audio player is playing.
+ */
+- (bool)isPlaying;
 /*!
  * Sets the loop time of the current track.
  * @param newLoopTime The time to set the loop time to.
@@ -369,7 +435,6 @@ extern NSInteger playlistIndex;
 /*!
  * Sets the playback time of the current track.
  * @param newCurrentTime The time to set the playback time to.
- * @return
  */
 - (void)setCurrentTime:(double)newCurrentTime;
 /*!
@@ -377,16 +442,18 @@ extern NSInteger playlistIndex;
  * @return A randomly varied amount of time to play the current track before shuffling.
  */
 - (double)timeVariance;
+/*!
+ * Recalculates internal shuffle time limit parameter, based on the base time and a random variation.
+ */
+- (void)recalculateShuffleTime;
 
 /*!
  * Displays an error message on the screen.
  * @param message The error message to display.
- * @return
  */
 - (void)showErrorMessage:(NSString *)message;
 /*!
  * Displays an error message stating that a track needs to be added to the app.
- * @return
  */
 - (void)showNoSongMessage;
 /*!
@@ -394,7 +461,6 @@ extern NSInteger playlistIndex;
  * @param title The title of the message dialogue box.
  * @param message The message to display.
  * @param okay The text to display in the confirmation button.
- * @return
  */
 - (void)showTwoButtonMessage:(NSString *)title :(NSString *)message :(NSString *)okay;
 /*!
@@ -403,7 +469,6 @@ extern NSInteger playlistIndex;
  * @param message The message to display.
  * @param okay The text to display in the confirmation button.
  * @param initText The initial text to display in the text input box.
- * @return
  */
 - (void)showTwoButtonMessageInput:(NSString *)title :(NSString *)message :(NSString *)okay :(NSString *)initText;
 /*!

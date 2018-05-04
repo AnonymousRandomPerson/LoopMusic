@@ -48,7 +48,6 @@ static CGPoint lastPosition;
 
 /*!
  * Saves the current position of the search.
- * @return
  */
 - (void)savePosition
 {

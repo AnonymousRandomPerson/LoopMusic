@@ -9,8 +9,6 @@
 #import <Foundation/Foundation.h>
 #import "AudioPlayer.h"
 
-/// The frame rate of the audio player.
-static const UInt32 FRAMERATE = 44100;
 /// The number of frames that have to match for the loop finder to accept a time.
 static const UInt32 NUMMATCHINGFRAMES = 1;
 /// The range of the loop finder's search.
@@ -19,6 +17,8 @@ static const float SEARCHRANGE = 1;
 static const float SEARCHTOLERANCE = 300;
 
 @implementation AudioPlayer
+
+@synthesize pauseTime;
 
 - (id)init
 {
@@ -33,6 +33,9 @@ static const float SEARCHTOLERANCE = 300;
     {
         NSLog(@"%@", [error description]);
     }
+    
+    pauseTime = 0;
+    [self resetLoopCounter];
     [self startFreeTimer];
     
     return self;
@@ -40,7 +43,6 @@ static const float SEARCHTOLERANCE = 300;
 
 /*!
  * Starts the free timer if it isn't already started.
- * @return
  */
 - (void)startFreeTimer
 {
@@ -57,7 +59,6 @@ static const float SEARCHTOLERANCE = 300;
 /*!
  * Checks if memory can be freed.
  * @param timer The timer that called this function.
- * @return
  */
 - (void)checkFree:(NSTimer *)timer
 {
@@ -80,12 +81,13 @@ static const float SEARCHTOLERANCE = 300;
 
 - (NSTimeInterval)currentTime
 {
-    return audioData->currentFrame / (NSTimeInterval)FRAMERATE;
+    return _playing ? audioData->currentFrame / (NSTimeInterval)FRAMERATE : pauseTime;
 }
 
 - (void)setCurrentTime:(NSTimeInterval)currentTime
 {
-    bufferAudioData->currentFrame = currentTime * FRAMERATE;
+    NSInteger lastFrame = audioData ? (NSInteger)audioData->numFrames - 1 : 0;
+    bufferAudioData->currentFrame = MAX(0, MIN(lastFrame, round(currentTime * FRAMERATE)));
 }
 
 - (float)volume
@@ -102,6 +104,11 @@ static const float SEARCHTOLERANCE = 300;
     _volume = volume;
 }
 
+- (void)decrementVolume:(float)volumeDec
+{
+    [self setVolume:_volume - volumeDec];
+}
+
 - (void)setGlobalVolume:(float)globalVolume
 {
     if (globalVolume < 0)
@@ -116,29 +123,43 @@ static const float SEARCHTOLERANCE = 300;
     return _playing;
 }
 
+- (UInt32)frameDuration
+{
+    return bufferAudioData->numFrames;
+}
 - (double)duration
 {
     return bufferAudioData->numFrames / (NSTimeInterval)FRAMERATE;
 }
 
+- (UInt32)loopStartFrame
+{
+    return _loopStart;
+}
+
 - (NSTimeInterval)loopStart
 {
-    return _loopStart / (NSTimeInterval)FRAMERATE;
+    return [AudioPlayer frameToTime:_loopStart];
 }
 
 - (void)setLoopStart:(NSTimeInterval)loopStart
 {
-    _loopStart = loopStart * FRAMERATE;
+    _loopStart = [AudioPlayer timeToFrame:loopStart];
+}
+
+- (UInt32)loopEndFrame
+{
+    return _loopEnd;
 }
 
 - (NSTimeInterval)loopEnd
 {
-    return _loopEnd / (NSTimeInterval)FRAMERATE;
+    return [AudioPlayer frameToTime:_loopEnd];
 }
 
 - (void)setLoopEnd:(NSTimeInterval)loopEnd
 {
-    _loopEnd = loopEnd * FRAMERATE;
+    _loopEnd = [AudioPlayer timeToFrame:loopEnd];
 }
 
 - (bool)loading
@@ -162,15 +183,44 @@ static const float SEARCHTOLERANCE = 300;
         [_audioController addChannels:@[_blockChannel]];
     }
     [self startFreeTimer];
+    self.currentTime = pauseTime;
 }
 
-- (void)stop
+/*!
+ *Stops playback of the audio player.
+ */
+- (void)stopPlayback
 {
     _playing = false;
     if ([self numChannels] > 0)
     {
         [_audioController removeChannels:@[_blockChannel]];
     }
+}
+- (void)pause
+{
+    pauseTime = self.currentTime;
+    [self stopPlayback];
+}
+
+- (void)stop
+{
+    pauseTime = 0;
+    [self stopPlayback];
+}
+
+- (NSUInteger)getLoopCount
+{
+    return loopCount;
+}
+- (void)resetLoopCounter
+{
+    loopCount = 0;
+}
+- (NSInteger)getRepeatNumber:(double)elapsedTime
+{
+    // Use a more robust time-based method, rather than a loop-based method. This allows for jumping around in playback, while still having around the desired number of repeats in playback time.
+    return ((NSInteger)(elapsedTime*FRAMERATE) - (NSInteger)_loopStart) / ((NSInteger)_loopEnd - (NSInteger)_loopStart);
 }
 
 /*!
@@ -227,15 +277,22 @@ static const float SEARCHTOLERANCE = 300;
                     if (audioData->currentFrame >= audioData->numFrames)
                     {
                         audioData->currentFrame = 0;
+                        loopCount++;
                     }
                     else if (!audioData->loading && audioData->currentFrame >= _loopEnd)
                     {
                         audioData->currentFrame = _loopStart;
+                        loopCount++;
                     }
                 }
             }];
         }
     }
+}
+
+- (AudioData *)getAudioData
+{
+    return audioData;
 }
 
 - (NSMutableArray *)findLoopTime
@@ -317,6 +374,16 @@ static const float SEARCHTOLERANCE = 300;
     }
     
     return foundPoints;
+}
+
+
++ (UInt32)timeToFrame:(NSTimeInterval)time
+{
+    return (UInt32)lround(time * FRAMERATE);
+}
++ (NSTimeInterval)frameToTime:(UInt32)frame
+{
+    return frame / (NSTimeInterval)FRAMERATE;
 }
 
 @end

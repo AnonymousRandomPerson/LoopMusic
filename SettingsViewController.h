@@ -46,73 +46,61 @@
 /*!
  * Navigates back to the main screen and saves the settings.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)back:(id)sender;
 /*!
  * Sets the relative volume of the current track.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)setVolume:(id)sender;
 /*!
  * Sets the time that a track will play for before shuffling.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)shuffleTime:(id)sender;
 /*!
  * Sets the number of times a track will loop before shuffling.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)shuffleRepeats:(id)sender;
 /*!
  * Sets the time taken for a track to fade out.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)setFade:(id)sender;
 /*!
  * Cleans up UI elements when the screen is closing.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)close:(id)sender;
 /*!
  * Changes how to shuffle tracks.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)shuffleChange:(id)sender;
 /*!
  * Navigates to the playlist choosing screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)choosePlaylist:(id)sender;
 /*!
  * Navigates to the playlist modification screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)modifyPlaylist:(id)sender;
 /*!
  * Displays a prompt to enter a name for a new playlist.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)newPlaylist:(id)sender;
 /*!
  * Displays a prompt to enter a new name for the current playlist.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)renamePlaylist:(id)sender;
 /*!
  * Navigates to the playlist deletion screen.
  * @param sender The object that called this function.
- * @return
  */
 - (IBAction)deletePlaylist:(id)sender;
 

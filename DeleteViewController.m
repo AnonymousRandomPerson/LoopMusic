@@ -25,7 +25,6 @@
  * @discussion The receiver is automatically dismissed after this method is invoked.
  * @param alertView The alert view containing the button.
  * @param buttonIndex The index of the button that was clicked. The button indices start at 0.
- * @return
  */
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
