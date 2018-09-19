@@ -193,9 +193,9 @@
     CGFloat loopEndX = [self loopEndCoord];
 
     [UIView animateWithDuration:0.1 animations:^{
-        preLoopBox.frame = [self createFrame:[self lowerBound] :loopStartX];
-        loopBox.frame = [self createFrame:loopStartX :loopEndX];
-        postLoopBox.frame = [self createFrame:loopEndX :[self upperBound]];
+        self->preLoopBox.frame = [self createFrame:[self lowerBound] :loopStartX];
+        self->loopBox.frame = [self createFrame:loopStartX :loopEndX];
+        self->postLoopBox.frame = [self createFrame:loopEndX :[self upperBound]];
     }];
 }
 

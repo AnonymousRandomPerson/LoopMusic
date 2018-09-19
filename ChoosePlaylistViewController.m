@@ -7,6 +7,7 @@
 //
 
 #import "ChoosePlaylistViewController.h"
+#import "SettingsStore.h"
 
 @interface ChoosePlaylistViewController ()
 
@@ -48,7 +49,7 @@ static CGPoint lastPosition;
 - (void)selectItem:(NSString *)item
 {
     [self openDB];
-    playlistIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM PlaylistNames WHERE name = \"%@\"", item]];
+    SettingsStore.instance.playlistIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM PlaylistNames WHERE name = \"%@\"", item]];
     sqlite3_close(trackData);
     [presenter updatePlaylistSongs];
     [presenter updatePlaylistName:item];

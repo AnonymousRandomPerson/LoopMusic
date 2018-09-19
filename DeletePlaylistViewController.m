@@ -7,6 +7,7 @@
 //
 
 #import "DeletePlaylistViewController.h"
+#import "SettingsStore.h"
 
 @interface DeletePlaylistViewController ()
 
@@ -39,11 +40,11 @@
         {
             /// The ID of the playlist to be deleted.
             NSInteger deleteIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM PlaylistNames WHERE name = \"%@\"", item]];
-            [self updateDB:[NSString stringWithFormat:@"DELETE FROM PlaylistNames WHERE id = %ld", deleteIndex]];
-            [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE id = %ld", deleteIndex]];
-            if (playlistIndex == deleteIndex)
+            [self updateDB:[NSString stringWithFormat:@"DELETE FROM PlaylistNames WHERE id = %ld", (long)deleteIndex]];
+            [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE id = %ld", (long)deleteIndex]];
+            if (SettingsStore.instance.playlistIndex == deleteIndex)
             {
-                playlistIndex = 0;
+                SettingsStore.instance.playlistIndex = 0;
                 [presenter updatePlaylistName:@""];
             }
         }

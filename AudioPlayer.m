@@ -256,33 +256,33 @@ static const float SEARCHTOLERANCE = 300;
             _blockChannel =
             [AEBlockChannel channelWithBlock:^(const AudioTimeStamp *time, UInt32 frames, AudioBufferList *audio)
             {
-                AudioData *oldData = audioData;
-                audioData = bufferAudioData;
-                if (oldData != audioData)
+                AudioData *oldData = self->audioData;
+                self->audioData = self->bufferAudioData;
+                if (oldData != self->audioData)
                 {
-                    freeData = oldData;
+                    self->freeData = oldData;
                 }
                 for (int i = 0; i < frames; i++)
                 {
                     for (int j = 0; j < 2; j++)
                     {
-                        float currentVolume = _volume * _globalVolume;
+                        float currentVolume = self->_volume * self->_globalVolume;
                         if (currentVolume > 1)
                         {
                             currentVolume = 1;
                         }
-                        ((SInt16 *)audio->mBuffers[j].mData)[i] = ((SInt16 *)audioData->playingList->mBuffers[j].mData)[audioData->currentFrame] * currentVolume;
+                        ((SInt16 *)audio->mBuffers[j].mData)[i] = ((SInt16 *)self->audioData->playingList->mBuffers[j].mData)[self->audioData->currentFrame] * currentVolume;
                     }
-                    audioData->currentFrame++;
-                    if (audioData->currentFrame >= audioData->numFrames)
+                    self->audioData->currentFrame++;
+                    if (self->audioData->currentFrame >= self->audioData->numFrames)
                     {
-                        audioData->currentFrame = 0;
-                        loopCount++;
+                        self->audioData->currentFrame = 0;
+                        self->loopCount++;
                     }
-                    else if (!audioData->loading && audioData->currentFrame >= _loopEnd)
+                    else if (!self->audioData->loading && self->audioData->currentFrame >= self->_loopEnd)
                     {
-                        audioData->currentFrame = _loopStart;
-                        loopCount++;
+                        self->audioData->currentFrame = self->_loopStart;
+                        self->loopCount++;
                     }
                 }
             }];

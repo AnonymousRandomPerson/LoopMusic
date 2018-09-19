@@ -7,26 +7,17 @@
 //
 
 #import "LoopMusicViewController.h"
+#import "SettingsStore.h"
 
 /// The name of the current track.
 NSString *settingsSongString = @"";
-/// The base amount of time to play a track before shuffling.
-double timeShuffle = -1;
 /// The actual amount of time (in microseconds) to play a track before shuffling.
 double timeShuffle2 = -1;
-/// The number of times to repeat a track before shuffling.
-NSInteger repeatsShuffle = -1;
-/// The setting for how to shuffle tracks.
-NSUInteger shuffleSetting = 0;
-/// The amount of time to fade out a track before shuffling.
-double fadeSetting = 0;
-/// The index of the currently selected playlist.
-NSInteger playlistIndex = 0;
 
 /// The amount of time that time shuffle can vary by.
-static const int TIMEVARIANCE = 30;
+static const int TIME_VARIANCE = 30;
 /// The time before the loop point that testing time will move the playback timer to.
-static const double TESTTIMEOFFSET = 5;
+static const double TEST_TIME_OFFSET = 5;
 
 @interface LoopMusicViewController ()
 
@@ -79,37 +70,11 @@ static const double TESTTIMEOFFSET = 5;
     songString = @"";
     chooseSongString = false;
     musicNumber = -1;
-    
-    /// The file path of the settings file.
-    NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
-    /// The contents of the settings file.
-    NSString *contentOfFile = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
-    if (contentOfFile)
-    {
-        /// The contents of the settings file, split into individual settings.
-        NSArray *splitSettings = [contentOfFile componentsSeparatedByString:@","];
-        shuffleSetting = [splitSettings[0] integerValue];
-        timeShuffle = [splitSettings[1] doubleValue];
-        [self recalculateShuffleTime];
-        repeatsShuffle = [splitSettings[2] integerValue];
-        fadeSetting = splitSettings.count > 3 ? [splitSettings[3] doubleValue] : 0;
-        playlistIndex = splitSettings.count > 4 ? [splitSettings[4] integerValue] : 0;
-        volumeSlider.value = splitSettings.count > 5 ? [splitSettings[5] floatValue] : 0;
-    }
-    else
-    {
-        // Default values.
-        shuffleSetting = 1;
-        timeShuffle = 3.5;
-        [self recalculateShuffleTime];
-        repeatsShuffle = 3;
-        fadeSetting = 2;
-        playlistIndex = 0;
-        volumeSlider.value = 0;
-        [self saveSettings];
-    }
+
+    volumeSlider.value = SettingsStore.instance.masterVolume;
+    [self recalculateShuffleTime];
     [self setGlobalVolume:nil];
-    if (playlistIndex)
+    if (SettingsStore.instance.playlistIndex)
     {
         [self updatePlaylistSongs];
         [self updatePlaylistName];
@@ -244,17 +209,17 @@ static const double TESTTIMEOFFSET = 5;
         if (!occupied)
         {
             bool willSwitch = false;
-            if (shuffleSetting == 2 && repeatsShuffle > 0 && [self getRepeats] >= repeatsShuffle)
+            if (SettingsStore.instance.shuffleSetting == 2 && SettingsStore.instance.repeatsShuffle > 0 && [self getRepeats] >= SettingsStore.instance.repeatsShuffle)
             {
                 willSwitch = true;
             }
-            else if (shuffleSetting == 1 && timeShuffle > 0 && [self getElapsedTime] >= timeShuffle2)
+            else if (SettingsStore.instance.shuffleSetting == 1 && SettingsStore.instance.timeShuffle > 0 && [self getElapsedTime] >= timeShuffle2)
             {
                 willSwitch = true;
             }
             if (willSwitch)
             {
-                if (fadeSetting <= 0)
+                if (SettingsStore.instance.fadeSetting <= 0)
                 {
                     [self shuffleTrack];
                 }
@@ -273,7 +238,7 @@ static const double TESTTIMEOFFSET = 5;
  */
 - (void)fadeOut:(NSTimer *)timer
 {
-    if (++fadeTime > fadeSetting * 100)
+    if (++fadeTime > SettingsStore.instance.fadeSetting * 100)
     {
         [self shuffleTrack];
         [self stopFadeTimer];
@@ -325,7 +290,7 @@ static const double TESTTIMEOFFSET = 5;
         playSlider.maximumValue = 0;    // Prevents any sliding
         return;
     }
-    if (!playlistIndex || !totalPlaylistSongs)
+    if (!SettingsStore.instance.playlistIndex || !totalPlaylistSongs)
     {
         totalPlaylistSongs = totalSongs;
     }
@@ -475,7 +440,7 @@ static const double TESTTIMEOFFSET = 5;
 
 - (void)updateVolumeDec
 {
-    volumeDec = fadeSetting > 0 ? volumeSet / (fadeSetting * 100) : 0;
+    volumeDec = SettingsStore.instance.fadeSetting > 0 ? volumeSet / (SettingsStore.instance.fadeSetting * 100) : 0;
 }
 
 - (IBAction)randomSong:(id)sender
@@ -616,6 +581,7 @@ static const double TESTTIMEOFFSET = 5;
 
 - (IBAction)saveGlobalVolume:(id)sender
 {
+    SettingsStore.instance.masterVolume = [self getVolumeSliderValue];
     [self saveSettings];
 }
 
@@ -706,7 +672,7 @@ static const double TESTTIMEOFFSET = 5;
 
 - (void)testTime
 {
-    double test = audioPlayer.loopEnd - TESTTIMEOFFSET;
+    double test = audioPlayer.loopEnd - TEST_TIME_OFFSET;
     if (test < 0)
     {
         test = 0;
@@ -780,7 +746,7 @@ static const double TESTTIMEOFFSET = 5;
 
 - (double)timeVariance
 {
-    return (((double)((int)(arc4random_uniform(2*TIMEVARIANCE) - TIMEVARIANCE))) / 60.0 + timeShuffle) * 60000000.0;
+    return (((double)((int)(arc4random_uniform(2 * TIME_VARIANCE) - TIME_VARIANCE))) / 60.0 + SettingsStore.instance.timeShuffle) * 60000000.0;
 }
 - (void)recalculateShuffleTime
 {
@@ -939,7 +905,7 @@ static const double TESTTIMEOFFSET = 5;
     totalSongs = 0;
     totalPlaylistSongs = 0;
     playlistName.text = @"";
-    playlistIndex = 0;
+    SettingsStore.instance.playlistIndex = 0;
 }
 
 - (NSInteger)initializeTotalSongs
@@ -967,7 +933,7 @@ static const double TESTTIMEOFFSET = 5;
 - (void)incrementTotalSongs
 {
     totalSongs++;
-    if (!playlistIndex)
+    if (!SettingsStore.instance.playlistIndex)
     {
         totalPlaylistSongs = totalSongs;
     }
@@ -976,7 +942,7 @@ static const double TESTTIMEOFFSET = 5;
 - (void)decrementTotalSongs
 {
     totalSongs--;
-    if (!playlistIndex)
+    if (!SettingsStore.instance.playlistIndex)
     {
         totalPlaylistSongs = totalSongs;
     }
@@ -1015,16 +981,16 @@ static const double TESTTIMEOFFSET = 5;
 
 - (void)updatePlaylistName
 {
-    if (playlistIndex)
+    if (SettingsStore.instance.playlistIndex)
     {
         [self openDB];
         /// The name of the current playlist.
-        NSString * newName = [self getStringDB:[NSString stringWithFormat:@"SELECT name FROM PlaylistNames where id = %ld", (long)playlistIndex]];
+        NSString * newName = [self getStringDB:[NSString stringWithFormat:@"SELECT name FROM PlaylistNames where id = %ld", (long)SettingsStore.instance.playlistIndex]];
         [self updatePlaylistName:newName];
         sqlite3_close(trackData);
         if ([newName isEqualToString:@""])
         {
-            playlistIndex = 0;
+            SettingsStore.instance.playlistIndex = 0;
             [self updatePlaylistSongs];
         }
     }
@@ -1050,9 +1016,9 @@ static const double TESTTIMEOFFSET = 5;
 {
     /// The IDs of all tracks in the current playlist.
     NSArray *splitSongs = nil;
-    if (playlistIndex)
+    if (SettingsStore.instance.playlistIndex)
     {
-        [self prepareQuery:[NSString stringWithFormat:@"SELECT track FROM Playlists WHERE id = %ld", (long)playlistIndex]];
+        [self prepareQuery:[NSString stringWithFormat:@"SELECT track FROM Playlists WHERE id = %ld", (long)SettingsStore.instance.playlistIndex]];
     }
     else
     {
@@ -1074,7 +1040,7 @@ static const double TESTTIMEOFFSET = 5;
 
 - (NSMutableArray*)getSongList
 {
-    if (!playlistIndex)
+    if (!SettingsStore.instance.playlistIndex)
     {
         return [self getTotalSongList];
     }
@@ -1209,11 +1175,7 @@ static const double TESTTIMEOFFSET = 5;
 
 - (void)saveSettings
 {
-    /// The string to write to the settings file.
-    NSString *fileWriteString = [NSString stringWithFormat:@"%lu,%f,%li,%f,%li,%f", (unsigned long)shuffleSetting, timeShuffle, (long)repeatsShuffle, fadeSetting, (long)playlistIndex, [self getVolumeSliderValue]];
-    /// The file path of the settings file.
-    NSString *filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:@"Settings.txt"];
-    [fileWriteString writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+    [SettingsStore.instance saveSettings];
 }
 
 - (float)getVolumeSliderValue

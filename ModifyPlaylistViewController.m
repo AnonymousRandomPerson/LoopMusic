@@ -7,6 +7,7 @@
 //
 
 #import "ModifyPlaylistViewController.h"
+#import "SettingsStore.h"
 
 @interface ModifyPlaylistViewController ()
 
@@ -34,7 +35,7 @@
 {
     // Forms (first, second[0]), (first, second[1]), ...
     // Assumes secondsArray is not empty
-    return [NSString stringWithFormat:@"(%ld, %@)", first, [secondsArray componentsJoinedByString:[NSString stringWithFormat:@"), (%ld, ", first]]];
+    return [NSString stringWithFormat:@"(%ld, %@)", (long)first, [secondsArray componentsJoinedByString:[NSString stringWithFormat:@"), (%ld, ", (long)first]]];
 }
 
 - (IBAction)confirmButton:(id)sender
@@ -47,14 +48,14 @@
     if (recentlyUnselectedItems.count > 0)
     {
         trackIndices = [self getMultiIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Tracks WHERE name in %@ AND id != 0", [self formStringTuple:recentlyUnselectedItems]]];
-        [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE id = %ld AND track in %@", (long)playlistIndex, [self formIntTuple:trackIndices]]];
+        [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE id = %ld AND track in %@", (long)SettingsStore.instance.playlistIndex, [self formIntTuple:trackIndices]]];
     }
     
     // Add stuff
     if (recentlySelectedItems.count > 0)
     {
         trackIndices = [self getMultiIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Tracks WHERE name in %@ AND id != 0", [self formStringTuple:recentlySelectedItems]]];
-        [self updateDB:[NSString stringWithFormat:@"INSERT INTO Playlists (id, track) VALUES %@", [self formIntTupleList:playlistIndex :trackIndices]]];
+        [self updateDB:[NSString stringWithFormat:@"INSERT INTO Playlists (id, track) VALUES %@", [self formIntTupleList:SettingsStore.instance.playlistIndex :trackIndices]]];
     }
     
     sqlite3_close(trackData);

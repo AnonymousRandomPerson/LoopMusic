@@ -7,6 +7,7 @@
 //
 
 #import "SettingsViewController.h"
+#import "SettingsStore.h"
 
 @interface SettingsViewController ()
 
@@ -24,12 +25,6 @@
 
 - (void)viewDidLoad
 {
-    self.shuffle.selectedSegmentIndex = shuffleSetting;
-    
-    shuffleTime.text = [NSString stringWithFormat:@"%f", timeShuffle];
-    shuffleRepeats.text = [NSString stringWithFormat:@"%li", (long)repeatsShuffle];
-    shuffle.selectedSegmentIndex = shuffleSetting;
-    fadeText.text = [NSString stringWithFormat:@"%f", fadeSetting];
     /// Timer to load settings for the app.
     [NSTimer scheduledTimerWithTimeInterval:.1
                                      target:self
@@ -45,7 +40,13 @@
 - (void)loadSettings:(NSTimer*)loadTimer
 {
     presenter = (LoopMusicViewController*)self.presentingViewController;
-    volumeAdjust.text = [NSString stringWithFormat:@"%f", [presenter getVolume]];
+    
+    shuffleTime.text = [NSString stringWithFormat:@"%@", @(SettingsStore.instance.timeShuffle)];
+    shuffleRepeats.text = [NSString stringWithFormat:@"%@", @(SettingsStore.instance.repeatsShuffle)];
+    shuffle.selectedSegmentIndex = SettingsStore.instance.shuffleSetting;
+    fadeText.text = [NSString stringWithFormat:@"%@", @(SettingsStore.instance.fadeSetting)];
+    volumeAdjust.text = [NSString stringWithFormat:@"%@", @([presenter getVolume])];
+    
     [presenter setOccupied:true];
 }
 
@@ -53,7 +54,7 @@
 {
     [presenter refreshPlaySlider];  // For when the underlying audio file was changed.
     [presenter setOccupied:false];
-    shuffleSetting = [shuffle selectedSegmentIndex];
+    SettingsStore.instance.shuffleSetting = [shuffle selectedSegmentIndex];
     [self saveSettings];
     [super back:sender];
 }
@@ -137,7 +138,7 @@
 {
     if ([shuffleTime.text doubleValue] > 0)
     {
-        timeShuffle = [shuffleTime.text doubleValue];
+        SettingsStore.instance.timeShuffle = [shuffleTime.text doubleValue];
         [presenter recalculateShuffleTime];
     }
     else
@@ -150,7 +151,7 @@
 {
     if ([shuffleRepeats.text intValue] > 0)
     {
-        repeatsShuffle = [shuffleRepeats.text intValue];
+        SettingsStore.instance.repeatsShuffle = [shuffleRepeats.text intValue];
     }
     else
     {
@@ -163,7 +164,7 @@
 {
     if ([fadeText.text doubleValue] >= 0)
     {
-        fadeSetting = [fadeText.text doubleValue];
+        SettingsStore.instance.fadeSetting = [fadeText.text doubleValue];
         [presenter updateVolumeDec];
     }
     else
@@ -182,7 +183,7 @@
 
 - (IBAction)shuffleChange:(id)sender
 {
-    shuffleSetting = [shuffle selectedSegmentIndex];
+    SettingsStore.instance.shuffleSetting = [shuffle selectedSegmentIndex];
 }
 
 /*!
@@ -256,17 +257,17 @@
     else if (alertIndex == 1)
     {
         // Rename playlist.
-        if (playlistIndex && ![newName isEqualToString:[presenter getPlaylistName]])
+        if (SettingsStore.instance.playlistIndex && ![newName isEqualToString:[presenter getPlaylistName]])
         {
             [self openDB];
             [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM PlaylistNames WHERE name=\"%@\"", newName]];
-            if (sqlite3_step(statement) == SQLITE_ROW && sqlite3_column_int(statement, 0) != playlistIndex)
+            if (sqlite3_step(statement) == SQLITE_ROW && sqlite3_column_int(statement, 0) != SettingsStore.instance.playlistIndex)
             {
                 [self showErrorMessage:@"Name is already used."];
             }
             else
             {
-                [self updateDB:[NSString stringWithFormat:@"UPDATE PlaylistNames SET name = \"%@\" WHERE id = \"%ld\"", newName, (long)playlistIndex]];
+                [self updateDB:[NSString stringWithFormat:@"UPDATE PlaylistNames SET name = \"%@\" WHERE id = \"%ld\"", newName, (long)SettingsStore.instance.playlistIndex]];
             }
             sqlite3_finalize(statement);
             sqlite3_close(trackData);
@@ -290,7 +291,7 @@
             [self prepareQuery:[NSString stringWithFormat:@"SELECT id FROM PlaylistNames WHERE name=\"%@\"", newName]];
             if (sqlite3_step(statement) == SQLITE_ROW)
             {
-                playlistIndex = sqlite3_column_int(statement, 0);
+                SettingsStore.instance.playlistIndex = sqlite3_column_int(statement, 0);
             }
         }
         sqlite3_finalize(statement);
@@ -408,7 +409,7 @@
 
 - (IBAction)modifyPlaylist:(id)sender
 {
-    if (!playlistIndex)
+    if (!SettingsStore.instance.playlistIndex)
     {
         [self showErrorMessage:@"The \"All tracks\" playlist can't be modified."];
     }
@@ -430,7 +431,7 @@
 
 - (IBAction)renamePlaylist:(id)sender
 {
-    if (playlistIndex)
+    if (SettingsStore.instance.playlistIndex)
     {
         alertIndex = 1;
         [self showTwoButtonMessageInput:@"Rename Playlist" :@"Enter a new name for the playlist." :@"Rename" :[presenter getPlaylistName]];

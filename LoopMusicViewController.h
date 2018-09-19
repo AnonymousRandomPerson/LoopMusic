@@ -9,23 +9,13 @@
 #import <UIKit/UIKit.h>
 #import <sqlite3.h>
 #import <sys/time.h>
+#import <Accelerate/Accelerate.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import "AudioPlayer.h"
 #import "UILoopSlider.h"
-#import <Accelerate/Accelerate.h>
 
 /// The name of the current track.
 extern NSString *settingsSongString;
-/// The base amount of time to play a track before shuffling.
-extern double timeShuffle;
-/// The number of times to repeat a track before shuffling.
-extern NSInteger repeatsShuffle;
-/// The setting for how to shuffle tracks.
-extern NSUInteger shuffleSetting;
-/// The amount of time to fade out a track before shuffling.
-extern double fadeSetting;
-/// The index of the currently selected playlist.
-extern NSInteger playlistIndex;
 
 @interface LoopMusicViewController : UIViewController
 {
