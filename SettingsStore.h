@@ -12,24 +12,24 @@
 /// Stores and loads settings for the app.
 @interface SettingsStore : NSObject
 {
-    /// The base amount of time to play a track before shuffling.
-    double _timeShuffle;
-    /// The number of times to repeat a track before shuffling.
-    NSInteger _repeatsShuffle;
-    /// The setting for how to shuffle tracks.
-    NSUInteger _shuffleSetting;
-    /// The amount of time to fade out a track before shuffling.
-    double _fadeSetting;
-    /// The index of the currently selected playlist.
-    NSInteger _playlistIndex;
-    /// The current master volume of the app, encompassing all tracks.
-    float _masterVolume;
 }
 
 /// The base amount of time to play a track before shuffling.
 @property(nonatomic) double timeShuffle;
+/// The base amount of time to play a track before shuffling.
+@property(nonatomic) double minTimeShuffle;
+/// The base amount of time to play a track before shuffling.
+@property(nonatomic) double maxTimeShuffle;
 /// The number of times to repeat a track before shuffling.
-@property(nonatomic) NSInteger repeatsShuffle;
+@property(nonatomic) double repeatsShuffle;
+/// The number of times to repeat a track before shuffling.
+@property(nonatomic) double minRepeatsShuffle;
+/// The number of times to repeat a track before shuffling.
+@property(nonatomic) double maxRepeatsShuffle;
+/// The amount of variance in the time for shuffling a track.
+@property(nonatomic) double timeShuffleVariance;
+/// The amount of variance in the number of repeats for shuffling a track.
+@property(nonatomic) double repeatsShuffleVariance;
 /// The setting for how to shuffle tracks.
 @property(nonatomic) NSUInteger shuffleSetting;
 /// The amount of time to fade out a track before shuffling.

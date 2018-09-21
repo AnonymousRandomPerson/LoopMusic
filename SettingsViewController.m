@@ -15,7 +15,7 @@
 
 @implementation SettingsViewController
 
-@synthesize back, volumeAdjust, shuffle, shuffleRepeats, shuffleTime, fadeText;
+@synthesize back, volumeAdjust, fadeText;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -25,36 +25,24 @@
 
 - (void)viewDidLoad
 {
-    /// Timer to load settings for the app.
-    [NSTimer scheduledTimerWithTimeInterval:.1
-                                     target:self
-                                   selector:@selector(loadSettings:)
-                                   userInfo:nil
-                                    repeats:NO];
+    fadeText.text = [NSString stringWithFormat:@"%@", @(SettingsStore.instance.fadeSetting)];
+    
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self
+                                                                          action:@selector(closeKeyboards)];
+    [self.view addGestureRecognizer:tap];
 }
 
-/*!
- * Loads the main screen and settings for the app.
- * @param loadTimer The timer that called this function.
- */
-- (void)loadSettings:(NSTimer*)loadTimer
+- (void)viewWillAppear:(BOOL)animated
 {
     presenter = (LoopMusicViewController*)self.presentingViewController;
-    
-    shuffleTime.text = [NSString stringWithFormat:@"%@", @(SettingsStore.instance.timeShuffle)];
-    shuffleRepeats.text = [NSString stringWithFormat:@"%@", @(SettingsStore.instance.repeatsShuffle)];
-    shuffle.selectedSegmentIndex = SettingsStore.instance.shuffleSetting;
-    fadeText.text = [NSString stringWithFormat:@"%@", @(SettingsStore.instance.fadeSetting)];
-    volumeAdjust.text = [NSString stringWithFormat:@"%@", @([presenter getVolume])];
-    
     [presenter setOccupied:true];
+    volumeAdjust.text = [NSString stringWithFormat:@"%@", @([presenter getVolume])];
 }
 
 - (IBAction)back:(id)sender
 {
     [presenter refreshPlaySlider];  // For when the underlying audio file was changed.
     [presenter setOccupied:false];
-    SettingsStore.instance.shuffleSetting = [shuffle selectedSegmentIndex];
     [self saveSettings];
     [super back:sender];
 }
@@ -134,32 +122,6 @@
     return result;
 }
 
-- (IBAction)shuffleTime:(id)sender
-{
-    if ([shuffleTime.text doubleValue] > 0)
-    {
-        SettingsStore.instance.timeShuffle = [shuffleTime.text doubleValue];
-        [presenter recalculateShuffleTime];
-    }
-    else
-    {
-        shuffleTime.text = @"Invalid";
-    }
-}
-
-- (IBAction)shuffleRepeats:(id)sender
-{
-    if ([shuffleRepeats.text intValue] > 0)
-    {
-        SettingsStore.instance.repeatsShuffle = [shuffleRepeats.text intValue];
-    }
-    else
-    {
-        shuffleRepeats.text = @"Invalid";
-    }
-}
-
-
 - (IBAction)setFade:(id)sender
 {
     if ([fadeText.text doubleValue] >= 0)
@@ -173,17 +135,13 @@
     }
 }
 
-- (IBAction)close:(id)sender
+/*!
+ * Closes any open keyboards.
+ */
+- (void)closeKeyboards
 {
-    [shuffleTime resignFirstResponder];
-    [shuffleRepeats resignFirstResponder];
     [volumeAdjust resignFirstResponder];
     [fadeText resignFirstResponder];
-}
-
-- (IBAction)shuffleChange:(id)sender
-{
-    SettingsStore.instance.shuffleSetting = [shuffle selectedSegmentIndex];
 }
 
 /*!
@@ -445,6 +403,11 @@
 - (IBAction)deletePlaylist:(id)sender
 {
     [self changeScreen:@"deletePlaylist"];
+}
+
+- (IBAction)openShuffleSettings:(id)sender
+{
+    [self changeScreen:@"shuffleSettings"];
 }
 
 - (float)getVolumeSliderValue

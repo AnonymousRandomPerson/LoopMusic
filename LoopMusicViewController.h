@@ -94,7 +94,18 @@ extern NSString *settingsSongString;
     NSTimer *fadeTimer;
     /// Timer used to update the playback slider.
     NSTimer *playSliderUpdateTimer;
+    
+    /// The actual amount of time (in microseconds) to play a track before shuffling.
+    double currentShuffleTime;
+    /// The actual amount of repeats to play a track for before shuffling.
+    double currentShuffleRepeats;
 }
+
+typedef enum {
+    NONE,
+    TIME,
+    REPEATS
+} ShuffleSetting;
 
 /// Button to randomize the current track.
 @property(nonatomic, retain) UIButton *randomSong;
@@ -427,11 +438,6 @@ extern NSString *settingsSongString;
  * @param newCurrentTime The time to set the playback time to.
  */
 - (void)setCurrentTime:(double)newCurrentTime;
-/*!
- * Varies the amount of time to play the current track before shuffling.
- * @return A randomly varied amount of time to play the current track before shuffling.
- */
-- (double)timeVariance;
 /*!
  * Recalculates internal shuffle time limit parameter, based on the base time and a random variation.
  */

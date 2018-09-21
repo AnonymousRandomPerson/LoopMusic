@@ -217,10 +217,10 @@ static const float SEARCHTOLERANCE = 300;
 {
     loopCount = 0;
 }
-- (NSInteger)getRepeatNumber:(double)elapsedTime
+- (double)getRepeatNumber:(double)elapsedTime
 {
     // Use a more robust time-based method, rather than a loop-based method. This allows for jumping around in playback, while still having around the desired number of repeats in playback time.
-    return ((NSInteger)(elapsedTime*FRAMERATE) - (NSInteger)_loopStart) / ((NSInteger)_loopEnd - (NSInteger)_loopStart);
+    return (elapsedTime * FRAMERATE - _loopStart) / (_loopEnd - _loopStart);
 }
 
 /*!
@@ -293,6 +293,11 @@ static const float SEARCHTOLERANCE = 300;
 - (AudioData *)getAudioData
 {
     return audioData;
+}
+
+- (bool)hasAudioData
+{
+    return audioData != nil;
 }
 
 - (NSMutableArray *)findLoopTime

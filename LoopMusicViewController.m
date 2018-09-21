@@ -11,11 +11,7 @@
 
 /// The name of the current track.
 NSString *settingsSongString = @"";
-/// The actual amount of time (in microseconds) to play a track before shuffling.
-double timeShuffle2 = -1;
 
-/// The amount of time that time shuffle can vary by.
-static const int TIME_VARIANCE = 30;
 /// The time before the loop point that testing time will move the playback timer to.
 static const double TEST_TIME_OFFSET = 5;
 
@@ -72,7 +68,6 @@ static const double TEST_TIME_OFFSET = 5;
     musicNumber = -1;
 
     volumeSlider.value = SettingsStore.instance.masterVolume;
-    [self recalculateShuffleTime];
     [self setGlobalVolume:nil];
     if (SettingsStore.instance.playlistIndex)
     {
@@ -209,11 +204,11 @@ static const double TEST_TIME_OFFSET = 5;
         if (!occupied)
         {
             bool willSwitch = false;
-            if (SettingsStore.instance.shuffleSetting == 2 && SettingsStore.instance.repeatsShuffle > 0 && [self getRepeats] >= SettingsStore.instance.repeatsShuffle)
+            if (SettingsStore.instance.shuffleSetting == REPEATS && SettingsStore.instance.repeatsShuffle > 0 && [self getRepeats] >= currentShuffleRepeats)
             {
                 willSwitch = true;
             }
-            else if (SettingsStore.instance.shuffleSetting == 1 && SettingsStore.instance.timeShuffle > 0 && [self getElapsedTime] >= timeShuffle2)
+            else if (SettingsStore.instance.shuffleSetting == TIME && SettingsStore.instance.timeShuffle > 0 && [self getElapsedTime] >= currentShuffleTime)
             {
                 willSwitch = true;
             }
@@ -355,7 +350,6 @@ static const double TEST_TIME_OFFSET = 5;
             }
         } while (musicNumber == random && totalPlaylistSongs != 1);
         musicNumber = random;
-        [self recalculateShuffleTime];
         
         [self prepareQuery:[NSString stringWithFormat:@"SELECT * FROM Tracks WHERE id = %li", (long)musicNumber]];
         if (sqlite3_step(statement) == SQLITE_ROW)
@@ -387,6 +381,7 @@ static const double TEST_TIME_OFFSET = 5;
         [self openDB];
         [self updateDB:[NSString stringWithFormat:@"UPDATE Tracks SET loopend = %f WHERE id=\"%li\"", audioPlayer.loopEnd, (long)musicNumber]];
     }
+    [self recalculateShuffleTime];
     [self resetForNewPlayback];
     [self startPlayback];
     [self refreshPlaySlider];
@@ -408,7 +403,10 @@ static const double TEST_TIME_OFFSET = 5;
 }
 - (void)refreshPlaySlider
 {
-    [playSlider setupNewTrack:audioPlayer.duration :audioPlayer.loopStart :audioPlayer.loopEnd];
+    if ([audioPlayer hasAudioData])
+    {
+        [playSlider setupNewTrack:audioPlayer.duration :audioPlayer.loopStart :audioPlayer.loopEnd];
+    }
 }
 - (void)setAudioLoopStart:(NSTimeInterval)newStart
 {
@@ -616,10 +614,10 @@ static const double TEST_TIME_OFFSET = 5;
  * Gets the number of repeats of the current track.
  * @return The current number of repeats.
  */
-- (NSInteger)getRepeats
+- (double)getRepeats
 {
     // Use a more robust time-based method, rather than a loop-based method. This allows for jumping around in playback, while still having around the desired number of repeats in playback time.
-    return [audioPlayer getRepeatNumber:[self getElapsedTime]*1e-6];
+    return [audioPlayer getRepeatNumber:[self getElapsedTime] * 1e-6];
 }
 
 - (void)setOccupied:(bool)newOccupied
@@ -744,13 +742,77 @@ static const double TEST_TIME_OFFSET = 5;
     }
 }
 
-- (double)timeVariance
-{
-    return (((double)((int)(arc4random_uniform(2 * TIME_VARIANCE) - TIME_VARIANCE))) / 60.0 + SettingsStore.instance.timeShuffle) * 60000000.0;
-}
 - (void)recalculateShuffleTime
 {
-    timeShuffle2 = [self timeVariance];
+    if (SettingsStore.instance.shuffleSetting == TIME)
+    {
+        double timeVariance = SettingsStore.instance.timeShuffleVariance;
+        double minRepeatsShuffle = SettingsStore.instance.minRepeatsShuffle;
+        double maxRepeatsShuffle = SettingsStore.instance.maxRepeatsShuffle;
+        double baseTime = SettingsStore.instance.timeShuffle;
+        
+        double loopDuration = audioPlayer.loopEnd - audioPlayer.loopStart;
+        
+        if (minRepeatsShuffle > 0)
+        {
+            double minTime = (audioPlayer.loopStart + loopDuration * minRepeatsShuffle) / 60.0;
+            if (baseTime < minTime)
+            {
+                baseTime = minTime;
+            }
+        }
+        
+        if (maxRepeatsShuffle > 0)
+        {
+            double maxTime = (audioPlayer.loopStart + loopDuration * maxRepeatsShuffle) / 60.0;
+            if (baseTime > maxTime)
+            {
+                baseTime = maxTime;
+            }
+        }
+        
+        double currentVariance = timeVariance - [self randomDouble:2 * timeVariance];
+        
+        double shuffleTimeMinutes = baseTime + currentVariance;
+        currentShuffleTime = shuffleTimeMinutes * 60000000.0;
+    }
+    else if (SettingsStore.instance.shuffleSetting == REPEATS)
+    {
+        double repeatsVariance = SettingsStore.instance.repeatsShuffleVariance;
+        double minTimeShuffle = SettingsStore.instance.minTimeShuffle * 60.0;
+        double maxTimeShuffle = SettingsStore.instance.maxTimeShuffle * 60.0;
+        double baseRepeats = SettingsStore.instance.repeatsShuffle;
+        
+        double loopDuration = audioPlayer.loopEnd - audioPlayer.loopStart;
+        double repeatTime = audioPlayer.loopStart + baseRepeats * loopDuration;
+        
+        if (minTimeShuffle > 0 && repeatTime < minTimeShuffle)
+        {
+            baseRepeats = (minTimeShuffle - audioPlayer.loopStart) / loopDuration;
+        }
+        
+        // No need to recalculate repeatTime since it is only changed if it is less than the min time,
+        // meaning it is definitely not more than the max time.
+        if (maxTimeShuffle > 0 && repeatTime > maxTimeShuffle)
+        {
+            baseRepeats = (maxTimeShuffle - audioPlayer.loopStart) / loopDuration;
+        }
+        
+        double currentVariance = repeatsVariance - [self randomDouble:2 * repeatsVariance];
+        
+        currentShuffleRepeats = baseRepeats + currentVariance;
+    }
+}
+
+/*!
+ * Gets a random double value between 0 and a maximum.
+ * @param max The maximum double value to get.
+ * @return A random double value between 0 and max.
+ */
+- (double)randomDouble:(double)max
+{
+    unsigned int randMax = (unsigned)RAND_MAX;
+    return (double) arc4random_uniform(randMax) / randMax * max;
 }
 
 // Screen changing helpers.

@@ -125,7 +125,7 @@
 /*!
  * Gets the repeat number, given an elapsed playback time in seconds.
  */
-- (NSInteger)getRepeatNumber:(double)elapsedTime;
+- (double)getRepeatNumber:(double)elapsedTime;
 
 /*!
  * Initializes the audio player.
@@ -139,6 +139,12 @@
  * @return The AudioData pointer to the current track.
  */
 - (AudioData *)getAudioData;
+
+/*!
+ * Checks if there is any audio data loaded into the player.
+ * @return Whether there is any audio data loaded into the player.
+ */
+- (bool)hasAudioData;
 
 /*!
  * Finds suitable start times to loop to.

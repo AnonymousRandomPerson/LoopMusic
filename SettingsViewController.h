@@ -8,19 +8,14 @@
 
 #import "LoopMusicViewController.h"
 
-@interface SettingsViewController : LoopMusicViewController <MPMediaPickerControllerDelegate> {
+@interface SettingsViewController : LoopMusicViewController <MPMediaPickerControllerDelegate>
+{
     /// Button to return to the main screen.
     IBOutlet UIButton *back;
     /// Text field to change the relative volume of the current track.
     IBOutlet UITextField *volumeAdjust;
-    /// Text field to change the time that a track will play for before shuffling.
-    IBOutlet UITextField *shuffleTime;
-    /// Text field to change the number of times a track will loop before shuffling.
-    IBOutlet UITextField *shuffleRepeats;
     /// Text field to change the time taken for a track to fade out.
     IBOutlet UITextField *fadeText;
-    /// Buttons to choose how to shuffle tracks.
-    IBOutlet UISegmentedControl *shuffle;
     /// The main screen of the app.
     LoopMusicViewController *presenter;
     
@@ -34,14 +29,8 @@
 @property(nonatomic, retain) UIButton *back;
 /// Text field to change the relative volume of the current track.
 @property(nonatomic, retain) UITextField *volumeAdjust;
-/// Text field to change the time that a track will play for before shuffling.
-@property(nonatomic, retain) UITextField *shuffleTime;
-/// Text field to change the number of times a track will loop before shuffling.
-@property(nonatomic, retain) UITextField *shuffleRepeats;
 /// Text field to change the time taken for a track to fade out.
 @property(nonatomic, retain) UITextField *fadeText;
-/// Buttons to choose how to shuffle tracks.
-@property(nonatomic, retain) UISegmentedControl *shuffle;
 
 /*!
  * Navigates back to the main screen and saves the settings.
@@ -54,16 +43,6 @@
  */
 - (IBAction)setVolume:(id)sender;
 /*!
- * Sets the time that a track will play for before shuffling.
- * @param sender The object that called this function.
- */
-- (IBAction)shuffleTime:(id)sender;
-/*!
- * Sets the number of times a track will loop before shuffling.
- * @param sender The object that called this function.
- */
-- (IBAction)shuffleRepeats:(id)sender;
-/*!
  * Sets the time taken for a track to fade out.
  * @param sender The object that called this function.
  */
@@ -73,11 +52,6 @@
  * @param sender The object that called this function.
  */
 - (IBAction)close:(id)sender;
-/*!
- * Changes how to shuffle tracks.
- * @param sender The object that called this function.
- */
-- (IBAction)shuffleChange:(id)sender;
 /*!
  * Navigates to the playlist choosing screen.
  * @param sender The object that called this function.
@@ -103,5 +77,10 @@
  * @param sender The object that called this function.
  */
 - (IBAction)deletePlaylist:(id)sender;
+/*!
+ * Navigates to the shuffle setings screen.
+ * @param sender The object that called this function.
+ */
+- (IBAction)openShuffleSettings:(id)sender;
 
 @end
