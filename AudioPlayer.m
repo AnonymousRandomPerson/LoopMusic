@@ -295,11 +295,6 @@ static const float SEARCHTOLERANCE = 300;
     return audioData;
 }
 
-- (bool)hasAudioData
-{
-    return audioData != nil;
-}
-
 - (NSMutableArray *)findLoopTime
 {
     /// Acceptable start points.
