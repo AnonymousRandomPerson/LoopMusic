@@ -141,12 +141,6 @@
 - (AudioData *)getAudioData;
 
 /*!
- * Checks if there is any audio data loaded into the player.
- * @return Whether there is any audio data loaded into the player.
- */
-- (bool)hasAudioData;
-
-/*!
  * Finds suitable start times to loop to.
  * @return An array of suitable start times.
  */

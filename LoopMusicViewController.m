@@ -403,10 +403,7 @@ static const double TEST_TIME_OFFSET = 5;
 }
 - (void)refreshPlaySlider
 {
-    if ([audioPlayer hasAudioData])
-    {
-        [playSlider setupNewTrack:audioPlayer.duration :audioPlayer.loopStart :audioPlayer.loopEnd];
-    }
+    [playSlider setupNewTrack:audioPlayer.duration :audioPlayer.loopStart :audioPlayer.loopEnd];
 }
 - (void)setAudioLoopStart:(NSTimeInterval)newStart
 {
