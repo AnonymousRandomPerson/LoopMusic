@@ -39,11 +39,8 @@
             /// The ID of the track to be deleted.
             NSInteger deleteIndex = 0;
             
-            if (SettingsStore.instance.playlistIndex)
-            {
-                deleteIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Tracks WHERE name = \"%@\"", item]];
-                [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE track = %ld", (long)deleteIndex]];
-            }
+            deleteIndex = [self getIntegerDB:[NSString stringWithFormat:@"SELECT id FROM Tracks WHERE name = \"%@\"", item]];
+            [self updateDB:[NSString stringWithFormat:@"DELETE FROM Playlists WHERE track = %ld", (long)deleteIndex]];
             [self updateDB:[NSString stringWithFormat:@"DELETE FROM Tracks WHERE name = \"%@\"", item]];
             [presenter decrementTotalSongs];
         }
